@@ -1,0 +1,7 @@
+{
+  "filter_paths": "lib|test|script|packages|src/probe|src/testnet",
+  "exclude_dependencies": true,
+  "exclude_informational": true,
+  "exclude_optimization": true,
+  "exclude_low": true
+}

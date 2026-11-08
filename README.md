@@ -130,7 +130,7 @@ FOUNDRY_PROFILE=kit forge test   # reactive-kit
 pnpm typecheck && pnpm test:ts   # TypeScript
 ```
 
-CI (`.github/workflows/ci.yml`) runs the same suites on every push.
+CI (`.github/workflows/ci.yml`) runs the same suites on every push; `.github/workflows/security.yml` adds gitleaks over full history and Slither, Dependabot keeps actions and npm deps current. See [SECURITY.md](SECURITY.md) and [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## 📁 Project Structure
 

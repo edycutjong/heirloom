@@ -290,6 +290,17 @@ contract HeirloomReactiveTest is HeirloomBase {
         assertFalse(armed, "activity unsubscribes the canary");
     }
 
+    function test_brake_lift_starts_fresh_freeze_epoch() public {
+        _redeploy(100);
+        runUntil(T0 + T_ + TICK);
+        assertTrue(rc.epochFreezeUsed());
+        for (uint256 i; i < MAX_REFUSED; i++) spoof(usdcBase);
+        uint64 lift = uint64(block.timestamp + BRAKE_WINDOW + TICK);
+        tickAt(lift);
+        assertFalse(rc.epochFreezeUsed(), "the lift starts a new epoch");
+        assertEq(rc.deadline(), lift + T_, "no extension carried over from the old epoch");
+    }
+
     function test_no_freeze_with_healthy_canary() public {
         _redeploy(100);
         while (block.timestamp < T0 + T_ + TICK) {

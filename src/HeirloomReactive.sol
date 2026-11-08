@@ -416,9 +416,11 @@ contract HeirloomReactive is AbstractReactive {
         b.refusedInWindow = 0;
         brakedCount--;
         if (allowed[chainId][token]) _subscribeToken(chainId, token);
-        // The brake hid real transfers: restart the T clock from the lift.
+        // The brake hid real transfers: restart the T clock from the lift. A new epoch starts here, with its own
+        // canary check and its own one freeze (the old epoch's extension must not ride along in `deadline()`).
         if (nowTs > observedFrom) observedFrom = nowTs;
-        _resetCanaries(); // a new epoch starts at the lift
+        epochFreezeUsed = false;
+        _resetCanaries();
         emit ObservationReset(chainId, token, nowTs);
     }
 

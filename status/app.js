@@ -17,7 +17,7 @@ const vaultAbi = parseAbi([
   "function state() view returns (uint8)", "function heir() view returns (address)", "function claimReadyAt() view returns (uint64)",
   "function claimDelay() view returns (uint64)", "function claimCanInitiate() view returns (bool)", "function graceEndsAt() view returns (uint64)",
   "function lastSeenMirror() view returns (uint64)", "function lastChainMirror() view returns (uint256)", "function lastOriginTxMirror() view returns (bytes32)",
-  "function runwayDays() view returns (uint32)", "function initiateClaim()", "function finalizeClaim()",
+  "function runwayDays() view returns (uint32)", "function estateTokenCount() view returns (uint256)", "function estateTokens(uint256) view returns (address)", "function paid(address) view returns (bool)", "function initiateClaim()", "function finalizeClaim()",
 ]);
 const rcAbi = parseAbi(["function phase() view returns (uint8)", "function deadline() view returns (uint64)", "function lastSeen() view returns (uint64)", "function T() view returns (uint64)"]);
 
@@ -65,7 +65,7 @@ function renderRows(i) {
   $("tbody").innerHTML = rows.map((t) => {
     const refused = t.stage === "REFUSED";
     const why = refused ? (/ZERO_VALUE|NOT_ALLOWLISTED|NOT_OWNER|MALFORMED/.exec(t.note)?.[0] ?? "").toLowerCase().replace("_", " ") : "";
-    const kind = KIND[t.stage] ?? t.stage;
+    const kind = (KIND[t.stage] ?? t.stage) + (t.stage === "VISIT" && /OwnerActive/.test(t.note) ? " (vault action)" : "");
     return `<tr class="${refused ? "refused" : ""} ${t.stage === "EXPIRE" || t.stage === "TEARDOWN" ? "released" : ""}">
       <td>${utc(+t.reactive_ts)}<span class="note">${rel(+t.reactive_ts)}</span></td>
       <td class="kind">${esc(kind)}${refused ? ` · ${esc(why)}` : ""}<span class="note">${esc(CHAIN_NAME[t.trigger_chain] ?? "")}${t.seq ? ` · seq ${esc(t.seq)}` : ""}</span></td>
@@ -79,7 +79,7 @@ function renderFacts(i, lv) {
   const parts = [
     fact("Last seen", last ? `${rel(last)}<br>${utc(last)} UTC<br>${esc(CHAIN_NAME[chainId] ?? "")}` : "—"),
     fact("Last origin tx", origin && /^0x0+$/.test(origin) === false ? link(+chainId, origin) : "—"),
-    fact("Deadline", lv?.deadline ?? i.deadline ? `${utc(lv?.deadline ?? i.deadline)} UTC<br>${rel(lv?.deadline ?? i.deadline)}` : "—"),
+    fact("Deadline", (lv?.state ?? 0) < 2 && (lv?.deadline ?? i.deadline) ? `${utc(lv?.deadline ?? i.deadline)} UTC<br>${rel(lv?.deadline ?? i.deadline)}` : "—"),
     fact("Days live", i.daysLive != null ? `${i.daysLive}` : i.tornDown ? "ended" : "—"),
     fact("Heartbeats · refused", i.heartbeats != null ? `${i.heartbeats} · ${i.spoofsRefused}` : "—"),
     fact("RC reserve", lv?.balance != null ? `${lv.balance} lREACT` : i.balanceReact != null ? `${i.balanceReact} lREACT` : "—"),
@@ -99,7 +99,12 @@ async function live(i) {
     const rcr = async (f) => { try { return await pubLasna.readContract({ address: i.rc, abi: rcAbi, functionName: f }); } catch { return null; } };
     const [deadline, rcSeen] = await Promise.all([rcr("deadline"), rcr("lastSeen")]);
     let bal = null; try { bal = (+formatEther(await pubLasna.getBalance({ address: i.rc }))).toFixed(4); } catch {}
-    const lv = { state: Number(state), heir, claimReadyAt: Number(claimReadyAt), claimDelay: Number(claimDelay), canInit, graceEndsAt: Number(graceEndsAt),
+    let unpaid = 0;
+    if (Number(state) === 4) {
+      const n = Number(await rd("estateTokenCount"));
+      for (let k = 0; k < n; k++) { const t = await rd("estateTokens", [BigInt(k)]); if (!(await rd("paid", [t]))) unpaid++; }
+    }
+    const lv = { unpaid, state: Number(state), heir, claimReadyAt: Number(claimReadyAt), claimDelay: Number(claimDelay), canInit, graceEndsAt: Number(graceEndsAt),
       lastSeen: Number(rcSeen ?? 0) || Number(lastSeen), lastChain: Number(lastChain), lastOrigin, deadline: deadline ? Number(deadline) : null, balance: bal };
     localStorage.setItem(key, JSON.stringify({ ...lv, ts: Date.now() }));
     apply(i, lv);
@@ -117,8 +122,11 @@ function apply(i, lv) {
   setStamp(lv.state === 1 ? `Dormant — grace until ${utc(lv.graceEndsAt)}` : lv.state === 3 ? `Claim pending — ${utc(lv.claimReadyAt)}` : s, cls);
   renderFacts(i, lv);
   $("stubfacts").innerHTML = fact("Heir", `<span class="v" title="${esc(lv.heir)}">${esc(lv.heir)}</span>`) + fact("Claim delay", `${Math.round(lv.claimDelay / 60)} min`) + fact("Vault state", esc(s));
-  const show = lv.canInit || lv.state === 3 || lv.state === 2 || (lv.state === 4);
+  const show = lv.canInit || lv.state === 3 || lv.state === 2 || (lv.state === 4 && lv.unpaid > 0);
   $("claim").hidden = !show;
+  $("claimhead").textContent = lv.state === 4 ? "Released, but some tokens are unpaid." : "Claimable.";
+  $("paidline").hidden = !(lv.state === 4 && lv.unpaid === 0);
+  $("paidline").textContent = "Released: every estate token was paid to the heir.";
   $("claim").dataset.vault = i.vault; $("claim").dataset.readyAt = lv.claimReadyAt; $("claim").dataset.canInit = lv.canInit; $("claim").dataset.state = lv.state;
   syncButtons();
 }

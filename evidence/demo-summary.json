@@ -1,0 +1,19 @@
+{
+  "instance": "demo",
+  "rc": "0xa3d92EAefb2fc4C972d6Ee524c24F38A93739B8b",
+  "vault": "0x51365bb9560dDfA4236fd62d4eF2CB61f78edDBA",
+  "callbackRows": 5,
+  "stages": {
+    "VISIT": 3,
+    "REFUSED": 1,
+    "GRACE": 2,
+    "CANCEL": 1,
+    "EXPIRE": 1,
+    "ATTEST": 1,
+    "TEARDOWN": 1
+  },
+  "canaryBeats": 3,
+  "freezeUsed": 0,
+  "stuck": 0,
+  "resends": 0
+}

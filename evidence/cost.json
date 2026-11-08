@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-08T18:10:14.416Z",
+ "generatedAt": "2026-11-08T18:31:01.314Z",
  "unit": "REACT (testnet lREACT)",
  "usd": null,
  "usdNote": "no dollar figure: it needs a second REACT price source",
@@ -17,7 +17,7 @@
    "reactPerDay": null,
    "reactPerMonth": null,
    "windowHours": 0,
-   "balanceReact": 0.207846,
+   "balanceReact": 0,
    "fundedThrough": null
   },
   {

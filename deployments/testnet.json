@@ -1,11 +1,29 @@
 {
   "network": "Reactive Lasna (5318007) + Base Sepolia (84532); heartbeats from Ethereum Sepolia (11155111)",
   "instances": [
-    { "id": "long-t", "label": "Long-T, T = 90 days (Cron10000)", "addresses": "evidence/long-t-addresses.txt", "fundedReact": 0.5,
-      "note": "owner = deployer; scripted heartbeats. Funded for days, not its 90-day horizon: lREACT is faucet-limited." },
-    { "id": "demo", "label": "Demo, T = 5 min (Cron100)", "addresses": "evidence/demo-addresses.txt", "fundedReact": 0.5,
-      "note": "short-T scenario run end to end: grace, cancel, grace, expiry, heir claim, teardown." },
-    { "id": "p1b-e2e", "label": "P1b end-to-end, T = 4 min (Cron10)", "addresses": "evidence/p1b-e2e-addresses.txt", "fundedReact": 2.0, "reclaimedReact": 0.7446,
-      "note": "first full run, deployed from pre-QA bytecode (e61051b predecessor); torn down." }
+    {
+      "id": "long-t",
+      "label": "Long-T, T = 90 days (Cron10000)",
+      "addresses": "evidence/long-t-addresses.txt",
+      "fundedReact": 0.5,
+      "note": "owner = deployer; scripted heartbeats. Funded for days, not its 90-day horizon: lREACT is faucet-limited. Shares owner and tokens with the demo and p1b-e2e instances, so its rows and cost up to costFrom include their activity; the cost window starts after the demo ended.",
+      "costFrom": 1794162555
+    },
+    {
+      "id": "demo",
+      "label": "Demo, T = 5 min (Cron100)",
+      "addresses": "evidence/demo-addresses.txt",
+      "fundedReact": 0.5,
+      "reclaimedReact": 0.0799,
+      "note": "short-T scenario run end to end: grace, cancel, grace, expiry, heir claim, teardown."
+    },
+    {
+      "id": "p1b-e2e",
+      "label": "P1b end-to-end, T = 4 min (Cron10)",
+      "addresses": "evidence/p1b-e2e-addresses.txt",
+      "fundedReact": 2.0,
+      "reclaimedReact": 0.7446,
+      "note": "first full run, deployed from pre-QA bytecode (e61051b predecessor); torn down."
+    }
   ]
 }

@@ -15,18 +15,5 @@
   "canaryBeats": 2,
   "freezeUsed": 0,
   "stuck": 0,
-  "resends": 0,
-  "teardown": {
-    "method": "rnk_getFilters on Lasna (2026-11-09), filters whose Configs list the RC as subscriber",
-    "rc_filters_after_teardown": 0,
-    "control": "P1a probe RCs 0xe4A0\u20261909 and 0x6818\u202647C9 still show 4 filters each (never unsubscribed)",
-    "filters_version": 1901
-  },
-  "lreact": {
-    "funded": "1.2 at deploy + 0.8 top-up (tx 0xe35bc63f\u2026deae)",
-    "reclaimed": "0.7445973 (reclaim tx 0x4d87b098\u2026a48c)",
-    "spent": "1.2554027",
-    "window": "deploy 17:30 UTC to teardown 17:43:49 UTC, Cron10 throughout"
-  },
-  "scenario_log": "evidence/p1b-e2e-actions.csv; heir tHTD balance after release 5000000 (4 estate + 1 heartbeat transfer)"
+  "resends": 0
 }

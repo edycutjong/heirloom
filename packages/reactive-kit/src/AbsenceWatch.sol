@@ -45,7 +45,8 @@ library AbsenceWatch {
         return w.lastAt + w.maxGap;
     }
 
-    /// @notice True when armed and silent for longer than `maxGap`.
+    /// @notice True when armed and silent for longer than `maxGap`. A disarmed watch is never stale: callers that must
+    ///         fail closed when a watch was never armed in time (Heirloom's canary at the deadline) check `armed` themselves.
     function isStale(Watch storage w, uint64 nowTs) internal view returns (bool) {
         return w.armed && nowTs > w.lastAt + w.maxGap;
     }

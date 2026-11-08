@@ -26,7 +26,8 @@ library AckLedger {
     error BadPolicy();
 
     function validate(Policy memory p) internal pure {
-        if (p.ackTimeout == 0 || p.fastTries == 0 || p.slowEvery < p.ackTimeout) revert BadPolicy();
+        // fastTries + 1 must be reachable below the uint8 saturation point, or the one-shot alarm repeats / overflows.
+        if (p.ackTimeout == 0 || p.fastTries == 0 || p.fastTries > 253 || p.slowEvery < p.ackTimeout) revert BadPolicy();
     }
 
     function start(Pending storage p, uint64 seq, bytes32 payloadHash, uint64 nowTs) internal {

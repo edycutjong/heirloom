@@ -137,15 +137,21 @@ abstract contract OmniReactiveTest is Test {
 
     function _drain(IReactive.LogRecord[] memory recs) internal returns (CallbackResult[] memory all) {
         all = new CallbackResult[](0);
+        bool quiet;
         for (uint256 it; it < MAX_CYCLES; it++) {
             for (uint256 i; i < recs.length; i++) {
                 deliver(recs[i]);
             }
             CallbackResult[] memory batch;
             (batch, recs) = runCallbacks();
-            if (batch.length == 0) break;
+            if (batch.length == 0) {
+                quiet = true;
+                break;
+            }
             all = _concat(all, batch);
         }
+        // Never return with feedback records undelivered: a callback loop that does not settle is a finding.
+        require(quiet, "OmniReactiveTest: no quiescence within MAX_CYCLES");
     }
 
     function _concat(CallbackResult[] memory a, CallbackResult[] memory b) internal pure returns (CallbackResult[] memory c) {

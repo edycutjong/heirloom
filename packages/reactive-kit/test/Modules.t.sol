@@ -98,6 +98,8 @@ contract AckLedgerTest is Test {
         AckLedger.validate(pol);
         vm.expectRevert(AckLedger.BadPolicy.selector);
         this.validateBad(AckLedger.Policy({ackTimeout: 30, fastTries: 3, slowEvery: 10}));
+        vm.expectRevert(AckLedger.BadPolicy.selector); // the one-shot alarm needs fastTries + 1 below uint8 saturation
+        this.validateBad(AckLedger.Policy({ackTimeout: 30, fastTries: 254, slowEvery: 60}));
     }
 
     function validateBad(AckLedger.Policy memory b) external pure {

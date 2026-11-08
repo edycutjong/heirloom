@@ -117,6 +117,8 @@ contract OmniSystemMock {
     }
 
     // ---- IPayable surface used by AbstractPayer ----
+    /// @dev Billing is not modelled: debt is always 0, so an underfunded contract still "succeeds" here. Reserve and
+    ///      debt behaviour (no react() while debt > 0) must be checked on Lasna, not in this harness.
     function debt(address) external pure returns (uint256) {
         return 0;
     }

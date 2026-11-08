@@ -123,7 +123,7 @@ contract HeirloomHardeningTest is HeirloomBase {
         ownerCall(abi.encodeCall(HeirloomVault.deposit, (address(usdcBase), 4e6)));
     }
 
-    // ------------------------------------------------------------------ a2a r03: re-entry
+    // ------------------------------------------------------------------ hardening: re-entry
 
     function test_owner_reentry_cannot_retire_mid_withdraw() public {
         ReenteringOwner o = new ReenteringOwner();
@@ -134,7 +134,7 @@ contract HeirloomHardeningTest is HeirloomBase {
         assertEq(uint8(v.state()), uint8(HeirloomTypes.VaultState.ARMED));
     }
 
-    // ------------------------------------------------------------------ a2a r03: payout isolation
+    // ------------------------------------------------------------------ hardening: payout isolation
 
     function test_hostile_tokens_cannot_block_the_payout() public {
         TwoToken two = new TwoToken();
@@ -159,7 +159,7 @@ contract HeirloomHardeningTest is HeirloomBase {
         assertFalse(v.paid(address(eater)));
     }
 
-    // ------------------------------------------------------------------ a2a r04: single-token recovery above the loop budget
+    // ------------------------------------------------------------------ hardening: single-token recovery above the loop budget
 
     function test_finalizeToken_recovers_a_token_above_the_loop_gas_budget() public {
         HeavyToken heavyXfer = new HeavyToken(false, true);
@@ -189,7 +189,7 @@ contract HeirloomHardeningTest is HeirloomBase {
         assertEq(heavyBal.balanceOf(heir), 1e6);
     }
 
-    // ------------------------------------------------------------------ a2a r03: foreign CallbackFailure
+    // ------------------------------------------------------------------ hardening: foreign CallbackFailure
 
     function test_foreign_callback_failure_does_not_spend_resends() public {
         vm.warp(rc.deadline() + 1);
@@ -211,7 +211,7 @@ contract HeirloomHardeningTest is HeirloomBase {
         assertEq(_pendingTries(), 2);
     }
 
-    // ------------------------------------------------------------------ a2a r03: debt settlement surface
+    // ------------------------------------------------------------------ hardening: debt settlement surface
 
     function test_cover_debt_is_callable_with_no_debt() public {
         rc.coverDebt(); // OmniSystemMock reports zero debt: a no-op that must not revert

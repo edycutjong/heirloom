@@ -1,0 +1,13 @@
+.env
+.env.*
+node_modules/
+__pycache__/
+.next/
+dist/
+coverage/
+.DS_Store
+out/
+out-kit/
+cache/
+broadcast/*/31337/
+broadcast/**/dry-run/

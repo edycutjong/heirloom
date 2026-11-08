@@ -109,6 +109,7 @@ The demo instance ran the full scenario on live networks: grace twice, one cance
 4. **Top-up.** Fund the reactive contract with a transfer plus `coverDebt()` (or the system contract's `depositTo(address)`); a plain transfer does not clear its debt.
 5. **Watch-set drift after an origin reorg.** An orphaned Base `setAllowlist(.., false)` can leave the reactive contract unsubscribed until the next `setAllowlist`. Documented at the ALLOWLIST branch of `react()`.
 6. **No mainnet evidence yet.** Cost per month is not published: the measured window is too short, and a dollar figure needs a second price source. The canary gaps in `evidence/canary-gaps.json` cover about 23 h of Ethereum feeds (medians 3,612 s and 3,636 s); a multi-day measurement is still open.
+7. **Native ETH and silent grace.** Native ETH transfers emit no ERC-20 `Transfer` log, so they are not proof of life; hold WETH-style tokens. Nobody is notified when a grace window opens, so choose T above your longest normal quiet stretch.
 
 ## 🚀 Getting Started
 
@@ -154,7 +155,7 @@ docs/            DX-REPORT.md, architecture.svg
 - [x] Shared `reactive-kit` and Test Lib adapter
 - [ ] Mainnet instances (a 90-day one and a 48 h one)
 - [ ] A REVIVE triple in the evidence
-- [ ] Hardening: CI scans, SECURITY.md
+- [x] Hardening: CI scans, SECURITY.md
 
 ## 📽️ Demo Materials
 

@@ -99,3 +99,10 @@ Three samples are not a distribution; P1b adds more before any figure is publish
 - Lasna faucet: a 0.03 SepETH `request(address)` to the Ethereum Sepolia faucet `0x9b9BB25f…f434` (tx
   `0x517457f954ac03da8ab3d4b40ecf724da0ac9dcfb27f5ca682e84aca7a2eab09`) took the deployer's Lasna balance from
   0.2410 to 3.3910 lREACT.
+
+## P1c findings (2026-11-09)
+- **Lasna gas is 100 gwei**, so deploying the ≈ 20 KB `HeirloomReactive` costs ≈ 0.45 lREACT in gas alone, before any reserve. `forge create` / `eth_estimateGas` fail with
+  `contract creation code storage out of gas` (or `gas required exceeds: 2004211`) when `balance − value` cannot cover `gas × price`: the error names gas, the cause is the balance. Keep `balance ≥ reserve + ~0.6 lREACT`, or pass `--gas-limit 5800000 --gas-price 100gwei` (`LASNA_GAS_LIMIT` in `script/heirloom-deploy.sh`; `forge`'s default fee headroom otherwise trips the node's 1-ether tx-fee cap).
+- **Instances that share an owner and token cross-react.** A heartbeat or zero-value spoof by the owner on a token that several RCs watch (`Transfer` with `topic1 = owner`) wakes every one of those RCs, and each one is billed. Running the demo scenario made the long-T RC count the demo's heartbeats and refuse the demo's spoof. Cost measurements are therefore taken over quiet windows (`costFrom` in `deployments/testnet.json`), and a tester's own instance should use its own owner wallet.
+- **Cron100 idle cost on Lasna** ≈ 0.013 lREACT/min for a live RC with two callbacks in flight (measured from reserve samples 18:11 → 18:12, instance `demo`); Cron10 ≈ 0.09/min (P1b). Long-lived instances should use Cron1000 / Cron10000.
+- **`cast call --create` is a real, signer-less deploy simulation** against Lasna and Base (it reverts on `BadConfig`), which is what `scripts/deploy-mainnet.sh` uses for its dry run (`forge create` without `--broadcast` still demands a signer).

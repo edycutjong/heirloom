@@ -21,8 +21,8 @@ case "$NET" in
     RC_CHAIN=1597; BASE_CHAIN=8453; EXTRA_CHAIN=1
     RC_RPC_VAR=REACTIVE_MAINNET_RPC; BASE_RPC_VAR=BASE_MAINNET_RPC
     PROXY=0xCc780DdE33f56f55dE778D42c930959374a4a068            # Base mainnet callback proxy
-    TOKEN_A=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913          # USDC Base
-    TOKEN_B=0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48          # USDC Ethereum
+    WATCH_A=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913          # USDC Base
+    WATCH_B=0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48          # USDC Ethereum
     CANARY=0x05c84a58FE042275b37db038bAAcD15F410c7bB0           # Chainlink ETH/USD aggregator on Base (AnswerUpdated emitter)
     CANARY_GAP=${CANARY_GAP:-3603}
     ;;
@@ -31,8 +31,8 @@ case "$NET" in
     RC_CHAIN=5318007; BASE_CHAIN=84532; EXTRA_CHAIN=11155111
     RC_RPC_VAR=LASNA_RPC; BASE_RPC_VAR=BASE_SEPOLIA_RPC
     PROXY=0x476F44b11F5C942c58f4c8E3d0300E5710743585
-    TOKEN_A=0x036CbD53842c5426634e7929541eC2318f3dCF7e          # Circle USDC Base Sepolia
-    TOKEN_B=0x90721E018E2246a6555755D63418686a1A04FD9f          # tHTD Ethereum Sepolia (testnet-only heartbeat token)
+    WATCH_A=0x036CbD53842c5426634e7929541eC2318f3dCF7e          # Circle USDC Base Sepolia
+    WATCH_B=0x90721E018E2246a6555755D63418686a1A04FD9f          # tHTD Ethereum Sepolia (testnet-only heartbeat token)
     CANARY=0xa24A68DD788e1D7eb4CA517765CFb2b7e217e7a3
     CANARY_GAP=${CANARY_GAP:-3633}
     ;;
@@ -72,10 +72,10 @@ logtx() { # chain txhash purpose rpc
 # ---- preflight (read-only on every mode)
 [ "$(cast chain-id --rpc-url "$RC_RPC")" = "$RC_CHAIN" ] || { echo "RC rpc is not chain $RC_CHAIN" >&2; exit 4; }
 [ "$(cast chain-id --rpc-url "$BASE_RPC")" = "$BASE_CHAIN" ] || { echo "Base rpc is not chain $BASE_CHAIN" >&2; exit 4; }
-for a in "$PROXY" "$TOKEN_A" "$CANARY"; do
+for a in "$PROXY" "$WATCH_A" "$CANARY"; do
   [ "$(cast code "$a" --rpc-url "$BASE_RPC" | wc -c)" -gt 4 ] || { echo "no contract code at $a on Base ($BASE_CHAIN)" >&2; exit 4; }
 done
-say "proxy $PROXY, token A $TOKEN_A, canary $CANARY present on Base"
+say "proxy $PROXY, token A $WATCH_A, canary $CANARY present on Base"
 RC_BAL=$(cast balance "$DEPLOYER_ADDRESS" --rpc-url "$RC_RPC"); BASE_BAL=$(cast balance "$DEPLOYER_ADDRESS" --rpc-url "$BASE_RPC")
 say "deployer $DEPLOYER_ADDRESS: RC chain $(cast from-wei "$RC_BAL"), Base $(cast from-wei "$BASE_BAL") ETH"
 
@@ -133,13 +133,13 @@ for spec in "$A" "$B"; do
   fi
   [ "$EXECUTE" = 1 ] && say "  RC ($RC_CHAIN): $RC" || say "  RC creation $RCSTAT ($RC_CHAIN), predicted address $RC"
   read -r VAULT VTX < <(create "$BASE_RPC" src/HeirloomVault.sol:HeirloomVault "$VAULT_FUND" "$VAULT_CTOR" \
-    "$PROXY" "$RC" "$OWNER" "$HEIR" "$CLAIM" "$CAP" "[$BASE_CHAIN,$EXTRA_CHAIN]" "[$TOKEN_A,$TOKEN_B]")
+    "$PROXY" "$RC" "$OWNER" "$HEIR" "$CLAIM" "$CAP" "[$BASE_CHAIN,$EXTRA_CHAIN]" "[$WATCH_A,$WATCH_B]")
   logtx "$BASE_CHAIN" "$VTX" "deploy vault $NAME" "$BASE_RPC"
   VSTAT=$VAULT; [ "$EXECUTE" = 1 ] || VAULT=$(cast compute-address "$DEPLOYER_ADDRESS" --nonce "$(( $(cast nonce "$DEPLOYER_ADDRESS" --rpc-url "$BASE_RPC") + IDX ))" | awk '{print $NF}')
   IDX=$((IDX + 1))
   [ "$EXECUTE" = 1 ] && say "  vault ($BASE_CHAIN): $VAULT" || say "  vault creation $VSTAT against predicted RC $RC"
   SETV=(setVault 'setVault(address,(uint256,address)[],(uint256,address,uint64)[])' "$VAULT" \
-    "[($BASE_CHAIN,$TOKEN_A),($EXTRA_CHAIN,$TOKEN_B)]" "[($BASE_CHAIN,$CANARY,$CANARY_GAP)]")
+    "[($BASE_CHAIN,$WATCH_A),($EXTRA_CHAIN,$WATCH_B)]" "[($BASE_CHAIN,$CANARY,$CANARY_GAP)]")
   if [ "$EXECUTE" = 1 ]; then
     STX=$(cast send "$RC" "${SETV[@]:1}" --rpc-url "$RC_RPC" --private-key "$DEPLOYER_PRIVATE_KEY" --json | jq -r .transactionHash)
     logtx "$RC_CHAIN" "$STX" "setVault $NAME" "$RC_RPC"

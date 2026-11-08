@@ -1,3 +1,8 @@
 # Public testnet contract addresses (tHTD test token on Base Sepolia / Eth Sepolia), flagged by generic-api-key because the keys were named TOKEN_*; keys renamed to THTD_* afterwards.
+# P1c: public mainnet/testnet token addresses in scripts/deploy-mainnet.sh (first commit used TOKEN_* names); renamed to WATCH_*.
 cc4ad945c79c4359fccb4cbdaf849a2be48922cc:evidence/p1b-e2e-addresses.txt:generic-api-key:6
 cc4ad945c79c4359fccb4cbdaf849a2be48922cc:evidence/p1b-e2e-addresses.txt:generic-api-key:7
+1a430dc167a8529b1800d85257424ed1e04f14ce:scripts/deploy-mainnet.sh:generic-api-key:24
+1a430dc167a8529b1800d85257424ed1e04f14ce:scripts/deploy-mainnet.sh:generic-api-key:25
+1a430dc167a8529b1800d85257424ed1e04f14ce:scripts/deploy-mainnet.sh:generic-api-key:34
+1a430dc167a8529b1800d85257424ed1e04f14ce:scripts/deploy-mainnet.sh:generic-api-key:35

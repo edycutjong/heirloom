@@ -162,13 +162,21 @@ for spec in "$A" "$B"; do
     stopv() { echo "instance $NAME: $1 — delete ONLY the VAULT= line in $ADDRS (keep RC=) and rerun to deploy a fresh vault for RC $RC" >&2; exit 9; }
     [ -n "$RC" ] && [ "$(cast code "$RC" --rpc-url "$RC_RPC" | wc -c)" -gt 4 ] || stop9 "$ADDRS names RC '$RC' with no code on $RC_CHAIN"
     [ "$(lc "$(cast call "$RC" 'owner()(address)' --rpc-url "$RC_RPC")")" = "$(lc "$OWNER")" ] || stop9 "recorded RC watches another owner"
-    [ "$(cast call "$RC" 'T()(uint64)' --rpc-url "$RC_RPC" | awk '{print $1}')" = "$T" ] || stop9 "recorded RC has a different T"
+    # Bind the WHOLE constructor config (the preflight validated THIS spec, so the reused RC must be this spec), then the deployer.
+    for kv in "T()(uint64)=$T" "grace()(uint64)=$GRACE" "freezeCap()(uint64)=$FREEZE" "attestEvery()(uint64)=$ATTEST" \
+              "ackTimeout()(uint64)=$ACK" "tickPeriod()(uint64)=$TICK" "brakeWindow()(uint64)=$BRAKE_WINDOW" \
+              "maxRefusedPerWindow()(uint32)=$MAX_REFUSED" "cronTopic()(bytes32)=$CRON" "graceCronTopic()(uint256)=0" \
+              "destChainId()(uint256)=$BASE_CHAIN" "callbackProxy()(address)=$PROXY" "deployer()(address)=$DEPLOYER_ADDRESS"; do
+      got=$(cast call "$RC" "${kv%%=*}" --rpc-url "$RC_RPC" | awk '{print $1}') || stop9 "cannot read ${kv%%=*} on the recorded RC"
+      [ "$(lc "$got")" = "$(lc "${kv#*=}")" ] || stop9 "recorded RC ${kv%%(*} is $got, this spec says ${kv#*=}"
+    done
     [ -z "$VAULT" ] || [ "$(cast code "$VAULT" --rpc-url "$BASE_RPC" | wc -c)" -gt 4 ] || stopv "recorded vault $VAULT has no code on $BASE_CHAIN"
     if [ -n "$VAULT" ]; then   # the recorded vault must match THIS invocation, or setVault would wire the wrong estate
       [ "$(lc "$(cast call "$VAULT" 'rc()(address)' --rpc-url "$BASE_RPC")")" = "$(lc "$RC")" ] || stopv "recorded vault $VAULT trusts another RC"
       [ "$(lc "$(cast call "$VAULT" 'owner()(address)' --rpc-url "$BASE_RPC")")" = "$(lc "$OWNER")" ] || stopv "recorded vault $VAULT has another owner"
       [ "$(lc "$(cast call "$VAULT" 'heir()(address)' --rpc-url "$BASE_RPC")")" = "$(lc "$HEIR")" ] || stopv "recorded vault $VAULT names another heir than HEIR"
       [ "$(cast call "$VAULT" 'claimDelay()(uint64)' --rpc-url "$BASE_RPC" | awk '{print $1}')" = "$CLAIM" ] || stopv "recorded vault $VAULT has claimDelay != $CLAIM"
+      [ "$(cast call "$VAULT" 'depositCap()(uint256)' --rpc-url "$BASE_RPC" | awk '{print $1}')" = "$CAP" ] || stopv "recorded vault $VAULT has depositCap != $CAP"
     fi
     WIRED=$(lc "$(cast call "$RC" 'vault()(address)' --rpc-url "$RC_RPC")")
     if [ -n "$VAULT" ] && [ "$WIRED" = "$(lc "$VAULT")" ]; then say "instance $NAME: already deployed and wired ($ADDRS); skipped"; IDX=$((IDX + 1)); continue; fi

@@ -57,7 +57,9 @@ Callback stages (GRACE, CANCEL, EXPIRE, ATTEST) have all three legs. VISIT and R
 | REFUSED | origin_log @ 84532 | [`0xaac45c5d…52e9`](https://sepolia.basescan.org/tx/0xaac45c5d961a6daf07676707c49b2422f72f24c0d90c06025f9033ade90b52e9) | [`0x76661c01…6a77`](https://lasna.reactscan.net/tx/0x76661c01fd3877e9329ae37566d58d960e79a6026be9667e0df7ec7479ef6a77) |
 | VISIT | origin_log @ 84532 | [`0x2082f0bc…ef00`](https://sepolia.basescan.org/tx/0x2082f0bc5c04108e8393bb2b58451b5a58c90a057aa0ccc6a2e2d8aee05def00) | [`0x479f3bf4…6c2b`](https://lasna.reactscan.net/tx/0x479f3bf4127e69e4189588dc07a6d51c0906204b880679ef90688d32db846c2b) |
 
-### Heir claim on the demo instance (Base Sepolia)
+### Claim on the demo instance (Base Sepolia)
+
+Anyone may press either step; here both were pressed from the owner key, and the vault paid the heir (`0x440E…438b`).
 
 | Step | Tx |
 |---|---|
@@ -73,16 +75,16 @@ curl -s -X POST https://lasna-rpc.rnk.dev/ -H 'content-type: application/json' -
   | jq --arg rc 0xa3d92EAefb2fc4C972d6Ee524c24F38A93739B8b '[.. | objects | select(has("Contract")) | select((.Contract|type)=="string" and (.Contract|ascii_downcase)==($rc|ascii_downcase))] | length'
 ```
 
-**Not yet in the evidence:** a REVIVE callback (the cross-chain revive after an expired grace) has no triple. The spec lists it as the fifth stage; the vault owner action is the synchronous cancel and is the path the CANCEL rows show.
+**Not yet in the evidence:** a REVIVE callback (the cross-chain revive after an expired grace) has no triple. REVIVE is the fifth callback kind (`src/HeirloomTypes.sol`). The CANCEL rows show the reactive path (an owner token transfer seen by `react()`); a vault owner action cancels synchronously on Base (`test_cancel_by_ping_in_grace`, `test_owner_withdraw_any_state`) and has no live triple.
 
 ## Fire a fresh loop yourself
 
-Any wallet that is not the owner can send a zero-value `transferFrom(owner, you, 0)` on the instance's Base Sepolia USDC. It is not the owner's activity, so the reactive contract must refuse it. You see your origin tx, then a `SpoofRefused` event from the long-t reactive contract on Lasna a few seconds later. (Only the owner's key can produce a real heartbeat: that is the point.)
+Any wallet that is not the owner can send a zero-value `transferFrom(owner, you, 0)` on the instance's Base Sepolia USDC. It is not the owner's activity, so the reactive contract must refuse it. You see your origin tx, then a `SpoofRefused` event from the long-t reactive contract on Lasna shortly after (no timing figure is claimed). (Only the owner's key, or a spender the owner has approved on that token, can produce a real heartbeat; see Known limit 2 in the README.)
 
 ```sh
 pnpm install
-tsx scripts/trigger-spoof.ts --dry-run                 # simulates, sends nothing, needs no key
-PRIVATE_KEY=0x… tsx scripts/trigger-spoof.ts           # any Base Sepolia key with a little ETH; default instance long-t
+pnpm exec tsx scripts/trigger-spoof.ts --dry-run                 # simulates, sends nothing, needs no key
+PRIVATE_KEY=0x… pnpm exec tsx scripts/trigger-spoof.ts           # any Base Sepolia key with a little ETH; default instance long-t
 ```
 
 The script prints the origin tx link and the long-t reactive contract's Reactscan page. A run on 2026-11-09 (the script as committed):
@@ -94,11 +96,10 @@ The script prints the origin tx link and the long-t reactive contract's Reactsca
 To read it from the chain without trusting this page:
 
 ```sh
-B=$(cast block-number --rpc-url https://lasna-rpc.rnk.dev/)
-cast logs --rpc-url https://lasna-rpc.rnk.dev/ --address 0x80b56204D8860a6B46c08deCd9F01DD1881F9DC6 --from-block $((B-300)) 'SpoofRefused(uint256,address,uint256,uint8)'
+cast logs --rpc-url https://lasna-rpc.rnk.dev/ --address 0x80b56204D8860a6B46c08deCd9F01DD1881F9DC6 --from-block 7865700 --to-block 7865900 'SpoofRefused(uint256,address,uint256,uint8)'
 ```
 
-The log's data begins with your origin tx hash; the last word is the refusal reason. `scripts/evidence-status.ts` recomputes the refused-spoof count for every instance.
+That window holds the run above; for your own run use `--from-block $((B-300))` right after sending (B = the head from `cast block-number`). The log's data begins with your origin tx hash; the last word is the refusal reason. `scripts/evidence-status.ts` recomputes the refused-spoof count for every instance.
 
 ## Test Lib output
 

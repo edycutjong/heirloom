@@ -82,7 +82,7 @@ Wall clock (`evidence/latency-wallclock.csv`, 3 complete samples, 500 ms polling
 | 2102 ms | 4963 ms | 7844 ms |
 | 2242 ms | 4587 ms | 7303 ms |
 
-Cross-chain block timestamps are not synchronised: in 5 of the 9 rows of `evidence/triples.csv` the Lasna reactive
+Cross-chain block timestamps are not synchronised: in 5 of the first 9 rows of `evidence/triples.csv` (the P1a probe rows) the Lasna reactive
 block is stamped one second *before* its origin block. Hop latencies must come from the wall-clock observer, not from timestamp deltas.
 Three samples are not a distribution; P1b adds more before any figure is published.
 

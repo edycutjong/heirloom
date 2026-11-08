@@ -35,7 +35,7 @@ Heirloom treats **absence as the signal**. Your wallet keeps doing what it does;
 - **No button.** Any value-carrying `Transfer` of an allowlisted token out of the owner's address on a watched chain counts as being alive.
 - **Spoofs are refused.** A zero-value `transferFrom(owner, anyone, 0)` is the cheapest way for a stranger to fake or hide activity, so the filter is the first thing a `Transfer` log meets in `react()`, and every refusal is logged (`SpoofRefused`).
 - **A canary guards against a deaf network.** An owner-independent Chainlink feed proves the network can still hear a chain; a gap in it freezes the countdown once, capped, instead of releasing on a silence nobody measured.
-- **Small, reversible, claimed by the heir.** A vault on Base holds a capped deposit; the owner can withdraw at any time before release; release needs the heir's two-step claim (`initiateClaim`, then `finalizeClaim` after `claimDelay`).
+- **Small, reversible, claimed by the heir.** A vault on Base holds a capped deposit; the owner can withdraw at any time before release; release needs a two-step claim (`initiateClaim`, then `finalizeClaim` after `claimDelay`); anyone may press either step and the payout goes only to the heir.
 
 States: `ARMED → GRACE → CLAIMABLE → CLAIM_PENDING → RELEASED`. Any watched owner activity (an allowlisted-token transfer or a vault action) during GRACE cancels it.
 
@@ -59,7 +59,7 @@ The reactive contract is the engine, not an add-on: the loop does not exist with
 |---|---|
 | `SYSTEM.subscribe` / `unsubscribe` | enumerated per (chain, token, `Transfer`, topic1 = owner); the allowlist, spam brake, canary arming and teardown all change subscriptions at runtime |
 | `requestCallbackV_1_0` | GRACE, CANCEL, EXPIRE, ATTEST and REVIVE callbacks to the vault, `gasLimit` 1,000,000 |
-| CRON topics | the only clock: silence, grace and weekly attest; a fixed tier per instance |
+| CRON topics | the only clock (silence, grace, attest); one tier chosen at deploy, an optional faster tier can run during grace (unused on the testnet instances); attest is weekly on long-t |
 | Self-unsubscribe | `react()` removes its own subscriptions on teardown; the finished demo instance holds 0 filters on Lasna (command in [DEMO.md](DEMO.md)) |
 | Callback proxy guards | `sync()` checks both the proxy caller and the injected first argument (the reactive contract) |
 | Reactive Test Lib | the whole loop (log → `react()` → callback) runs in `forge test` |
@@ -75,7 +75,7 @@ Testnet instances, with every origin, reactive and callback hash in [DEMO.md](DE
 | demo (T = 5 min) | [`0xa3d92EAefb2fc4C972d6Ee524c24F38A93739B8b`](https://lasna.reactscan.net/address/0xa3d92EAefb2fc4C972d6Ee524c24F38A93739B8b) | [`0x51365bb9560dDfA4236fd62d4eF2CB61f78edDBA`](https://sepolia.basescan.org/address/0x51365bb9560dDfA4236fd62d4eF2CB61f78edDBA) |
 | long-t (T = 90 days) | [`0x80b56204D8860a6B46c08deCd9F01DD1881F9DC6`](https://lasna.reactscan.net/address/0x80b56204D8860a6B46c08deCd9F01DD1881F9DC6) | [`0x8C37E79420Cd16e46E4D9FFd4541a87FfFa4e7Be`](https://sepolia.basescan.org/address/0x8C37E79420Cd16e46E4D9FFd4541a87FfFa4e7Be) |
 
-The demo instance ran the full scenario on live networks: grace twice, one cancel by owner activity, one expiry, the heir's claim, teardown; 5 of 5 callbacks acknowledged (`evidence/status.json`), 0 resends (`evidence/demo-summary.json`). The testnet rows come from a build earlier than `HEAD`; mainnet deploys `HEAD`. **Try it yourself:** [`scripts/trigger-spoof.ts`](scripts/trigger-spoof.ts) fires a spoof from any wallet and you watch the reactive contract refuse it ([DEMO.md](DEMO.md#fire-a-fresh-loop-yourself)).
+The demo instance ran the full scenario on live networks: grace twice, one cancel by owner activity, one expiry, the claim, teardown; 5 of 5 callbacks acknowledged (`evidence/status.json`), 0 resends (`evidence/demo-summary.json`). The testnet rows come from a build earlier than `HEAD`; mainnet deploys `HEAD`. **Try it yourself:** [`scripts/trigger-spoof.ts`](scripts/trigger-spoof.ts) fires a spoof from any wallet and you watch the reactive contract refuse it ([DEMO.md](DEMO.md#fire-a-fresh-loop-yourself)).
 
 ## 📊 Engineering Rigor
 
@@ -84,7 +84,7 @@ The demo instance ran the full scenario on live networks: grace twice, one cance
 | Contract tests (`forge test`) | 104 passed, 0 failed |
 | Shared kit tests (`FOUNDRY_PROFILE=kit forge test`) | 23 passed, 0 failed |
 | TypeScript tests (`pnpm test:ts`) | 6 passed, 0 failed |
-| Live callback triples in `evidence/triples.csv` | 40 rows across probe, short-T and long-T instances |
+| Rows in `evidence/triples.csv` | 40 (22 with a callback leg, 18 reactive-only) across probe, short-T and long-T instances |
 
 ### Attacks defeated
 
@@ -104,7 +104,7 @@ The demo instance ran the full scenario on live networks: grace twice, one cance
 1. **An active spam brake holds a grace.** Safety over liveness: spam can delay a release, never cause one.
 2. **Approved spenders count as life.** Any value-carrying `Transfer` from the owner counts, including one made by a spender holding a standing allowance. That can only delay a release. Allowlist tokens that have no standing allowances.
 3. **Cross-chain revive is best effort.** The vault owner's own action is the synchronous cancel.
-4. **Top-up.** Fund the reactive contract with a transfer plus `coverDebt()` (or the proxy's `depositTo`); a plain transfer does not clear its debt.
+4. **Top-up.** Fund the reactive contract with a transfer plus `coverDebt()` (or the system contract's `depositTo(address)`); a plain transfer does not clear its debt.
 5. **Watch-set drift after an origin reorg.** An orphaned Base `setAllowlist(.., false)` can leave the reactive contract unsubscribed until the next `setAllowlist`. Documented at the ALLOWLIST branch of `react()`.
 6. **No mainnet evidence yet.** Cost per month is not published: the measured window is too short, and a dollar figure needs a second price source. The canary gaps in `evidence/canary-gaps.json` cover about 23 h of Ethereum feeds (medians 3,612 s and 3,636 s); a multi-day measurement is still open.
 
@@ -119,7 +119,7 @@ The demo instance ran the full scenario on live networks: grace twice, one cance
 ```sh
 git clone --recurse-submodules https://github.com/edycutjong/heirloom && cd heirloom
 pnpm install
-tsx scripts/trigger-spoof.ts --dry-run   # simulate a spoof against the live long-t instance
+pnpm exec tsx scripts/trigger-spoof.ts --dry-run   # simulate a spoof against the live long-t instance
 ```
 
 ## 🧪 Testing & CI

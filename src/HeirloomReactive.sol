@@ -342,6 +342,12 @@ contract HeirloomReactive is AbstractReactive {
             ownerActionIdSeen = id;
             _seen(log_.chainId, log_.contractAddress, log_.txHash);
         } else if (t0 == ALLOWLIST_T0) {
+            // Known limit (origin reorgs): Reactive finalizes instantly and does not roll back a reaction to an origin
+            // log that is later orphaned. If a Base reorg orphans the owner's `setAllowlist(.., false)`, this contract
+            // stays unsubscribed from a token the canonical vault still allowlists, until the owner's next setAllowlist.
+            // The Ack adoption below restores the owner VERSION, not the watch set. Backstops: the vault's OwnerActive
+            // channel is unaffected, and any owner action on the vault cancels a claim during claimDelay. An orphaned
+            // `true` only over-watches (can delay, never cause, a release).
             uint256 chainId = log_.topic1;
             address token = address(uint160(log_.topic2));
             if (abi.decode(log_.data, (bool))) _allow(chainId, token);

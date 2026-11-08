@@ -224,6 +224,12 @@ contract HeirloomReactive is AbstractReactive {
         if (!ok) revert BadConfig();
     }
 
+    /// @notice Settle debt to the system contract from this contract's balance. A plain top-up does not clear debt,
+    ///         and no react() runs while any is outstanding (docs: "Any Debt Blocks Execution"). Anyone may call.
+    function coverDebt() external {
+        _coverDebt();
+    }
+
     /// @notice Funds for reacts and callbacks. Counted so the runway estimate ignores top-ups.
     receive() external payable override(AbstractPayer, IPayer) {
         depositsSinceAttest += msg.value;
@@ -235,6 +241,9 @@ contract HeirloomReactive is AbstractReactive {
         if (phase == HeirloomTypes.Phase.DONE) return;
 
         // H6: the token filter is the first thing a Transfer meets (refused reacts are billed; keep them cheap).
+        // Proof of life = an allowlisted, value > 0 Transfer FROM the owner. The log carries no tx sender, so a spender
+        // holding a standing allowance can produce one too: that can only delay a release, never cause one. Allowlist
+        // tokens the owner moves themself, without standing allowances.
         if (log_.topic0 == TRANSFER_T0) {
             if (log_.opCode != 3 || log_.data.length != 32) return _refuse(log_, Refusal.MALFORMED, true);
             if (!allowed[log_.chainId][log_.contractAddress]) return _refuse(log_, Refusal.NOT_ALLOWLISTED, false);
@@ -278,6 +287,10 @@ contract HeirloomReactive is AbstractReactive {
 
     /// @dev H6 hard bound: at `maxRefusedPerWindow` refusals per `brakeWindow`, the token is unsubscribed until a
     ///      CRON tick after `brakedUntil`. The vault's OwnerActive channel is never braked.
+    ///      Trade-off, chosen fail-closed: an unsubscribed token is blind, and a blind interval is never counted as
+    ///      silence (else a spray could hide a living owner's real transfers until the release fires). The price is
+    ///      liveness: a sustained zero-value spray can postpone a release by up to T per brake, without bound; it can
+    ///      never cause one. `freezeCap` bounds the canary extension only, not this.
     function _brakeCount(uint256 chainId, address token) internal {
         Brake storage b = brakes[chainId][token];
         uint64 nowTs = uint64(block.timestamp);
@@ -353,6 +366,9 @@ contract HeirloomReactive is AbstractReactive {
     function _onFailure(LogRecord calldata log_) internal {
         bytes memory p = CallbackFailureWatch.payload(log_);
         if (CallbackFailureWatch.selectorOf(p) != IHeirloomVault.sync.selector || p.length < 4 + 64) return;
+        // Only failures of OUR requests: the proxy injects the requesting reactive contract as argument 0, so another
+        // contract's rejected callback to this vault cannot spend our immediate-resend budget.
+        if (address(uint160(CallbackFailureWatch.argWord(p, 0))) != address(this)) return;
         uint64 seq = uint64(CallbackFailureWatch.argWord(p, 1));
         emit CallbackFailed(seq, log_.txHash);
         // Immediate resend only inside the fast budget; past it the CRON backoff paces resends (bounded spend).

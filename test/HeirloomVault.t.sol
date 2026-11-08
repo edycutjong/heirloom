@@ -388,6 +388,23 @@ contract HeirloomVaultTest is HeirloomBase {
         assertEq(sys.activeSubscriptions(address(rc)), 0);
     }
 
+    /// A token paused at retire time is not stranded: after the unpause only the owner can sweep it, to the owner.
+    function test_owner_sweeps_token_left_after_retire() public {
+        uint256 held = usdcBase.balanceOf(address(vault));
+        assertGt(held, 0);
+        usdcBase.setPaused(true);
+        ownerCall(abi.encodeCall(HeirloomVault.retire, ()));
+        usdcBase.setPaused(false);
+        vm.prank(heir);
+        vm.expectRevert(HeirloomVault.NotOwner.selector);
+        vault.sweep(address(usdcBase));
+        uint256 before = usdcBase.balanceOf(owner);
+        vm.prank(owner);
+        vault.sweep(address(usdcBase));
+        assertEq(usdcBase.balanceOf(owner) - before, held);
+        assertEq(usdcBase.balanceOf(address(vault)), 0);
+    }
+
     function test_claim_delay_minimum() public {
         uint256[] memory c = new uint256[](0);
         address[] memory t = new address[](0);

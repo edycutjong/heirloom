@@ -281,13 +281,22 @@ contract HeirloomVault is AbstractCallback, IHeirloomVault {
     }
 
     /// @notice After RELEASED, anything left that is not an unpaid estate token (direct transfers, top-ups after
-    ///         payout, the native gas reserve with token = 0) goes to the payee. Anyone may call.
+    ///         payout, the native gas reserve with token = 0) goes to the payee; anyone may call. After RETIRED, the
+    ///         owner recovers whatever `retire` could not move (a token paused at the time, a later transfer in).
     function sweep(address token) external {
-        if (state != HeirloomTypes.VaultState.RELEASED) revert BadState(state);
-        if (isEstateToken[token] && !paid[token]) revert BadState(state); // use finalizeToken
+        address to;
+        if (state == HeirloomTypes.VaultState.RELEASED) {
+            if (isEstateToken[token] && !paid[token]) revert BadState(state); // use finalizeToken
+            to = payee();
+        } else if (state == HeirloomTypes.VaultState.RETIRED) {
+            if (msg.sender != owner) revert NotOwner();
+            to = owner;
+        } else {
+            revert BadState(state);
+        }
         uint256 bal = token == address(0) ? address(this).balance : IERC20Min(token).balanceOf(address(this));
-        _send(token, payee(), bal);
-        emit Swept(token, payee(), bal);
+        _send(token, to, bal);
+        emit Swept(token, to, bal);
     }
 
     /// @notice The heir may redirect the payout (e.g. a blacklisted heir address).

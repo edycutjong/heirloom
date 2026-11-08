@@ -1,0 +1,3 @@
+run_utc,instance,step,origin_chain,origin_tx,send_to_mined_ms,mined_to_lasna_state_ms,poll_ms,result
+2026-11-08T23:34:30Z,long-t,heartbeat,84532,0x14f59c3e646105a46fea7d9b1c7a3c7e3fff53749d22c85cda84728e2b490b7e,2382,3114,500,lastSeen 1794161322 -> 1794180863; deadline 1801937322 -> 1801956863
+2026-11-08T23:35:02Z,long-t,spoof,84532,0xb476a67684d8f6406de291b91dcb1636d30af9b8ae674ed3438974629a4bf55f,,,,SpoofRefused ZERO_VALUE in Lasna tx 0x433b24f19ebddbb164ff15c3e92e638ddb6d7947ade8f910fa81e82e5069ee18; lastSeen unchanged (stranger wallet 0x144C2ceD7E35489a9F7ba046857898824c4057F8)

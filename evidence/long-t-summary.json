@@ -4,8 +4,8 @@
   "vault": "0x8C37E79420Cd16e46E4D9FFd4541a87FfFa4e7Be",
   "callbackRows": 0,
   "stages": {
-    "VISIT": 6,
-    "REFUSED": 2
+    "VISIT": 7,
+    "REFUSED": 4
   },
   "canaryBeats": 0,
   "freezeUsed": 0,

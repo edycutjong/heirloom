@@ -17,6 +17,9 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/sorts-mill-goudy-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/sorts-mill-goudy-italic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/cutive-mono-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/work-sans-var.woff2" as="font" type="font/woff2" crossorigin>
 <style>
 @font-face{font-family:"Sorts Mill Goudy";src:url(../assets/fonts/sorts-mill-goudy-400.woff2) format("woff2");font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:"Sorts Mill Goudy";src:url(../assets/fonts/sorts-mill-goudy-italic.woff2) format("woff2");font-weight:400;font-style:italic;font-display:swap}
@@ -43,7 +46,7 @@ a{color:inherit}
 .card{position:relative;background:var(--bg);color:var(--ink);border:1.5px solid var(--ink);padding:22px 24px 0;
   background-image:repeating-linear-gradient(180deg,transparent 0 35px,color-mix(in srgb,var(--rule) 45%,transparent) 35px 36px)}
 .card-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:1.5px solid var(--ink);padding-bottom:10px}
-.card-head h3{font:400 26px/1 var(--font-display);margin:0}
+.card-head h2,.card-head h3{font:400 26px/1 var(--font-display);margin:0}
 .card-head .clock{font:13px var(--font-data);color:var(--muted);white-space:nowrap}
 .card-sub{font:12px var(--font-data);color:var(--muted);margin:8px 0 2px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .rows{list-style:none;margin:0;padding:0}
@@ -205,7 +208,7 @@ body.shownotes .np{display:block}
     </div>
     <div class="mat">
       <div class="card" id="cover-card">
-        <div class="card-head"><h3>Access card</h3><span class="clock" data-start="18:02:46 UTC" data-final="18:26:59 UTC">18:26:59 UTC</span></div>
+        <div class="card-head"><h2>Access card</h2><span class="clock" data-start="18:02:46 UTC" data-final="18:26:59 UTC">18:26:59 UTC</span></div>
         <p class="card-sub"><span>demo · T = 5 min · 2026-11-08</span><span>reactive 0xa3d9…9B8b · vault 0x5136…dDBA</span></p>
         <ol class="rows">
         <li class="row k-visit" data-at="0.0" data-clock="18:02:46 UTC"><time datetime="2026-11-08T18:02:46Z">18:02:46</time><span class="what"><span>Deposit into the vault</span><small>Base Sepolia · <a href="https://sepolia.basescan.org/tx/0x17d60349ae30cf05796d73184a9698713209fe3d42e13a850e6f92035d16f478">0x17d6…f478</a></small></span><span class="stamp">VISIT</span></li>
@@ -275,7 +278,7 @@ body.shownotes .np{display:block}
   <div class="s6">
     <div class="mat">
       <div class="card" id="deck-card">
-        <div class="card-head"><h3>Access card</h3><span class="clock" data-start="18:02:46 UTC" data-final="18:26:59 UTC">18:26:59 UTC</span></div>
+        <div class="card-head"><h2>Access card</h2><span class="clock" data-start="18:02:46 UTC" data-final="18:26:59 UTC">18:26:59 UTC</span></div>
         <p class="card-sub"><span>demo · T = 5 min · 2026-11-08</span><span>reactive 0xa3d9…9B8b · vault 0x5136…dDBA</span></p>
         <ol class="rows">
         <li class="row k-visit" data-at="0.0" data-clock="18:02:46 UTC"><time datetime="2026-11-08T18:02:46Z">18:02:46</time><span class="what"><span>Deposit into the vault</span><small>Base Sepolia · <a href="https://sepolia.basescan.org/tx/0x17d60349ae30cf05796d73184a9698713209fe3d42e13a850e6f92035d16f478">0x17d6…f478</a></small></span><span class="stamp">VISIT</span></li>

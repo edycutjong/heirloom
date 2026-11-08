@@ -6,6 +6,8 @@
 
   <p>Every on-chain and security claim below links to a transaction or a test. Testnet only so far: Reactive Lasna with Base Sepolia. The mainnet deploy is scripted and dry-run, not yet run.</p>
 
+  <p><a href="https://edycutjong.github.io/heirloom/">Landing page</a> · <a href="https://edycutjong.github.io/heirloom/pitch/">Pitch deck</a> · <a href="https://edycutjong.github.io/heirloom/status/">Live status card</a> (GitHub Pages, published from <code>docs/</code> and <code>status/</code> once the repo is public)</p>
+
   <br/>
 
   [![Built for Reactive Omni Buildathon](https://img.shields.io/badge/DoraHacks-Reactive_Omni_Buildathon-8b5cf6?style=for-the-badge)](https://dorahacks.io/hackathon/reactive-omni-buildathon/detail)

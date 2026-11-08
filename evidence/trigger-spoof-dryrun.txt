@@ -1,0 +1,9 @@
+# captured 2026-11-08 20:45:34 UTC
+$ pnpm exec tsx scripts/trigger-spoof.ts --dry-run
+instance long-t
+  reactive contract (Lasna): 0x80b56204D8860a6B46c08deCd9F01DD1881F9DC6
+  owner: 0x12bF8bbD1Eec23B5ab5A44B8d551bbC1d038651C
+  token: Base Sepolia USDC 0x036CbD53842c5426634e7929541eC2318f3dCF7e
+  you: 0x000000000000000000000000000000000000dEaD
+simulation ok: transferFrom(owner, you, 0) does not revert
+--dry-run: nothing sent

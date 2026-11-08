@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heirloom: a dead-man's switch with no server to die with you</title>
+<meta name="description" content="A Reactive Network contract watches your everyday token transfers. When they stop, a small vault on Base releases to your heir. No button, no keeper.">
+<meta name="author" content="Edy Cu">
+<meta name="theme-color" content="#EFE8D8">
+<link rel="canonical" href="https://edycutjong.github.io/heirloom/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Heirloom">
+<meta property="og:title" content="Heirloom: your wallet goes quiet, the vault remembers your partner">
+<meta property="og:description" content="A dead-man's switch that reads silence across chains. No check-in button, no keeper. Built on Reactive Network.">
+<meta property="og:url" content="https://edycutjong.github.io/heirloom/">
+<meta property="og:image" content="https://edycutjong.github.io/heirloom/assets/og.png?v=62d776ad">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The Heirloom access card: visit stamps, a refused $0 row, and an oxblood RELEASED stamp">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:creator" content="Edy Cu">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<link rel="preload" href="assets/fonts/sorts-mill-goudy-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/work-sans-var.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face{font-family:"Sorts Mill Goudy";src:url(assets/fonts/sorts-mill-goudy-400.woff2) format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Sorts Mill Goudy";src:url(assets/fonts/sorts-mill-goudy-italic.woff2) format("woff2");font-weight:400;font-style:italic;font-display:swap}
+@font-face{font-family:"Work Sans";src:url(assets/fonts/work-sans-var.woff2) format("woff2");font-weight:300 700;font-style:normal;font-display:swap}
+@font-face{font-family:"Cutive Mono";src:url(assets/fonts/cutive-mono-400.woff2) format("woff2");font-weight:400;font-style:normal;font-display:swap}
+:root {
+  --bg:      #EFE8D8;  /* manila card stock */
+  --ink:     #1E1A15;  /* carbon-black typewriter ribbon */
+  --muted:   #6F675A;  /* faded pencil */
+  --before:  #4A3E8C;  /* state: armed / alive (violet stamp-pad ink) */
+  --after:   #8E2B1D;  /* state: released (oxblood); expiry/claim only */
+  --rule:    #C9BFA8;  /* the card's printed ruling */
+  --font-display: "Sorts Mill Goudy", "Goudy Old Style", Georgia, serif;
+  --font-body:    "Work Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-data:    "Cutive Mono", "Courier New", monospace;
+}
+*,*::before,*::after{box-sizing:border-box}
+::selection{background:var(--before);color:var(--bg)}
+:focus-visible{outline:2px solid var(--before);outline-offset:3px}
+a{color:inherit}
+.mono{font-family:var(--font-data)}
+
+/* the access card: shared by the landing hero and deck slides 1 + 6 */
+.card{position:relative;background:var(--bg);color:var(--ink);border:1.5px solid var(--ink);padding:22px 24px 0;
+  background-image:repeating-linear-gradient(180deg,transparent 0 35px,color-mix(in srgb,var(--rule) 45%,transparent) 35px 36px)}
+.card-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:1.5px solid var(--ink);padding-bottom:10px}
+.card-head h3{font:400 26px/1 var(--font-display);margin:0}
+.card-head .clock{font:13px var(--font-data);color:var(--muted);white-space:nowrap}
+.card-sub{font:12px var(--font-data);color:var(--muted);margin:8px 0 2px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.rows{list-style:none;margin:0;padding:0}
+.row{display:grid;grid-template-columns:76px minmax(0,1fr) auto;gap:4px 12px;align-items:center;min-height:36px;padding:5px 0;border-bottom:1px solid var(--rule)}
+.row time{font:13px var(--font-data);color:var(--ink)}
+.row .what{font:500 14.5px/1.3 var(--font-body);min-width:0}
+.row .what small{display:block;font:12px var(--font-data);color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .what small a{color:var(--before);text-underline-offset:2px}
+.row .what small a:hover{color:var(--ink)}
+.stamp{font:12px/1 var(--font-data);letter-spacing:.1em;color:var(--before);border:1.5px solid var(--before);padding:4px 6px 3px;transform:rotate(-3deg);white-space:nowrap;justify-self:end}
+.row:nth-child(even) .stamp{transform:rotate(2deg)}
+.row.k-grace .stamp,.row.k-expire .stamp{border-style:dashed}
+.row.k-attest .stamp{border-width:1px}
+.row.k-refused{color:var(--muted)}
+.row.k-refused .what>span{text-decoration:line-through;text-decoration-thickness:1.5px}
+.row.k-refused time{color:var(--muted)}
+.row.k-refused .stamp{color:var(--muted);border-color:var(--muted)}
+.released{position:absolute;left:50%;bottom:104px;transform:translateX(-50%) rotate(-9deg);font:400 46px/1 var(--font-display);letter-spacing:.12em;
+  color:var(--after);border:4px double var(--after);padding:8px 20px 4px;white-space:nowrap;pointer-events:none;background:color-mix(in srgb,var(--bg) 60%,transparent)}
+.blank{height:150px}
+.stub{position:relative;margin:0 -24px;border-top:2px dashed var(--ink);padding:14px 24px 16px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  font:12.5px var(--font-data);background:var(--bg);transform-origin:12% 0;transform:translateY(14px) rotate(1.6deg);
+  border-bottom:1.5px solid var(--ink);border-left:1.5px solid var(--ink);border-right:1.5px solid var(--ink);margin-bottom:-14px}
+.stub::before,.stub::after{content:"";position:absolute;top:-9px;width:16px;height:16px;border-radius:50%;background:var(--bg);border:1.5px solid var(--ink)}
+.stub::before{left:-9px}.stub::after{right:-9px}
+.stub b{font:400 15px var(--font-display);letter-spacing:.08em}
+.stub .paid{color:var(--after)}
+
+/* replay states (JS adds .armed, then .on per row; markup default = final state) */
+.card.armed .row{opacity:0;transform:translateY(-6px)}
+.card.armed .row.on{opacity:1;transform:none;transition:opacity .35s ease,transform .35s ease}
+.card.armed .row.on .stamp{animation:stampin .32s cubic-bezier(.2,.9,.3,1.3) both}
+.card.armed .released{opacity:0;transform:translateX(-50%) rotate(-9deg) scale(1.6)}
+.card.armed.rel .released{opacity:1;transform:translateX(-50%) rotate(-9deg) scale(1);transition:opacity .25s ease,transform .38s cubic-bezier(.2,.9,.3,1.25)}
+.card.armed .stub{transform:none}
+.card.armed.rel .stub{transform:translateY(14px) rotate(1.6deg);transition:transform .7s cubic-bezier(.3,.7,.2,1) .35s}
+.card.armed .stub .paid{opacity:0}.card.armed.rel .stub .paid{opacity:1;transition:opacity .3s ease .6s}
+@keyframes stampin{from{transform:scale(1.7) rotate(-8deg);opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.card.armed .row,.card.armed .released,.card.armed .stub{transition:none!important;animation:none!important}}
+
+/* terminal, re-set on card stock (a typed record, not a glowing screen) */
+.term{background:var(--ink);color:var(--bg);font:13.5px/1.6 var(--font-data);padding:18px 20px;overflow-x:auto;margin:0;white-space:pre}
+.term .p{color:color-mix(in srgb,var(--before) 32%,var(--bg))}.term .c{color:color-mix(in srgb,var(--muted) 45%,var(--bg))}.term .ok{color:var(--bg);text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--before) 32%,var(--bg));text-underline-offset:3px}
+
+html{overflow-x:clip;scroll-behavior:smooth;scroll-padding-top:72px}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.6 var(--font-body);-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--font-display);font-weight:400;margin:0}
+p{margin:0}
+code{font-family:var(--font-data);font-size:.92em}
+.wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+.skip{position:absolute;left:-999px;top:8px;background:var(--ink);color:var(--bg);padding:8px 12px;z-index:9}
+.skip:focus{left:8px}
+/* nav */
+.nav{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(6px);border-bottom:1px solid var(--rule)}
+.nav .wrap{display:flex;align-items:center;gap:22px;height:62px}
+.brand{display:flex;align-items:center;gap:10px;font:400 24px/1 var(--font-display);text-decoration:none}
+.brand svg{width:26px;height:26px}
+.nav ul{display:flex;gap:20px;list-style:none;margin:0 0 0 auto;padding:0;font-size:14.5px}
+.nav ul a{text-decoration:none;color:var(--muted);padding:6px 0;border-bottom:1.5px solid transparent;transition:color .2s,border-color .2s}
+.nav ul a:hover{color:var(--ink);border-color:var(--ink)}
+.btn{display:inline-flex;align-items:center;gap:8px;font:600 15px/1 var(--font-body);padding:13px 18px;border:1.5px solid var(--ink);text-decoration:none;color:var(--ink);background:transparent;cursor:pointer;transition:background .2s,color .2s,transform .15s,box-shadow .2s}
+.btn:hover{background:var(--ink);color:var(--bg);box-shadow:3px 3px 0 var(--before)}
+.btn:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--before)}
+.btn.solid{background:var(--ink);color:var(--bg)}
+.btn.solid:hover{background:var(--before);border-color:var(--before);box-shadow:3px 3px 0 var(--ink)}
+.btn svg{width:16px;height:16px}
+.nav .btn{padding:9px 14px;font-size:14px}
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,520px);gap:56px;align-items:start;padding:58px 0 64px}
+.lab{font:13px var(--font-data);color:var(--muted);letter-spacing:.05em}
+.lab b{font-weight:400;color:var(--before)}
+h1{font-size:clamp(44px,4.9vw,72px);line-height:1.02;letter-spacing:-.012em;margin:18px 0 22px}
+h1 em{color:var(--after);font-style:italic}
+.sub{max-width:34em;color:color-mix(in srgb,var(--ink) 82%,var(--bg))}
+.sub b{color:var(--ink);font-weight:600}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
+.proof{margin-top:22px;font:13px/1.7 var(--font-data);color:var(--muted);display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.copy{display:inline-flex;align-items:center;gap:10px;border:1px dashed var(--muted);padding:5px 6px 5px 10px;color:var(--ink);background:none;font:13px var(--font-data);cursor:pointer;transition:border-color .2s,background .2s}
+.copy:hover{border-color:var(--ink);background:color-mix(in srgb,var(--rule) 40%,transparent)}
+.copy span{font:600 11px var(--font-body);letter-spacing:.06em;text-transform:uppercase;color:var(--before)}
+/* the mat: the card sits on the clerk's ink counter */
+.mat{background:var(--ink);padding:26px 26px 40px;position:relative;
+  background-image:radial-gradient(circle at 20% 0%,color-mix(in srgb,var(--before) 26%,transparent),transparent 55%),repeating-linear-gradient(90deg,transparent 0 3px,rgba(255,255,255,.018) 3px 4px)}
+.mat .card{box-shadow:0 18px 40px rgba(0,0,0,.35)}
+.mat-cap{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:30px;font:12px/1.5 var(--font-data);color:color-mix(in srgb,var(--bg) 72%,var(--ink))}
+.mat-cap button{font:12px var(--font-data);color:var(--bg);background:none;border:1px solid color-mix(in srgb,var(--bg) 50%,transparent);padding:6px 10px;cursor:pointer;white-space:nowrap;transition:background .2s,color .2s}
+.mat-cap button:hover{background:var(--bg);color:var(--ink)}
+/* receipts */
+.receipts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink)}
+.receipts>div{padding:26px 22px 22px;border-right:1px solid var(--rule)}
+.receipts>div:last-child{border-right:0}
+.num{display:block;font:400 clamp(40px,4.2vw,58px)/1 var(--font-data);letter-spacing:-.02em}
+.receipts p{font-size:14.5px;line-height:1.45;margin-top:10px}
+.receipts code{display:block;margin-top:8px;font-size:12px;color:var(--muted)}
+/* sections */
+section{padding:84px 0}
+.h2{font-size:clamp(34px,3.6vw,50px);line-height:1.08;letter-spacing:-.01em;max-width:18em}
+.lede{max-width:40em;margin-top:16px;color:color-mix(in srgb,var(--ink) 82%,var(--bg))}
+.pair-band{background:color-mix(in srgb,var(--rule) 34%,var(--bg))}
+.pair{display:grid;grid-template-columns:minmax(0,1fr);gap:34px;margin-top:40px}
+.frame{border:1.5px solid var(--ink);background:var(--bg)}
+.frame-bar{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1.5px solid var(--ink);font:12px var(--font-data);color:var(--muted)}
+.frame-bar i{width:9px;height:9px;border:1.5px solid var(--muted);border-radius:50%}
+.frame-bar a{margin-left:auto;color:var(--before)}
+.frame-scroll{height:540px;overflow-y:auto;overscroll-behavior:contain}
+.frame-scroll img{display:block;width:100%;height:auto}
+.cap{font:12.5px/1.55 var(--font-data);color:var(--muted);margin-top:12px}
+.term-wrap{border:1.5px solid var(--ink)}
+.term-wrap .frame-bar{background:var(--bg)}
+.term{font-size:13px}
+/* how */
+.arch{margin-top:40px;border:1.5px solid var(--ink);background:var(--bg);padding:18px}
+.arch img{display:block;width:100%;height:auto}
+.arch-phone{display:none}
+.bento{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0;margin-top:36px;border-top:1.5px solid var(--ink);border-left:1px solid var(--rule)}
+.cell{padding:26px 24px 28px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);position:relative}
+.cell:nth-child(1){grid-column:span 4}.cell:nth-child(2){grid-column:span 2}
+.cell:nth-child(3){grid-column:span 2}.cell:nth-child(4){grid-column:span 2}.cell:nth-child(5){grid-column:span 2}
+.cell svg{width:40px;height:40px;color:var(--before);display:block;margin-bottom:16px}
+.cell h3{font-size:27px;line-height:1.1}
+.cell p{font-size:15.5px;margin-top:10px;max-width:34em}
+.chip{display:inline-block;margin-top:14px;font:12.5px var(--font-data);color:var(--before);border:1px solid var(--before);padding:3px 8px 2px}
+.cell:nth-child(1) h3{font-size:34px}
+/* voided rows */
+.voids{margin-top:36px;border-top:1.5px solid var(--ink)}
+.void{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,1fr);gap:8px 24px;padding:16px 0;border-bottom:1px solid var(--rule);align-items:baseline}
+.void .att{font-size:16px;color:var(--muted);text-decoration:line-through;text-decoration-thickness:1.5px;text-decoration-color:var(--ink)}
+.void .res{font-size:15.5px}
+.void code{font-size:12.5px;color:var(--before);word-break:break-word}
+/* remarks: the ink band */
+.remarks{background:var(--ink);color:var(--bg);
+  background-image:radial-gradient(ellipse at 85% 0%,color-mix(in srgb,var(--before) 22%,transparent),transparent 60%)}
+.remarks .h2{color:var(--bg)}
+.remarks .lede{color:color-mix(in srgb,var(--bg) 78%,var(--ink))}
+.rmk{display:grid;grid-template-columns:120px minmax(0,1fr);gap:8px 28px;padding:26px 0;border-bottom:1px solid color-mix(in srgb,var(--bg) 22%,transparent);max-width:980px}
+.rmk:first-of-type{margin-top:34px;border-top:1px solid color-mix(in srgb,var(--bg) 22%,transparent)}
+.rmk .n{font:13px var(--font-data);color:color-mix(in srgb,var(--bg) 62%,var(--ink));padding-top:8px}
+.rmk q{display:block;font:400 clamp(22px,2.2vw,29px)/1.32 var(--font-display);quotes:none}
+.rmk q b{font-weight:400;font-style:italic}
+.rmk cite{display:block;margin-top:10px;font:12.5px var(--font-data);font-style:normal;color:color-mix(in srgb,var(--bg) 62%,var(--ink))}
+/* the triple */
+.slips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin-top:38px;position:relative}
+.slip{border:1.5px solid var(--ink);padding:20px 22px;margin-right:-1.5px;background:var(--bg)}
+.slip .leg{font:12px var(--font-data);letter-spacing:.12em;color:var(--before)}
+.slip h3{font-size:25px;margin:8px 0 6px}
+.slip a{font:14px var(--font-data);color:var(--before);word-break:break-all;text-underline-offset:3px}
+.slip a:hover{color:var(--ink)}
+.slip time{display:block;font:13px var(--font-data);color:var(--muted);margin-top:8px}
+.slip p{font-size:14.5px;margin-top:10px}
+.after-slips{display:flex;flex-wrap:wrap;gap:12px 28px;margin-top:22px;font:13px/1.6 var(--font-data);color:var(--muted)}
+.after-slips a{color:var(--before)}
+/* faq */
+.faq{margin-top:34px;border-top:1.5px solid var(--ink);max-width:900px}
+details{border-bottom:1px solid var(--rule)}
+summary{list-style:none;cursor:pointer;padding:20px 40px 20px 0;font:400 23px/1.25 var(--font-display);position:relative;transition:color .2s}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";position:absolute;right:6px;top:16px;font:400 28px var(--font-display);color:var(--before);transition:transform .25s}
+details[open] summary::after{transform:rotate(45deg)}
+summary:hover{color:var(--before)}
+details p{padding:0 0 22px;max-width:44em;color:color-mix(in srgb,var(--ink) 85%,var(--bg))}
+/* footer */
+footer{background:var(--ink);color:var(--bg);padding:56px 0 46px}
+footer .wrap{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:32px}
+footer .brand{color:var(--bg)}
+footer p{font-size:14.5px;color:color-mix(in srgb,var(--bg) 75%,var(--ink));margin-top:12px;max-width:30em}
+footer ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;font-size:15px}
+footer ul a{text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--bg) 35%,transparent);transition:border-color .2s}
+footer ul a:hover{border-color:var(--bg)}
+footer .stamp-line{grid-column:1/-1;max-width:none;font:12px var(--font-data);color:color-mix(in srgb,var(--bg) 58%,var(--ink));border-top:1px solid color-mix(in srgb,var(--bg) 18%,transparent);padding-top:18px}
+/* responsive */
+@media (max-width:1040px){
+  .hero{grid-template-columns:minmax(0,1fr);gap:0;padding-top:34px}
+  .hero-copy{display:contents}
+  .hero .lab{order:1}.hero h1{order:2}.mat{order:3;margin:6px 0 26px}.hero .sub{order:4}.hero .cta{order:5}.hero .proof{order:6}
+  .nav ul{display:none}.nav .wrap{justify-content:space-between}
+}
+@media (max-width:760px){
+  .wrap{padding:0 18px}
+  section{padding:60px 0}
+  .receipts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .receipts>div:nth-child(2){border-right:0}.receipts>div:nth-child(-n+2){border-bottom:1px solid var(--rule)}
+  .bento{grid-template-columns:minmax(0,1fr)}.cell{grid-column:auto!important}
+  .void{grid-template-columns:minmax(0,1fr);gap:4px}
+  .rmk{grid-template-columns:minmax(0,1fr);gap:4px}
+  .slips{grid-template-columns:minmax(0,1fr)}.slip{margin:0 0 -1.5px}
+  footer .wrap{grid-template-columns:minmax(0,1fr)}
+  .arch-wide{display:none}.arch-phone{display:block}
+  .frame-scroll{height:460px}
+  .mat{padding:16px 12px 30px;margin-left:-18px;margin-right:-18px}
+  .card{padding:16px 14px 0}.stub{margin:0 -14px;padding:12px 14px 14px}
+  .row{grid-template-columns:58px minmax(0,1fr) auto;gap:2px 8px}
+  .row time{font-size:12px}.row .what{font-size:13.5px}.stamp{font-size:10.5px;padding:3px 4px 2px}
+  .released{font-size:34px;bottom:88px}.blank{height:118px}
+  .term{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}
+  .nav .btn.deck{display:none}
+}
+@media print{
+  .nav,.mat-cap button,.copy span,.skip{display:none}
+  .mat{background:none;padding:0}.remarks,footer{background:none;color:var(--ink)}
+  .remarks .h2,.rmk q{color:var(--ink)}
+  *{transition:none!important;animation:none!important}
+  .frame-scroll{height:auto;overflow:visible}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Heirloom, back to top"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="5" width="26" height="22" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 20h26" stroke="currentColor" stroke-width="1.6" stroke-dasharray="2 2"/><path d="M9 11h10M9 15h7" stroke="#4A3E8C" stroke-width="2"/><rect x="17" y="9" width="10" height="7" transform="rotate(-12 22 12.5)" fill="none" stroke="#8E2B1D" stroke-width="1.8"/></svg>Heirloom</a>
+    <ul>
+      <li><a href="#live">The card</a></li>
+      <li><a href="#how">How it works</a></li>
+      <li><a href="#remarks">Limits</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ul>
+    <a class="btn deck" href="pitch/">Pitch deck</a>
+    <a class="btn solid" href="https://github.com/edycutjong/heirloom"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5.5 4 1.5 8l4 4M10.5 4l4 4-4 4"/></svg>Source</a>
+  </div>
+</header>
+
+<main id="main">
+<div class="wrap" id="top">
+  <div class="hero">
+    <div class="hero-copy">
+      <p class="lab"><b>Set It and Forget It</b> · Reactive Omni Buildathon</p>
+      <h1>Your wallet goes quiet. The vault <em>remembers your partner.</em></h1>
+      <p class="sub">If you die with crypto in your own wallet, nobody gets it. Heirloom's Reactive contract watches your everyday token transfers on the chains you choose. When they stop for the period you set, a grace window opens on Base; any move of yours cancels it; then your heir claims in two steps. <b>No check-in button, no keeper, and a $0 transfer is refused, not counted.</b> On the testnet demo it ran the whole story: <b>2 graces, 1 cancel, 1 release</b>, with <b>5 of 5 callbacks</b> acknowledged.</p>
+      <div class="cta">
+        <a class="btn solid" href="https://github.com/edycutjong/heirloom"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5.5 4 1.5 8l4 4M10.5 4l4 4-4 4"/></svg>Source on GitHub</a>
+        <a class="btn" href="pitch/">Pitch deck</a>
+        <a class="btn" href="status/">Live status card</a>
+      </div>
+      <p class="proof"><span>Testnet: Reactive Lasna + Base Sepolia · mainnet scripted, dry-run, not yet run</span>
+        <button class="copy" type="button" data-copy="pnpm exec tsx scripts/trigger-spoof.ts --dry-run" aria-label="Copy the spoof dry-run command">pnpm exec tsx scripts/trigger-spoof.ts --dry-run <span>Copy</span></button></p>
+    </div>
+    <div class="mat">
+      <div class="card" id="card">
+        <div class="card-head"><h3>Access card</h3><span class="clock" data-start="18:02:46 UTC" data-final="18:26:59 UTC">18:26:59 UTC</span></div>
+        <p class="card-sub"><span>demo · T = 5 min · 2026-11-08</span><span>reactive 0xa3d9…9B8b · vault 0x5136…dDBA</span></p>
+        <ol class="rows">
+        <li class="row k-visit" data-at="0.0" data-clock="18:02:46 UTC"><time datetime="2026-11-08T18:02:46Z">18:02:46</time><span class="what"><span>Deposit into the vault</span><small>Base Sepolia · <a href="https://sepolia.basescan.org/tx/0x17d60349ae30cf05796d73184a9698713209fe3d42e13a850e6f92035d16f478">0x17d6…f478</a></small></span><span class="stamp">VISIT</span></li>
+        <li class="row k-visit" data-at="0.6" data-clock="18:02:48 UTC"><time datetime="2026-11-08T18:02:48Z">18:02:48</time><span class="what"><span>Token transfer</span><small>Ethereum Sepolia · <a href="https://sepolia.etherscan.io/tx/0xbc2c6b8b69649105fc56b15fac5f792b9117da76f9f01c5d6ef71442140bac55">0xbc2c…ac55</a></small></span><span class="stamp">VISIT</span></li>
+        <li class="row k-refused" data-at="1.2" data-clock="18:02:51 UTC"><time datetime="2026-11-08T18:02:51Z">18:02:51</time><span class="what"><span>$0 USDC transfer</span><small>Base Sepolia · <a href="https://sepolia.basescan.org/tx/0xaac45c5d961a6daf07676707c49b2422f72f24c0d90c06025f9033ade90b52e9">0xaac4…52e9</a></small></span><span class="stamp">REFUSED</span></li>
+        <li class="row k-grace" data-at="2.9" data-clock="18:08:34 UTC"><time datetime="2026-11-08T18:08:34Z">18:08:34</time><span class="what"><span>5 min of silence: grace opens</span><small>callback <a href="https://sepolia.basescan.org/tx/0xde28408b0cb45115d6bde3464bf03255e356a5411d666c0c7f617bee3d209488">0xde28…9488</a></small></span><span class="stamp">DORMANT</span></li>
+        <li class="row k-visit" data-at="3.5" data-clock="18:08:42 UTC"><time datetime="2026-11-08T18:08:42Z">18:08:42</time><span class="what"><span>Owner transfer cancels the grace</span><small>Base Sepolia · <a href="https://sepolia.basescan.org/tx/0x2082f0bc5c04108e8393bb2b58451b5a58c90a057aa0ccc6a2e2d8aee05def00">0x2082…ef00</a></small></span><span class="stamp">VISIT</span></li>
+        <li class="row k-grace" data-at="5.58" data-clock="18:13:55 UTC"><time datetime="2026-11-08T18:13:55Z">18:13:55</time><span class="what"><span>Silence again: grace opens</span><small>callback <a href="https://sepolia.basescan.org/tx/0x484b96d0154bf62b99f08ce40a24d5b12c32b740fbc727259146a3426e9efe2f">0x484b…fe2f</a></small></span><span class="stamp">DORMANT</span></li>
+        <li class="row k-expire" data-at="8.23" data-clock="18:19:14 UTC"><time datetime="2026-11-08T18:19:14Z">18:19:14</time><span class="what"><span>Grace ran out: claimable</span><small>callback <a href="https://sepolia.basescan.org/tx/0xabb5147f4da4bb94174c142612cdde6dfbcac89f7c206f757d24426d8a6e0401">0xabb5…0401</a></small></span><span class="stamp">EXPIRED</span></li>
+        <li class="row k-heir" data-at="8.83" data-clock="18:19:20 UTC"><time datetime="2026-11-08T18:19:20Z">18:19:20</time><span class="what"><span>Heir: initiateClaim</span><small>Base Sepolia · <a href="https://sepolia.basescan.org/tx/0xf86669ab514601ee00a1fc8c0f97e6f0e6e2edb405cc9d496e761f25d91ede8d">0xf866…de8d</a></small></span><span class="stamp">HEIR</span></li>
+        <li class="row k-attest" data-at="10.93" data-clock="18:24:37 UTC"><time datetime="2026-11-08T18:24:37Z">18:24:37</time><span class="what"><span>Attest callback</span><small>callback <a href="https://sepolia.basescan.org/tx/0x54d9e18e6df914d6fe6cacd43028848d6f8ee10894e8b01a4b3292d3106e3614">0x54d9…3614</a></small></span><span class="stamp">ATTEST</span></li>
+        <li class="row k-release" data-at="12.11" data-clock="18:26:59 UTC"><time datetime="2026-11-08T18:26:59Z">18:26:59</time><span class="what"><span>Heir: finalizeClaim, paid</span><small>subscriptions removed · <a href="https://lasna.reactscan.net/tx/0x1eb6d631129b1db49bac2a230b10632214460809939c29e517d614021c25a988">0x1eb6…a988</a></small></span><span class="stamp">PAID</span></li>
+        </ol>
+        <div class="blank" aria-hidden="true"></div><div class="released" aria-label="Released">RELEASED</div>
+        <div class="stub"><span><b>HEIR STUB</b> · pay to 0x440E…438b</span><span>claim delay 7 min 30 s</span><span class="paid">PAID · <a href="https://sepolia.basescan.org/tx/0x13d8677c445bbfb41a63e33b3405c218bec83b6af7c50018ca34d739caf580d3">0x13d8…80d3</a></span></div>
+      </div>
+      <div class="mat-cap"><span>The demo instance, row for row from <code>evidence/triples.csv</code>. Recorded 2026-11-08, 18:02–18:26 UTC; replayed about ×120.</span><button type="button" id="replay">Replay</button></div>
+    </div>
+  </div>
+
+  <div class="receipts" aria-label="Receipts">
+    <div><span class="num" data-to="104">104</span><p>contract tests passing; the whole loop runs in <code style="display:inline">forge test</code> on the Reactive Test Lib</p><code>README · Engineering Rigor</code></div>
+    <div><span class="num"><span data-to="5">5</span> of 5</span><p>callbacks the demo vault acknowledged, 0 resends</p><code>evidence/status.json</code></div>
+    <div><span class="num" data-to="40">40</span><p>rows in the evidence ledger, 22 of them with a callback leg</p><code>evidence/triples.csv</code></div>
+    <div><span class="num" data-to="0">0</span><p>subscriptions left on Lasna after the release: the contract removes its own</p><code>DEMO.md · rnk_getFilters</code></div>
+  </div>
+</div>
+
+<section class="pair-band" id="live">
+  <div class="wrap">
+    <h2 class="h2">The same card, on the status page.</h2>
+    <p class="lede">The status page reads the vault and the reactive contract live, and the heir claims from its stub. Below: the demo instance after release, beside a spoof you can fire yourself.</p>
+    <div class="pair">
+      <figure style="margin:0">
+        <div class="frame">
+          <div class="frame-bar"><i></i><i></i><span>status/ · demo instance</span><a href="status/">Open it live</a></div>
+          <div class="frame-scroll" tabindex="0" aria-label="Status card screenshot, scrollable"><img src="assets/img/status-demo.webp" width="1600" height="2202" alt="The Heirloom status card for the demo instance: RELEASED stamp, live facts, ten access-card rows with origin, reactive and callback hashes, and the heir stub" loading="lazy"></div>
+        </div>
+        <figcaption class="cap">Screenshot of <code>status/</code>, captured 2026-11-08 20:47 UTC. Scroll inside the frame.</figcaption>
+      </figure>
+      <figure style="margin:0">
+        <div class="term-wrap">
+          <div class="frame-bar"><span>terminal · trigger-spoof.ts</span></div>
+<pre class="term" id="term"><span class="c"># dry run, captured 2026-11-08 20:45 UTC</span>
+<span class="p">$</span> pnpm exec tsx scripts/trigger-spoof.ts --dry-run
+instance long-t
+  reactive contract (Lasna): 0x80b56204D8860a6B46c08deCd9F01DD1881F9DC6
+  owner: 0x12bF8bbD1Eec23B5ab5A44B8d551bbC1d038651C
+  token: Base Sepolia USDC 0x036CbD53842c5426634e7929541eC2318f3dCF7e
+  you: 0x000000000000000000000000000000000000dEaD
+<span class="ok">simulation ok: transferFrom(owner, you, 0) does not revert</span>
+--dry-run: nothing sent
+
+<span class="c"># earlier live run (evidence/fresh-loop-runs.csv)</span>
+origin    Base Sepolia  <a href="https://sepolia.basescan.org/tx/0x777b953e33748cc005ae19e57c2f480ec54a2244203291ca7162690ab4174d79">0x777b953e…4d79</a>
+reactive  Lasna         <a href="https://lasna.reactscan.net/tx/0xb622bc82cdbd66bad8d5c14e085d4c080ec253c99b10ad1413675f67e849f226">0xb622bc82…f226</a>
+refusal   ZERO_VALUE  <span class="c">(SpoofRefused; lastSeen unchanged)</span></pre>
+        </div>
+        <figcaption class="cap">Top: a dry run, captured verbatim 2026-11-08 20:45 UTC (<code>evidence/trigger-spoof-dryrun.txt</code>). Bottom: an earlier live run of the same script, from <code>evidence/fresh-loop-runs.csv</code>. Two runs, labelled apart.</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <p class="lab">How it works</p>
+    <h2 class="h2" style="margin-top:12px">Silence starts the clock.</h2>
+    <p class="lede">There is no server. A reactive contract on Lasna subscribes to your token transfers on each watched chain, keeps time with Reactive's own Cron, and calls back into a small vault on Base.</p>
+    <div class="arch">
+      <img class="arch-wide" src="architecture.svg" width="960" height="560" alt="Heirloom architecture: origin-chain transfers and a Chainlink canary flow into HeirloomReactive on the Reactive Network, which calls back through the Base proxy into HeirloomVault; the heir claims from the vault" loading="lazy">
+      <ol class="arch-phone" style="margin:0;padding-left:20px;font-size:15px;line-height:1.7">
+        <li>Your token <code>Transfer</code> on Base, Ethereum or Unichain</li>
+        <li><code>react()</code> on Lasna: filter, then stamp <code>lastSeen</code></li>
+        <li>Cron: silence ran out → callback</li>
+        <li><code>HeirloomVault</code> on Base: grace → claimable</li>
+        <li>Heir: <code>initiateClaim</code> → <code>finalizeClaim</code></li>
+      </ol>
+    </div>
+    <div class="bento">
+      <div class="cell"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6h10v7l4 5H11l4-5z"/><path d="M8 22h24v5H8z"/><path d="M10 33h20"/></svg><h3>Silence is the signal</h3><p>Every value-carrying transfer of an allowlisted token out of your address, on each watched chain, is a visit stamp. You keep using your wallet; there is nothing to press.</p><span class="chip">SYSTEM.subscribe</span></div>
+      <div class="cell"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5h18M11 35h18M13 5c0 9 14 9 14 15s-14 6-14 15M27 5c0 9-14 9-14 15s14 6 14 15"/><path d="M16 30h8"/></svg><h3>The clock is a Cron topic</h3><p>Reactive's Cron measures silence, grace and the attest. No server keeps time.</p><span class="chip">CRON</span></div>
+      <div class="cell"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 12h28M6 20h28M6 28h28"/><path d="M4 22l32-6" stroke-width="2.4"/></svg><h3>Spoofs are struck through</h3><p>A $0 transfer or an unlisted token is refused first in <code>react()</code> and logged.</p><span class="chip">SpoofRefused</span></div>
+      <div class="cell"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 24c4-1 7-6 10-10 3-4 8-5 11-2l4 1-3 2c0 7-6 13-14 13-3 0-6-1-8-4z"/><path d="M27 15h.01"/><path d="M14 33l-2 4M19 33l1 4"/></svg><h3>A deaf network cannot release you</h3><p>An owner-independent Chainlink feed proves a chain is still heard; a gap freezes the countdown once, capped.</p><span class="chip">canary</span></div>
+      <div class="cell"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8h28v14H6z"/><path d="M6 26h28v6H6z" stroke-dasharray="2.5 2.5"/><path d="M11 13h12M11 17h8"/></svg><h3>The heir presses twice</h3><p><code>initiateClaim</code>, then <code>finalizeClaim</code> after the claim delay. Then the contract unsubscribes itself.</p><span class="chip">requestCallbackV_1_0</span></div>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <h2 class="h2">Voided, not erased.</h2>
+    <p class="lede">A clerk strikes a wrong row through instead of rubbing it out. Each attack below is refused the same way, and a test pins every one.</p>
+    <div class="voids">
+      <div class="void"><span class="att">A stranger's <code>transferFrom(owner, x, 0)</code></span><span class="res">Refused and logged; your clock does not move</span><code>test_spoof_zero_value</code></div>
+      <div class="void"><span class="att">A worthless token sent from your address</span><span class="res">Ignored: only allowlisted tokens count</span><code>test_spoof_not_allowlisted</code></div>
+      <div class="void"><span class="att">A spoof during an open grace</span><span class="res">Does not cancel it, so nobody can hold off a release</span><code>test_spoof_in_grace_does_not_cancel</code></div>
+      <div class="void"><span class="att">Spam to drain the contract's reserve</span><span class="res">Refused under a fixed gas ceiling; a spam brake bounds it</span><code>test_refused_react_gas_ceiling · test_spam_brake</code></div>
+      <div class="void"><span class="att">A chain the network stops hearing</span><span class="res">Freezes the countdown once, capped; cannot be chained</span><code>test_freeze_not_twice</code></div>
+      <div class="void"><span class="att">Anyone but the callback proxy calling the vault</span><span class="res">Reverts: both the caller and the relayed contract are checked</span><code>test_sync_direct_call_reverts · test_sync_wrong_rvm_reverts</code></div>
+    </div>
+  </div>
+</section>
+
+<section class="remarks" id="remarks">
+  <div class="wrap">
+    <h2 class="h2">Remarks.</h2>
+    <p class="lede">Typed on the back of the card, verbatim from the README's known limits.</p>
+    <div class="rmk"><span class="n">Remark 1</span><div><q><b>An active spam brake holds a grace.</b> Safety over liveness: spam can delay a release, never cause one.</q><cite>README · Known limits, item 1</cite></div></div>
+    <div class="rmk"><span class="n">Remark 2</span><div><q><b>Approved spenders count as life.</b> … That can only delay a release. Allowlist tokens that have no standing allowances.</q><cite>README · Known limits, item 2</cite></div></div>
+    <div class="rmk"><span class="n">Remark 3</span><div><q><b>No mainnet evidence yet.</b> Cost per month is not published: the measured window is too short, and a dollar figure needs a second price source.</q><cite>README · Known limits, item 6</cite></div></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="lab">Card No. 0xa3d9…9B8b · row 5</p>
+    <h2 class="h2" style="margin-top:12px">One cancel, end to end.</h2>
+    <p class="lede">At 18:08:42 UTC the owner's ordinary Base Sepolia transfer met an open grace. Three transactions on two networks, each one a click away.</p>
+    <div class="slips">
+      <div class="slip"><span class="leg">ORIGIN</span><h3>Base Sepolia</h3><a href="https://sepolia.basescan.org/tx/0x2082f0bc5c04108e8393bb2b58451b5a58c90a057aa0ccc6a2e2d8aee05def00">0x2082f0bc…e05def00</a><time>18:08:42 UTC</time><p>The owner moves an allowlisted token, as on any day.</p></div>
+      <div class="slip"><span class="leg">REACTIVE</span><h3>Lasna</h3><a href="https://lasna.reactscan.net/tx/0x99bb1f2241f3b067a91e4130343e0d8a6bfe8245aa658b4e639329c4ed2899fe">0x99bb1f22…ed2899fe</a><time>18:08:42 UTC</time><p><code>react()</code> sees life during grace and requests the cancel.</p></div>
+      <div class="slip"><span class="leg">CALLBACK</span><h3>Base Sepolia</h3><a href="https://sepolia.basescan.org/tx/0x217b43e3027b9ead0bf1f1af33137ab12b8a9a4f69c4202fec9d82bf62f390ce">0x217b43e3…62f390ce</a><time>18:08:44 UTC</time><p>The vault goes from grace back to armed.</p></div>
+    </div>
+    <div class="after-slips">
+      <span>Every origin, reactive and callback hash: <a href="https://github.com/edycutjong/heirloom/blob/main/DEMO.md">DEMO.md</a></span>
+      <span>Long-T instance: armed since 2026-11-08 17:57 UTC, T = 90 days</span>
+      <span>Cost per month: not published yet (the window is under the 6 h the meter needs)</span>
+    </div>
+  </div>
+</section>
+
+<section class="pair-band" id="faq">
+  <div class="wrap">
+    <h2 class="h2">Questions a judge would ask.</h2>
+    <div class="faq">
+      <details><summary>What counts as being alive?</summary><p>A value-carrying transfer of a token on your allowlist, out of your address, on a chain you watch; or an action you take on the vault itself. A $0 transfer never counts.</p></details>
+      <details><summary>What if I just go travelling for a month?</summary><p>You choose the silence period at deploy; the long-running testnet instance uses 90 days. Silence first opens a grace window, and any transfer or vault action during it cancels. You can withdraw from the vault at any time before release.</p></details>
+      <details><summary>Can a stranger fake my life, or cause my release?</summary><p>Neither. $0 transfers and unlisted tokens are refused and logged, so they cannot keep you alive; and only your silence can start a release. The worst a spammer can do is hold a grace open (Remark 1).</p></details>
+      <details><summary>What if the Reactive Network stops hearing a chain?</summary><p>An owner-independent Chainlink ETH/USD feed acts as a canary. If its updates stop arriving, the countdown freezes once, capped, so a release never fires on a silence nobody measured. The Ethereum feeds measured so far update about hourly (medians 3,612 s and 3,636 s over about 23 h).</p></details>
+      <details><summary>What is real, and what is not yet?</summary><p>Real: every row on this page is a testnet transaction on Reactive Lasna, Base Sepolia or Ethereum Sepolia, linked to its explorer, and the tests run the whole loop. Not yet: mainnet. The deploy script is written and dry-run, and waits for funding. The testnet rows come from a build earlier than HEAD; mainnet deploys HEAD.</p></details>
+      <details><summary>What does it cost to keep running?</summary><p>Not published yet. The long-running instance&#x27;s measured window is shorter than the 6 hours the meter needs, and a dollar figure needs a second REACT price source. Refused reacts are billed too, which is why the filter runs first and a spam brake bounds it.</p></details>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <a class="brand" href="#top"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="5" width="26" height="22" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 20h26" stroke="currentColor" stroke-width="1.6" stroke-dasharray="2 2"/><path d="M9 11h10M9 15h7" stroke="#4A3E8C" stroke-width="2"/><rect x="17" y="9" width="10" height="7" transform="rotate(-12 22 12.5)" fill="none" stroke="#8E2B1D" stroke-width="1.8"/></svg>Heirloom</a>
+      <p>A dead-man's switch with no server to die with you. Built by Edy Cu for the Reactive Omni Buildathon, track Set It and Forget It. MIT licensed.</p>
+    </div>
+    <ul>
+      <li><a href="https://github.com/edycutjong/heirloom">Source on GitHub</a></li>
+      <li><a href="pitch/">Pitch deck</a></li>
+      <li><a href="status/">Status card</a></li>
+      <li><a href="https://github.com/edycutjong/heirloom/blob/main/DEMO.md">DEMO.md</a></li>
+      <li><a href="https://github.com/edycutjong/heirloom/blob/main/docs/DX-REPORT.md">DX report</a></li>
+      <li><a href="https://dorahacks.io/hackathon/reactive-omni-buildathon/detail">The buildathon</a></li>
+    </ul>
+    <p class="stamp-line">Evidence generated 2026-11-08 19:23 UTC · numbers from <code>evidence/</code> · v0.0.0-dev</p>
+  </div>
+</footer>
+
+<script>
+var Heirloom = {
+  // landing: replay the card from its armed state; markup default is the final (released) state
+  replay: function (card) {
+    var rows = [].slice.call(card.querySelectorAll('.row')), timers = [], clock = card.querySelector('.clock');
+    function clear() { timers.forEach(clearTimeout); timers = []; }
+    function settle() { card.classList.remove('armed', 'rel'); rows.forEach(function (r) { r.classList.remove('on'); }); if (clock) clock.textContent = clock.dataset.final; }
+    return function () {
+      clear(); card.classList.remove('rel'); rows.forEach(function (r) { r.classList.remove('on'); });
+      card.classList.add('armed'); if (clock) clock.textContent = clock.dataset.start; void card.offsetWidth;
+      rows.forEach(function (r) { timers.push(setTimeout(function () { r.classList.add('on'); if (clock) clock.textContent = r.dataset.clock; }, +r.dataset.at * 1000 + 450)); });
+      var end = +rows[rows.length - 1].dataset.at * 1000 + 450;
+      timers.push(setTimeout(function () { card.classList.add('rel'); }, end + 450));
+      timers.push(setTimeout(settle, end + 2700));
+    };
+  },
+  // deck: presenter steps; n rows shown, n > rows → released
+  step: function (card, n) {
+    var rows = card.querySelectorAll('.row'), clock = card.querySelector('.clock');
+    card.classList.add('armed');
+    [].forEach.call(rows, function (r, i) { r.classList.toggle('on', i < n); });
+    card.classList.toggle('rel', n > rows.length);
+    if (clock) clock.textContent = n ? rows[Math.min(n, rows.length) - 1].dataset.clock : clock.dataset.start;
+  },
+  unstep: function (card) {
+    card.classList.remove('armed', 'rel');
+    [].forEach.call(card.querySelectorAll('.row'), function (r) { r.classList.remove('on'); });
+    var c = card.querySelector('.clock'); if (c) c.textContent = c.dataset.final;
+  }
+};
+
+(function(){
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // count-up: markup holds the final value; animate only when scrolled into view
+  var nums = [].slice.call(document.querySelectorAll('[data-to]'));
+  if (!reduce && 'IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function(es){ es.forEach(function(e){
+      if (!e.isIntersecting) return; io.unobserve(e.target);
+      var el = e.target, to = +el.dataset.to, t0 = performance.now(), d = 1100;
+      if (!to) return;
+      (function step(t){ var k = Math.min(1,(t-t0)/d); el.textContent = Math.round(to*(1-Math.pow(1-k,3))); if (k<1) requestAnimationFrame(step); })(t0);
+    }); }, {threshold:.6});
+    nums.forEach(function(n){ io.observe(n); });
+  }
+  // terminal: type the transcript once when it is in view
+  var term = document.getElementById('term');
+  if (term && !reduce && 'IntersectionObserver' in window) {
+    var html = term.innerHTML, lines = html.split('\n');
+    var tio = new IntersectionObserver(function(es){ if (!es[0].isIntersecting) return; tio.disconnect();
+      var i = 0; term.innerHTML = '';
+      (function next(){ if (i >= lines.length) { term.innerHTML = html; return; }
+        term.innerHTML += (i ? '\n' : '') + lines[i++]; setTimeout(next, /^\s*$/.test(lines[i-1]) ? 120 : 260); })();
+    }, {threshold:.5});
+    tio.observe(term);
+  }
+  // copy command
+  [].forEach.call(document.querySelectorAll('[data-copy]'), function(b){
+    b.addEventListener('click', function(){ var s = b.querySelector('span');
+      (navigator.clipboard ? navigator.clipboard.writeText(b.dataset.copy) : Promise.reject()).then(function(){ s.textContent = 'Copied'; }, function(){ s.textContent = 'Select'; });
+      setTimeout(function(){ s.textContent = 'Copy'; }, 1600); });
+  });
+  addEventListener('beforeprint', function(){ [].forEach.call(document.querySelectorAll('details'), function(d){ d.open = true; }); });
+  // hero replay
+  var card = document.getElementById('card');
+  var replay = Heirloom.replay(card);
+  document.getElementById('replay').addEventListener('click', function(){ replay(true); });
+  if (!reduce && 'IntersectionObserver' in window) {
+    var cio = new IntersectionObserver(function(es){ if (es[0].intersectionRatio >= .35) { cio.disconnect(); replay(false); } }, {threshold:[.35]});
+    cio.observe(card);
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Not on the card · Heirloom</title>
+<meta name="description" content="This page is not on Heirloom's card. Go back to the landing page, the status card or the pitch deck.">
+<link rel="icon" href="/heirloom/assets/icon.svg" type="image/svg+xml">
+<style>
+@font-face{font-family:"Sorts Mill Goudy";src:url(/heirloom/assets/fonts/sorts-mill-goudy-400.woff2) format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Sorts Mill Goudy";src:url(/heirloom/assets/fonts/sorts-mill-goudy-italic.woff2) format("woff2");font-weight:400;font-style:italic;font-display:swap}
+@font-face{font-family:"Work Sans";src:url(/heirloom/assets/fonts/work-sans-var.woff2) format("woff2");font-weight:300 700;font-style:normal;font-display:swap}
+@font-face{font-family:"Cutive Mono";src:url(/heirloom/assets/fonts/cutive-mono-400.woff2) format("woff2");font-weight:400;font-style:normal;font-display:swap}
+:root {
+  --bg:      #EFE8D8;  /* manila card stock */
+  --ink:     #1E1A15;  /* carbon-black typewriter ribbon */
+  --muted:   #6F675A;  /* faded pencil */
+  --before:  #4A3E8C;  /* state: armed / alive (violet stamp-pad ink) */
+  --after:   #8E2B1D;  /* state: released (oxblood); expiry/claim only */
+  --rule:    #C9BFA8;  /* the card's printed ruling */
+  --font-display: "Sorts Mill Goudy", "Goudy Old Style", Georgia, serif;
+  --font-body:    "Work Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-data:    "Cutive Mono", "Courier New", monospace;
+}
+*,*::before,*::after{box-sizing:border-box}
+::selection{background:var(--before);color:var(--bg)}
+:focus-visible{outline:2px solid var(--before);outline-offset:3px}
+a{color:inherit}
+.mono{font-family:var(--font-data)}
+
+/* the access card: shared by the landing hero and deck slides 1 + 6 */
+.card{position:relative;background:var(--bg);color:var(--ink);border:1.5px solid var(--ink);padding:22px 24px 0;
+  background-image:repeating-linear-gradient(180deg,transparent 0 35px,color-mix(in srgb,var(--rule) 45%,transparent) 35px 36px)}
+.card-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:1.5px solid var(--ink);padding-bottom:10px}
+.card-head h3{font:400 26px/1 var(--font-display);margin:0}
+.card-head .clock{font:13px var(--font-data);color:var(--muted);white-space:nowrap}
+.card-sub{font:12px var(--font-data);color:var(--muted);margin:8px 0 2px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.rows{list-style:none;margin:0;padding:0}
+.row{display:grid;grid-template-columns:76px minmax(0,1fr) auto;gap:4px 12px;align-items:center;min-height:36px;padding:5px 0;border-bottom:1px solid var(--rule)}
+.row time{font:13px var(--font-data);color:var(--ink)}
+.row .what{font:500 14.5px/1.3 var(--font-body);min-width:0}
+.row .what small{display:block;font:12px var(--font-data);color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .what small a{color:var(--before);text-underline-offset:2px}
+.row .what small a:hover{color:var(--ink)}
+.stamp{font:12px/1 var(--font-data);letter-spacing:.1em;color:var(--before);border:1.5px solid var(--before);padding:4px 6px 3px;transform:rotate(-3deg);white-space:nowrap;justify-self:end}
+.row:nth-child(even) .stamp{transform:rotate(2deg)}
+.row.k-grace .stamp,.row.k-expire .stamp{border-style:dashed}
+.row.k-attest .stamp{border-width:1px}
+.row.k-refused{color:var(--muted)}
+.row.k-refused .what>span{text-decoration:line-through;text-decoration-thickness:1.5px}
+.row.k-refused time{color:var(--muted)}
+.row.k-refused .stamp{color:var(--muted);border-color:var(--muted)}
+.released{position:absolute;left:50%;bottom:104px;transform:translateX(-50%) rotate(-9deg);font:400 46px/1 var(--font-display);letter-spacing:.12em;
+  color:var(--after);border:4px double var(--after);padding:8px 20px 4px;white-space:nowrap;pointer-events:none;background:color-mix(in srgb,var(--bg) 60%,transparent)}
+.blank{height:150px}
+.stub{position:relative;margin:0 -24px;border-top:2px dashed var(--ink);padding:14px 24px 16px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  font:12.5px var(--font-data);background:var(--bg);transform-origin:12% 0;transform:translateY(14px) rotate(1.6deg);
+  border-bottom:1.5px solid var(--ink);border-left:1.5px solid var(--ink);border-right:1.5px solid var(--ink);margin-bottom:-14px}
+.stub::before,.stub::after{content:"";position:absolute;top:-9px;width:16px;height:16px;border-radius:50%;background:var(--bg);border:1.5px solid var(--ink)}
+.stub::before{left:-9px}.stub::after{right:-9px}
+.stub b{font:400 15px var(--font-display);letter-spacing:.08em}
+.stub .paid{color:var(--after)}
+
+/* replay states (JS adds .armed, then .on per row; markup default = final state) */
+.card.armed .row{opacity:0;transform:translateY(-6px)}
+.card.armed .row.on{opacity:1;transform:none;transition:opacity .35s ease,transform .35s ease}
+.card.armed .row.on .stamp{animation:stampin .32s cubic-bezier(.2,.9,.3,1.3) both}
+.card.armed .released{opacity:0;transform:translateX(-50%) rotate(-9deg) scale(1.6)}
+.card.armed.rel .released{opacity:1;transform:translateX(-50%) rotate(-9deg) scale(1);transition:opacity .25s ease,transform .38s cubic-bezier(.2,.9,.3,1.25)}
+.card.armed .stub{transform:none}
+.card.armed.rel .stub{transform:translateY(14px) rotate(1.6deg);transition:transform .7s cubic-bezier(.3,.7,.2,1) .35s}
+.card.armed .stub .paid{opacity:0}.card.armed.rel .stub .paid{opacity:1;transition:opacity .3s ease .6s}
+@keyframes stampin{from{transform:scale(1.7) rotate(-8deg);opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.card.armed .row,.card.armed .released,.card.armed .stub{transition:none!important;animation:none!important}}
+
+/* terminal, re-set on card stock (a typed record, not a glowing screen) */
+.term{background:var(--ink);color:var(--bg);font:13.5px/1.6 var(--font-data);padding:18px 20px;overflow-x:auto;margin:0;white-space:pre}
+.term .p{color:color-mix(in srgb,var(--before) 32%,var(--bg))}.term .c{color:color-mix(in srgb,var(--muted) 45%,var(--bg))}.term .ok{color:var(--bg);text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--before) 32%,var(--bg));text-underline-offset:3px}
+
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--ink);font:17px/1.6 var(--font-body);padding:24px}
+.box{max-width:560px;width:100%}
+.card{padding-bottom:22px}
+h1{font:400 44px/1.05 var(--font-display);margin:18px 0 10px}
+p{margin:0 0 18px}
+a.b{display:inline-block;margin:0 10px 10px 0;padding:11px 16px;border:1.5px solid var(--ink);text-decoration:none;font-weight:600;transition:background .2s,color .2s}
+a.b:hover{background:var(--ink);color:var(--bg)}
+</style></head><body><main class="box"><div class="card">
+<div class="card-head"><h3>Access card</h3><span class="clock">no such row</span></div>
+<ol class="rows"><li class="row k-refused"><time>404</time><span class="what"><span>This page is not on the card</span><small>nothing was recorded here</small></span><span class="stamp">REFUSED</span></li></ol>
+<h1>Not on the card.</h1>
+<p>The address you followed does not exist on Heirloom's site.</p>
+<a class="b" href="/heirloom/">Landing page</a><a class="b" href="/heirloom/status/">Status card</a><a class="b" href="/heirloom/pitch/">Pitch deck</a>
+</div></main></body></html>

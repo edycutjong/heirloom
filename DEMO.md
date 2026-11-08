@@ -13,7 +13,7 @@ A watched wallet's token activity on an origin chain → a Reactive Network cont
 | Instance | Reactive contract (Lasna) | Vault (Base Sepolia) | T | Notes |
 |---|---|---|---|---|
 | demo | [`0xa3d92EAe…B8b`](https://lasna.reactscan.net/address/0xa3d92EAefb2fc4C972d6Ee524c24F38A93739B8b) | [`0x51365bb9…DBA`](https://sepolia.basescan.org/address/0x51365bb9560dDfA4236fd62d4eF2CB61f78edDBA) | 5 min | full scenario, torn down after the claim |
-| long-t | [`0x80b56204…DC6`](https://lasna.reactscan.net/address/0x80b56204D8860a6B46c08deCd9F01DD1881F9DC6) | [`0x8C37E794…7Be`](https://sepolia.basescan.org/address/0x8C37E79420Cd16e46E4D9FFd4541a87FfFa4e7Be) | 90 days | armed as of 2026-11-09; funded for days, not its 90-day horizon (`evidence/status.json`); the one to fire a loop against |
+| long-t | [`0x80b56204…DC6`](https://lasna.reactscan.net/address/0x80b56204D8860a6B46c08deCd9F01DD1881F9DC6) | [`0x8C37E794…7Be`](https://sepolia.basescan.org/address/0x8C37E79420Cd16e46E4D9FFd4541a87FfFa4e7Be) | 90 days | armed as of 2026-11-08 (UTC); funded for days, not its 90-day horizon (`evidence/status.json`); the one to fire a loop against |
 
 Owner (both): `0x12bF8bbD1Eec23B5ab5A44B8d551bbC1d038651C`. Heir: `0x440E03bb3AAdBE65D5Bf2Ad7f84A64c509ff438b`.
 
@@ -87,7 +87,7 @@ pnpm exec tsx scripts/trigger-spoof.ts --dry-run                 # simulates, se
 PRIVATE_KEY=0x… pnpm exec tsx scripts/trigger-spoof.ts           # any Base Sepolia key with a little ETH; default instance long-t
 ```
 
-The script prints the origin tx link and the long-t reactive contract's Reactscan page. A run on 2026-11-09 (the script as committed):
+The script prints the origin tx link and the long-t reactive contract's Reactscan page. A run on 2026-11-08 at 20:22 UTC (the script as committed):
 
 | Origin tx (Base Sepolia) | Reactive tx (Lasna) | Refusal reason |
 |---|---|---|
@@ -111,7 +111,7 @@ FOUNDRY_PROFILE=kit forge test   # Ran 4 test suites: 23 tests passed, 0 failed,
 pnpm test:ts                     # tests 6, pass 6, fail 0
 ```
 
-Those are the counts from the run that produced this page (2026-11-09).
+Those are the counts from the run that produced this page (2026-11-08 UTC).
 
 ## Cost and latency
 

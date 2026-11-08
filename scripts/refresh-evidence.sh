@@ -17,7 +17,7 @@ done
 $TSX scripts/evidence-status.ts
 mkdir -p status/data
 case "$DEPLOYMENTS" in
-  *mainnet*) cp evidence/status-mainnet.json evidence/cost-mainnet.json status/data/ ;;
+  *mainnet*) cp evidence/status-mainnet.json evidence/cost-mainnet.json evidence/triples.json status/data/ ;;
   *) cp evidence/status.json evidence/cost.json evidence/triples.json status/data/ ;;
 esac
 echo "status page data refreshed in status/data/"

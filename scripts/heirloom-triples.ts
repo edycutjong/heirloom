@@ -118,6 +118,8 @@ async function main() {
       const st = vault.find((v) => v.name === "StateChanged" && v.tx === ack.tx);
       if (st) note += `; vault ${st.args.from}->${st.args.to}`;
     } else note += "; no Ack found";
+    // A row joins by seq: with resends, the delivering attempt is not necessarily the first request. Say so.
+    if (ack && (tries.get(seq) ?? 1) > 1) note += "; Ack after a resend: reactive_tx is the FIRST attempt, callback_tx the delivered one";
     const last = lastActivityBefore(d.block, d.index);
     const lastAct = last ? { chainId: Number(last.args.chainId), tx: hex32(last.args.originTx) } : undefined;
     if (seen || brake) {

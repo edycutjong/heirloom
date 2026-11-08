@@ -48,7 +48,8 @@ let current = null, wallet = null, account = null;
 async function loadJson(p) { try { const r = await fetch(p, { cache: "no-store" }); if (!r.ok) throw new Error(r.status); return await r.json(); } catch { return null; } }
 
 async function main() {
-  status = (await loadJson("data/status.json")) ?? status;
+  const suffix = NET === NETS.mainnet ? "-mainnet" : ""; // refresh-evidence.sh writes status-mainnet.json for ?net=mainnet
+  status = (await loadJson(`data/status${suffix}.json`)) ?? status;
   triples = (await loadJson("data/triples.json")) ?? [];
   $("gen").textContent = status.generatedAt ? `Evidence generated ${status.generatedAt.slice(0, 19).replace("T", " ")} UTC` : "No evidence snapshot loaded";
   const list = [...status.instances];
@@ -133,6 +134,7 @@ async function live(i) {
     localStorage.setItem(key, JSON.stringify({ ...lv, ts: Date.now() }));
     apply(i, lv);
   } catch (e) {
+    if (i !== current) return; // a late failure for a tab the user already left
     let snap = null; try { snap = JSON.parse(localStorage.getItem(key) || "null"); } catch {}
     $("offline").hidden = false;
     $("offline").textContent = `Can't read ${NET.baseName} right now${snap ? `; last snapshot ${new Date(snap.ts).toISOString().slice(0, 19).replace("T", " ")} UTC` : ""}. The rows below come from the committed evidence.`;
@@ -141,6 +143,7 @@ async function live(i) {
 }
 
 function apply(i, lv) {
+  if (i !== current) return; // a slow read for another tab must never set this tab's claim target
   const s = VSTATE[lv.state];
   const cls = lv.state >= 2 ? "released" : lv.state === 1 ? "outlined" : "";
   setStamp(lv.state === 1 ? `Dormant — grace until ${utc(lv.graceEndsAt)}` : lv.state === 3 ? `Claim pending — ${utc(lv.claimReadyAt)}` : s, cls, lv.state);

@@ -59,7 +59,7 @@ abstract contract OmniReactiveTest is Test {
                 topic3: l.topics.length > 3 ? uint256(l.topics[3]) : 0,
                 data: l.data,
                 blockNumber: block.number,
-                opCode: 0,
+                opCode: l.topics.length, // docs: opCode = number of topics (LOG3 -> 3)
                 blockHash: uint256(blockhash(block.number)),
                 txHash: uint256(keccak256(abi.encode("tx", ++_nonce))),
                 logIndex: i
@@ -127,7 +127,7 @@ abstract contract OmniReactiveTest is Test {
             topic3: 0,
             data: "",
             blockNumber: block.number,
-            opCode: 0,
+            opCode: 1, // topic0 only
             blockHash: 0,
             txHash: uint256(keccak256(abi.encode("cron", ++_nonce))),
             logIndex: 0

@@ -21,6 +21,7 @@ interface IERC20Min {
 ///      requesting reactive contract). No callback ever moves funds.
 contract HeirloomVault is AbstractCallback, IHeirloomVault {
     uint256 public constant MAX_TOKENS = 8;
+    uint64 public constant MIN_CLAIM_DELAY = 60; // the two-step claim must be two steps
 
     address public immutable owner;
     address public immutable rc; // informational; authorization uses _CALLBACK_SENDER
@@ -63,6 +64,9 @@ contract HeirloomVault is AbstractCallback, IHeirloomVault {
     event Retired();
     event PayoutRedirected(address to);
     event HeirChanged(address heir);
+    event SyncDeferred(uint64 indexed seq, uint64 graceEndsAt);
+    event RetireFailed(address indexed token);
+    event Swept(address indexed token, address to, uint256 amount);
 
     error NotOwner();
     error NotHeir();
@@ -72,6 +76,7 @@ contract HeirloomVault is AbstractCallback, IHeirloomVault {
     error OverCap(uint256 balance, uint256 cap);
     error TooManyTokens();
     error ZeroAddress();
+    error ClaimDelayTooShort();
     error TransferFailed2(address token);
 
     modifier onlyOwner() {
@@ -99,6 +104,7 @@ contract HeirloomVault is AbstractCallback, IHeirloomVault {
         address[] memory tokens_
     ) payable AbstractCallback(IPayable(payable(proxy_)), callbackSender_) {
         if (owner_ == address(0) || heir_ == address(0) || callbackSender_ == address(0)) revert ZeroAddress();
+        if (claimDelay_ < MIN_CLAIM_DELAY) revert ClaimDelayTooShort();
         owner = owner_;
         heir = heir_;
         rc = callbackSender_;
@@ -166,10 +172,17 @@ contract HeirloomVault is AbstractCallback, IHeirloomVault {
         _setState(HeirloomTypes.VaultState.RETIRED, lastAppliedSeq);
         for (uint256 i; i < estateTokens.length; i++) {
             address t = estateTokens[i];
-            uint256 bal = IERC20Min(t).balanceOf(address(this));
-            if (bal > 0) _send(t, owner, bal);
+            (bool okB, bytes memory b) = t.staticcall(abi.encodeCall(IERC20Min.balanceOf, (address(this))));
+            uint256 bal = okB && b.length >= 32 ? abi.decode(b, (uint256)) : 0;
+            if (bal == 0) continue;
+            (bool ok, bytes memory ret) = t.call(abi.encodeCall(IERC20Min.transfer, (owner, bal)));
+            // a paused/blacklisted token must not block retirement (the RC would keep billing CRON)
+            if (!ok || (ret.length != 0 && (ret.length < 32 || !abi.decode(ret, (bool))))) emit RetireFailed(t);
         }
-        if (address(this).balance > 0) _send(address(0), owner, address(this).balance);
+        if (address(this).balance > 0) {
+            (bool okN,) = payable(owner).call{value: address(this).balance}("");
+            if (!okN) emit RetireFailed(address(0));
+        }
         emit Retired();
     }
 
@@ -187,6 +200,17 @@ contract HeirloomVault is AbstractCallback, IHeirloomVault {
         }
         if (s.seq <= lastAppliedSeq) {
             emit Ack(s.seq, ownerNonce, ownerActionId, false); // replay or stale retry
+            return;
+        }
+        HeirloomTypes.VaultState st0 = state;
+        if (
+            s.rcPhase == HeirloomTypes.Phase.EXPIRED && block.timestamp < s.graceEndsAt
+                && (st0 == HeirloomTypes.VaultState.ARMED || st0 == HeirloomTypes.VaultState.GRACE)
+                && s.ownerNonce == ownerNonce && s.ownerActionId == ownerActionId
+        ) {
+            // Base clock behind the Reactive-computed grace end: do NOT ack, so the RC resends on its next try
+            // instead of waiting a whole attest period (keeps I2's bound). Never hastens a transition.
+            emit SyncDeferred(s.seq, s.graceEndsAt);
             return;
         }
         lastAppliedSeq = s.seq;
@@ -248,6 +272,16 @@ contract HeirloomVault is AbstractCallback, IHeirloomVault {
         if (state != HeirloomTypes.VaultState.RELEASED) revert BadState(state);
         if (!isEstateToken[token]) revert ZeroAddress();
         _release(token);
+    }
+
+    /// @notice After RELEASED, anything left that is not an unpaid estate token (direct transfers, top-ups after
+    ///         payout, the native gas reserve with token = 0) goes to the payee. Anyone may call.
+    function sweep(address token) external {
+        if (state != HeirloomTypes.VaultState.RELEASED) revert BadState(state);
+        if (isEstateToken[token] && !paid[token]) revert BadState(state); // use finalizeToken
+        uint256 bal = token == address(0) ? address(this).balance : IERC20Min(token).balanceOf(address(this));
+        _send(token, payee(), bal);
+        emit Swept(token, payee(), bal);
     }
 
     /// @notice The heir may redirect the payout (e.g. a blacklisted heir address).

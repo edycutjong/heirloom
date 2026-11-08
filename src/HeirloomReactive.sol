@@ -169,7 +169,11 @@ contract HeirloomReactive is AbstractReactive {
     constructor(address owner_, Config memory c) payable {
         if (owner_ == address(0) || c.T == 0 || c.grace == 0 || c.attestEvery == 0 || c.tickPeriod == 0) revert BadConfig();
         if (CronTopics.interval(c.cronTopic) == 0) revert BadConfig();
-        if (c.graceCronTopic != 0 && CronTopics.interval(c.graceCronTopic) == 0) revert BadConfig();
+        if (c.graceCronTopic != 0 && (CronTopics.interval(c.graceCronTopic) == 0 || c.graceCronTopic == c.cronTopic)) {
+            revert BadConfig();
+        }
+        // The spam brake is a must-have bound (H6/I7): it cannot be disabled.
+        if (c.brakeWindow == 0 || c.maxRefusedPerWindow == 0 || c.destChainId == 0) revert BadConfig();
         AckLedger.validate(AckLedger.Policy(c.ackTimeout, FAST_TRIES, c.attestEvery));
         owner = owner_;
         deployer = msg.sender;
@@ -275,7 +279,6 @@ contract HeirloomReactive is AbstractReactive {
     /// @dev H6 hard bound: at `maxRefusedPerWindow` refusals per `brakeWindow`, the token is unsubscribed until a
     ///      CRON tick after `brakedUntil`. The vault's OwnerActive channel is never braked.
     function _brakeCount(uint256 chainId, address token) internal {
-        if (maxRefusedPerWindow == 0) return;
         Brake storage b = brakes[chainId][token];
         uint64 nowTs = uint64(block.timestamp);
         if (nowTs >= b.windowStart + brakeWindow) {
@@ -363,8 +366,7 @@ contract HeirloomReactive is AbstractReactive {
         uint64 nowTs = uint64(block.timestamp);
 
         _liftBrakes(nowTs);
-
-        if (pending.due(_policy(), nowTs)) _resend();
+        uint64 seqBefore = nextSeq;
 
         if (brakedCount == 0) {
             if (phase == HeirloomTypes.Phase.ARMED) {
@@ -387,6 +389,9 @@ contract HeirloomReactive is AbstractReactive {
                 _send(HeirloomTypes.Kind.EXPIRE);
             }
         }
+
+        // Resend only if this tick did not already supersede the pending snapshot (no double spend).
+        if (nextSeq == seqBefore && pending.due(_policy(), nowTs)) _resend();
 
         if (nowTs >= lastAttestAt + attestEvery) {
             // An attest never overwrites a pending state change: skip it, keep the cadence.
@@ -413,6 +418,7 @@ contract HeirloomReactive is AbstractReactive {
         if (allowed[chainId][token]) _subscribeToken(chainId, token);
         // The brake hid real transfers: restart the T clock from the lift.
         if (nowTs > observedFrom) observedFrom = nowTs;
+        _resetCanaries(); // a new epoch starts at the lift
         emit ObservationReset(chainId, token, nowTs);
     }
 
@@ -519,7 +525,10 @@ contract HeirloomReactive is AbstractReactive {
     function _anyCanaryStale(uint64 nowTs) internal view returns (bool) {
         for (uint256 i; i < _canaryChains.length; i++) {
             Canary storage c = canaries[_canaryChains[i]];
-            if (c.armed && (nowTs - c.lastAt > c.maxGap || c.maxGapSeen > c.maxGap)) return true;
+            // Never armed by the deadline = no tick ran inside the arm window (debt, outage, slow ticks):
+            // the network itself is suspect, so fail closed and spend the epoch's one freeze.
+            if (!c.armed) return true;
+            if (nowTs - c.lastAt > c.maxGap || c.maxGapSeen > c.maxGap) return true;
         }
         return false;
     }

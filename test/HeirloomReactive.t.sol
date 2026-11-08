@@ -553,6 +553,88 @@ contract HeirloomReactiveTest is HeirloomBase {
         assertEq(rc.tokens().length, 4);
     }
 
+    // ================================================================ QA r2 fixes
+
+    function test_unarmed_canary_at_deadline_fails_closed() public {
+        _redeploy(100); // arm window 222 s before the deadline
+        tickAt(T0 + 10);
+        tickAt(T0 + T_ + 5); // ticks paused through the whole arm window
+        assertTrue(rc.epochFreezeUsed(), "a canary never armed by the deadline spends the freeze");
+        assertPhase(HeirloomTypes.Phase.ARMED);
+        tickAt(T0 + T_ + FREEZE + 6);
+        assertPhase(HeirloomTypes.Phase.GRACE); // once only
+    }
+
+    function test_canary_arrival_advances_lastAt() public {
+        _redeploy(3633); // always on
+        (,, uint64 armedAt,,) = rc.canaries(BASE);
+        vm.warp(block.timestamp + 40);
+        beat();
+        (,, uint64 lastAt, uint64 gapSeen,) = rc.canaries(BASE);
+        assertEq(lastAt, armedAt + 40, "a real arrival advances lastAt past arming");
+        assertEq(gapSeen, 40);
+    }
+
+    function test_no_double_send_when_transition_supersedes_resend() public {
+        injectOverride = stranger;
+        tickAt(T0 + ATTEST + 1); // ATTEST pending, un-acked
+        CallbackResult[] memory r = tickAt(T0 + T_ + 1); // resend due AND grace fires
+        assertCallbacks(r, 1);
+        assertEq(uint8(rc.pendingKind()), uint8(HeirloomTypes.Kind.GRACE));
+        assertEq(_pendingTries(), 1);
+    }
+
+    function test_rc_allowlist_cap() public {
+        for (uint256 i; i < 5; i++) {
+            ownerCall(abi.encodeCall(HeirloomVault.setAllowlist, (ETH, address(uint160(0x1000 + i)), true)));
+        }
+        assertEq(rc.tokens().length, 8);
+        // a 9th can only come from a vault/RC mismatch: deliver it by hand
+        IReactive.LogRecord memory l;
+        l.chainId = BASE;
+        l.contractAddress = address(vault);
+        l.topic0 = uint256(keccak256("AllowlistChanged(uint256,address,bool)"));
+        l.topic1 = ETH;
+        l.topic2 = uint256(uint160(address(0x2000)));
+        l.data = abi.encode(true);
+        l.opCode = 3;
+        deliverAs(l);
+        assertEq(rc.tokens().length, 8);
+        assertFalse(rc.allowed(ETH, address(0x2000)));
+        assertFalse(rc.subscribed(ETH, address(0x2000)));
+    }
+
+    function test_config_guards() public {
+        HeirloomReactive.Config memory c = _cfg();
+        c.graceCronTopic = c.cronTopic; // would unsubscribe the main tier on cancel
+        vm.expectRevert(HeirloomReactive.BadConfig.selector);
+        new HeirloomReactive(owner, c);
+        c = _cfg();
+        c.brakeWindow = 0;
+        vm.expectRevert(HeirloomReactive.BadConfig.selector);
+        new HeirloomReactive(owner, c);
+        c = _cfg();
+        c.maxRefusedPerWindow = 0;
+        vm.expectRevert(HeirloomReactive.BadConfig.selector);
+        new HeirloomReactive(owner, c);
+        c = _cfg();
+        c.destChainId = 0;
+        vm.expectRevert(HeirloomReactive.BadConfig.selector);
+        new HeirloomReactive(owner, c);
+    }
+
+    function test_brake_lift_starts_fresh_canary_epoch() public {
+        _redeploy(100);
+        runUntil(T0 + T_ - 222 + TICK); // armed near the deadline
+        (,,,, bool armed) = rc.canaries(BASE);
+        assertTrue(armed);
+        for (uint256 i; i < MAX_REFUSED; i++) spoof(usdcBase);
+        (,, uint64 until) = rc.brakes(BASE, address(usdcBase));
+        tickAt(until + 1);
+        (,,,, armed) = rc.canaries(BASE);
+        assertFalse(armed, "lift = new epoch: the near-deadline canary is unsubscribed");
+    }
+
     // ================================================================ helpers
 
     function _cronLog() internal view returns (IReactive.LogRecord memory l) {

@@ -255,7 +255,10 @@ contract HeirloomVaultTest is HeirloomBase {
         injectOverride = address(0);
         runUntil(block.timestamp + ACK + TICK);
         assertVault(HeirloomTypes.VaultState.ARMED);
-        assertFalse(vault.claimCanInitiate());
+        assertGt(vault.lastAppliedSeq(), 0, "delivery resumed: the first applied snapshot is the REVIVE");
+        assertPhase(HeirloomTypes.Phase.ARMED);
+        runUntil(block.timestamp + CLAIM_DELAY);
+        assertFalse(vault.claimCanInitiate(), "the claim stays closed across a full claimDelay");
     }
 
     // ================================================================ teardown (A4, A10, I9)
@@ -332,6 +335,82 @@ contract HeirloomVaultTest is HeirloomBase {
         _release();
         assertEq(usdcBase.balanceOf(heir), 4e6);
         assertPhase(HeirloomTypes.Phase.DONE);
+    }
+
+    // ================================================================ QA r2 fixes
+
+    function test_early_expired_snapshot_deferred_then_applied() public {
+        tickAt(T0 + T_ + 1);
+        assertVault(HeirloomTypes.VaultState.GRACE);
+        HeirloomTypes.Snapshot memory s = _snap(40, HeirloomTypes.Phase.EXPIRED);
+        s.graceEndsAt = uint64(block.timestamp + 50); // Base clock behind the Reactive grace end
+        uint64 applied = vault.lastAppliedSeq();
+        _proxySync(s);
+        assertEq(vault.lastAppliedSeq(), applied, "not applied, not acked: the RC will resend");
+        assertVault(HeirloomTypes.VaultState.GRACE);
+        vm.warp(block.timestamp + 50);
+        _proxySync(s); // the resend (same seq)
+        assertVault(HeirloomTypes.VaultState.CLAIMABLE);
+    }
+
+    function test_retire_with_paused_token_still_retires() public {
+        usdcBase.setPaused(true);
+        ownerCall(abi.encodeCall(HeirloomVault.retire, ()));
+        assertVault(HeirloomTypes.VaultState.RETIRED);
+        assertPhase(HeirloomTypes.Phase.DONE);
+        assertEq(sys.activeSubscriptions(address(rc)), 0);
+    }
+
+    function test_claim_delay_minimum() public {
+        uint256[] memory c = new uint256[](0);
+        address[] memory t = new address[](0);
+        vm.expectRevert(HeirloomVault.ClaimDelayTooShort.selector);
+        new HeirloomVault(address(proxy), address(rc), owner, heir, 59, CAP, c, t);
+    }
+
+    function test_sweep_after_release() public {
+        TestToken stray = new TestToken();
+        stray.mint(address(vault), 7);
+        vm.expectRevert(abi.encodeWithSelector(HeirloomVault.BadState.selector, HeirloomTypes.VaultState.ARMED));
+        vault.sweep(address(stray));
+        _release();
+        vm.prank(stranger);
+        vault.sweep(address(stray));
+        assertEq(stray.balanceOf(heir), 7);
+        uint256 reserve = address(vault).balance;
+        vault.sweep(address(0));
+        assertEq(heir.balance, reserve, "native gas reserve to the payee after release");
+    }
+
+    function test_teardown_retire_in_grace_with_grace_cron_and_late_token() public {
+        vm.warp(T0);
+        HeirloomReactive.Config memory c = _cfg();
+        c.graceCronTopic = 0xb49937fb8970e19fd46d48f7e3fb00d659deac0347f79cd7cb542f0fc1503c70; // CRON100
+        _deploy(c, 3633); // always-on canary
+        TestToken late = new TestToken();
+        onChain(address(late), UNI);
+        ownerCall(abi.encodeCall(HeirloomVault.setAllowlist, (UNI, address(late), true)));
+        assertTrue(rc.subscribed(UNI, address(late)));
+        uint256 armedSubs = sys.activeSubscriptions(address(rc));
+        runUntil(rc.deadline() + TICK);
+        assertPhase(HeirloomTypes.Phase.GRACE);
+        assertEq(sys.activeSubscriptions(address(rc)), armedSubs + 1, "grace CRON live");
+        ownerCall(abi.encodeCall(HeirloomVault.retire, ()));
+        assertPhase(HeirloomTypes.Phase.DONE);
+        assertEq(sys.activeSubscriptions(address(rc)), 0, "grace CRON, late token, canary, vault events, failure watch: all gone");
+    }
+
+    function test_teardown_with_braked_token_and_armed_canary() public {
+        vm.warp(T0);
+        _deploy(_cfg(), 100); // near-deadline canary
+        runUntil(T0 + T_ - 222 + TICK);
+        (,,,, bool armed) = rc.canaries(BASE);
+        assertTrue(armed);
+        for (uint256 i; i < MAX_REFUSED; i++) spoof(usdcBase);
+        assertEq(rc.brakedCount(), 1);
+        ownerCall(abi.encodeCall(HeirloomVault.retire, ()));
+        assertPhase(HeirloomTypes.Phase.DONE);
+        assertEq(sys.activeSubscriptions(address(rc)), 0);
     }
 
     // ================================================================ helpers

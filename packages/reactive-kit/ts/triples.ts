@@ -131,8 +131,19 @@ export function rowKey(r: TripleRow): string {
   return `${r.instance}|${r.stage}|${r.seq}|${r.reactive_tx.toLowerCase()}`;
 }
 
+const CALLBACK_LEG = new Set<TripleColumn>(["callback_chain", "callback_tx", "callback_ts"]);
+
+/** True when `next` carries a callback leg that should replace `stored`'s: stored has none, or next's is earlier. */
+function earlierCallback(next: TripleRow, stored: TripleRow): boolean {
+  if (!next.callback_tx) return false;
+  if (!stored.callback_tx) return true;
+  const a = Number(next.callback_ts), b = Number(stored.callback_ts);
+  return Number.isFinite(a) && Number.isFinite(b) && next.callback_ts !== "" && stored.callback_ts !== "" && a < b;
+}
+
 /** Upsert rows by `rowKey`: new rows are appended; a re-joined row updates its existing row in place, field by field,
- *  where the new value is non-empty (a later join that misses a leg never blanks one an earlier join found).
+ *  where the new value is non-empty (a later join that misses a leg never blanks one an earlier join found). The
+ *  callback leg (chain, tx, ts) is the exception: it is replaced only by an earlier callback, never a later one.
  *  Rows that are not re-joined are kept (history survives RPC log pruning). Returns the number of rows added. */
 export function appendTriples(path: string, rows: TripleRow[]): number {
   const all = readTriples(path);
@@ -147,7 +158,14 @@ export function appendTriples(path: string, rows: TripleRow[]): number {
       added++;
     } else {
       const merged = { ...all[i] };
-      for (const c of TRIPLE_COLUMNS) if (r[c] !== "" && r[c] !== undefined) merged[c] = r[c];
+      // The callback leg moves only to an EARLIER callback: a replayed sync re-emits a non-terminal Ack for the same
+      // seq after the applying one, so a later join that missed the applying Ack must not replace the cited hash.
+      const keepCallback = !earlierCallback(r, merged);
+      for (const c of TRIPLE_COLUMNS) {
+        if (r[c] === "" || r[c] === undefined) continue;
+        if (keepCallback && CALLBACK_LEG.has(c)) continue;
+        merged[c] = r[c];
+      }
       all[i] = merged;
     }
   }

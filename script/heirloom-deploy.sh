@@ -30,6 +30,7 @@ create() { # rpc contract value args...
   local rpc=$1 c=$2 v=$3; shift 3
   local extra=(); [ $# -gt 0 ] && extra=(--constructor-args "$@")   # must stay last (variadic)
   forge create "$c" --broadcast --rpc-url "$rpc" --private-key "$DEPLOYER_PRIVATE_KEY" --value "$v" --json \
+    ${LASNA_GAS_LIMIT:+$([ "$rpc" = "$LASNA_RPC" ] && echo "--gas-limit $LASNA_GAS_LIMIT --gas-price ${LASNA_GAS_PRICE:-100gwei}")} \
     ${extra[@]+"${extra[@]}"} | sed -n "/^{/,\$p" | jq -r .deployedTo
 }
 send() { # rpc to sig args... -> "hash status"

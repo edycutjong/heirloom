@@ -15,15 +15,16 @@ test("csv round-trips notes with commas and quotes", () => {
   assert.deepEqual(parseCsvLine(toCsvLine(r)), TRIPLE_COLUMNS.map((c) => r[c]));
 });
 
-test("appendTriples keeps the first row per (instance, stage, seq, trigger)", () => {
+test("appendTriples upserts per (instance, stage, seq, reactive tx); a re-join fixes, never blanks, a row", () => {
   const p = join(mkdtempSync(join(tmpdir(), "kit-")), "t.csv");
-  const a = row({ stage: "GRACE", seq: "1", trigger_tx: "0xAA", instance: "demo", callback_tx: "0x01" });
-  const dup = { ...a, trigger_tx: "0xaa", callback_tx: "0x02" };
+  const a = row({ stage: "GRACE", seq: "1", trigger_tx: "0xAA", reactive_tx: "0xR1", instance: "demo", callback_tx: "0x01" });
+  const rejoin = { ...a, reactive_tx: "0xr1", trigger_tx: "0xBB", callback_tx: "" };
   assert.equal(appendTriples(p, [a]), 1);
-  assert.equal(appendTriples(p, [dup, row({ stage: "GRACE", seq: "2", instance: "demo" })]), 1);
+  assert.equal(appendTriples(p, [rejoin, row({ stage: "GRACE", seq: "2", reactive_tx: "0xR2", instance: "demo" })]), 1);
   const rows = readTriples(p);
   assert.equal(rows.length, 2);
-  assert.equal(rows[0].callback_tx, "0x01");
+  assert.equal(rows[0].trigger_tx, "0xBB", "the corrected trigger replaces the stale one in place");
+  assert.equal(rows[0].callback_tx, "0x01", "a leg the re-join missed is kept");
   assert.equal(readFileSync(p, "utf8").split("\n")[0], TRIPLE_COLUMNS.join(","));
 });
 

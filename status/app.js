@@ -82,7 +82,7 @@ function renderRows(i) {
     return `<tr class="${refused ? "refused" : ""} ${t.stage === "EXPIRE" || t.stage === "TEARDOWN" ? "released" : ""}">
       <td>${utc(+t.reactive_ts)}<span class="note">${rel(+t.reactive_ts)}</span></td>
       <td class="kind">${esc(kind)}${refused ? ` · ${esc(why)}` : ""}<span class="note">${esc(CHAIN_NAME[t.trigger_chain] ?? "")}${t.seq ? ` · seq ${esc(t.seq)}` : ""}</span></td>
-      <td>${link(+t.trigger_chain, t.trigger_tx)}</td><td>${link(5318007, t.reactive_tx)}</td><td>${t.callback_tx ? link(+t.callback_chain, t.callback_tx) : '<span class="note">—</span>'}</td></tr>`;
+      <td>${link(+t.trigger_chain, t.trigger_tx)}</td><td>${link(lasna.id, t.reactive_tx)}</td><td>${t.callback_tx ? link(+t.callback_chain, t.callback_tx) : '<span class="note">—</span>'}</td></tr>`;
   }).join("");
 }
 
@@ -136,7 +136,7 @@ async function live(i) {
     let snap = null; try { snap = JSON.parse(localStorage.getItem(key) || "null"); } catch {}
     $("offline").hidden = false;
     $("offline").textContent = `Can't read ${NET.baseName} right now${snap ? `; last snapshot ${new Date(snap.ts).toISOString().slice(0, 19).replace("T", " ")} UTC` : ""}. The rows below come from the committed evidence.`;
-    if (snap) apply(i, snap); else setStamp(i.vaultState ?? "—", "");
+    if (snap) apply(i, snap); else setStamp(i.vaultState === "GRACE" ? "DORMANT" : (i.vaultState ?? "—").replace("_", " "), "");
   }
 }
 
@@ -166,7 +166,7 @@ function syncButtons() {
 setInterval(() => { if (!$("claim").hidden) syncButtons(); }, 1000);
 
 $("connect").onclick = async () => {
-  if (!window.ethereum) { $("claimmsg").textContent = "No browser wallet found. Use scripts/claim.ts or Basescan “Write contract”."; return; }
+  if (!window.ethereum) { $("claimmsg").textContent = "No browser wallet found. On Basescan, open the vault’s “Write contract” tab and call initiateClaim, then finalizeClaim after the delay."; return; }
   try {
     wallet = createWalletClient({ chain: baseSep, transport: custom(window.ethereum) });
     [account] = await wallet.requestAddresses();

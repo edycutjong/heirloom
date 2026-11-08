@@ -60,13 +60,30 @@ async function logs(chainId: number, address: Hex, from: bigint, abi: any): Prom
   return out;
 }
 
-async function cronTx(reactBlock: bigint): Promise<Hex | undefined> {
-  const sys = await client(LASNA).getLogs({ address: CRON_EMITTER, fromBlock: reactBlock - 2n, toBlock: reactBlock });
-  return sys.length ? (sys[sys.length - 1].transactionHash as Hex) : undefined;
+// CronTopics.sol values -> tier names (the note must name the instance's real tier, never a hard-coded one).
+const CRON_TIER: Record<string, string> = {
+  "0xf02d6ea5c22a71cffe930a4523fcb4f129be6c804db50e4202fb4e0b07ccb514": "Cron1",
+  "0x04463f7c1651e6b9774d7f85c85bb94654e3c46ca79b0c16fb16d4183307b687": "Cron10",
+  "0xb49937fb8970e19fd46d48f7e3fb00d659deac0347f79cd7cb542f0fc1503c70": "Cron100",
+  "0xe20b31294d84c3661ddc8f423abb9c70310d0cf172aa2714ead78029b325e3f4": "Cron1000",
+  "0xd214e1d84db704ed42d37f538ea9bf71e44ba28bc1cc088b2f5deca654677a56": "Cron10000",
+};
+const topicHex = (t: bigint) => `0x${t.toString(16).padStart(64, "0")}` as Hex;
+
+/** The CRON log that triggered a react: only this instance's tier topics, latest in the 3-block window. */
+async function cronTx(reactBlock: bigint, topics: Hex[]): Promise<{ tx: Hex; tier: string } | undefined> {
+  const sys = (await client(LASNA).getLogs({ address: CRON_EMITTER, fromBlock: reactBlock - 2n, toBlock: reactBlock }))
+    .filter((l) => topics.includes((l.topics[0] ?? "").toLowerCase() as Hex));
+  const l = sys[sys.length - 1];
+  return l ? { tx: l.transactionHash as Hex, tier: CRON_TIER[(l.topics[0] as string).toLowerCase()] ?? "Cron" } : undefined;
 }
 
 async function main() {
   const rc = await logs(LASNA, RC, BigInt(env.LASNA_FROM), rcAbi);
+  const topicAbi = parseAbi(["function cronTopic() view returns (uint256)", "function graceCronTopic() view returns (uint256)"]);
+  const [cronT, graceT] = await Promise.all((["cronTopic", "graceCronTopic"] as const).map((functionName) =>
+    client(LASNA).readContract({ address: RC, abi: topicAbi, functionName }) as Promise<bigint>));
+  const cronTopics = [cronT, graceT].filter((t) => t !== 0n).map(topicHex);
   const vault = await logs(BASE_SEPOLIA, VAULT, BigInt(env.BASE_FROM), vaultAbi);
   const proxy = chain(BASE_SEPOLIA).callbackProxy!.toLowerCase();
   const byTx = new Map<Hex, D[]>();
@@ -89,6 +106,8 @@ async function main() {
     const inTx = byTx.get(d.tx) ?? [];
     const seen = inTx.find((x) => x.name === "Seen");
     const brake = inTx.find((x) => x.name === "SpamBrake");
+    // A brake-only CANCEL/REVIVE has no Seen: its origin log is the refused transfer that tripped the brake.
+    const refused = brake ? [...inTx].reverse().find((x) => x.name === "SpoofRefused" && x.index < brake.index) : undefined;
     const ack = vault.find((v) => v.name === "Ack" && v.args.seq === seq && !v.args.terminal);
     let callback: { chainId: number; tx: Hex } | undefined;
     let note = `seq ${seq}; tries ${tries.get(seq)}`;
@@ -103,15 +122,17 @@ async function main() {
     const lastAct = last ? { chainId: Number(last.args.chainId), tx: hex32(last.args.originTx) } : undefined;
     if (seen || brake) {
       const trig = seen ?? brake!;
-      const trigTx = seen ? hex32(seen.args.originTx) : undefined;
-      if (!trigTx) continue;
+      const trigTx = seen ? hex32(seen.args.originTx) : refused ? hex32(refused.args.originTx) : undefined;
+      if (!trigTx) { console.warn(`seq ${seq}: brake without a SpoofRefused in ${d.tx}; row skipped`); continue; }
+      if (!seen) note += "; trigger = the refused transfer that tripped the spam brake";
       rows.push(await buildTriple({ stage, seq, triggerKind: "origin_log", triggerChain: Number(trig.args.chainId), triggerTx: trigTx,
         reactiveChain: LASNA, reactiveTx: d.tx, callback, lastActivity: lastAct, instance: INSTANCE, note }));
     } else {
-      const ctx = await cronTx(d.block);
+      const ctx = await cronTx(d.block, cronTopics);
       if (!ctx) { console.warn(`seq ${seq}: no cron log near block ${d.block}`); continue; }
-      rows.push(await buildTriple({ stage, seq, triggerKind: "cron", triggerChain: LASNA, triggerTx: ctx,
-        reactiveChain: LASNA, reactiveTx: d.tx, callback, lastActivity: lastAct, instance: INSTANCE, note: note + "; trigger = Cron10 log on Lasna" }));
+      rows.push(await buildTriple({ stage, seq, triggerKind: "cron", triggerChain: LASNA, triggerTx: ctx.tx,
+        reactiveChain: LASNA, reactiveTx: d.tx, callback, lastActivity: lastAct, instance: INSTANCE,
+        note: `${note}; trigger = ${ctx.tier} log on ${LASNA === 1597 ? "Reactive" : "Lasna"}` }));
     }
   }
 

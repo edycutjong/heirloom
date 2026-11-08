@@ -41,7 +41,7 @@ const vaultAbi = parseAbi([
   "function depositCap() view returns (uint256)",
 ]);
 const PHASE = ["ARMED", "GRACE", "EXPIRED", "DONE"];
-const VSTATE = ["ARMED", "DORMANT", "CLAIMABLE", "CLAIM_PENDING", "RELEASED", "RETIRED"];
+const VSTATE = ["ARMED", "GRACE", "CLAIMABLE", "CLAIM_PENDING", "RELEASED", "RETIRED"]; // HeirloomTypes.VaultState, verbatim
 
 const lasna = client(LASNA), base = client(BASE_SEPOLIA);
 const tsOf = async (c: typeof lasna, block: bigint) => Number((await c.getBlock({ blockNumber: block })).timestamp);

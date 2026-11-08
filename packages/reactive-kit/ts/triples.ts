@@ -1,6 +1,7 @@
 // Tx-triple logger: origin (or CRON) tx -> reactive tx -> callback tx, with on-chain timestamps.
 // Joins by data the contracts emit themselves (the RC logs the origin tx hash + a seq; the destination logs the seq),
-// so it needs nothing but eth_getLogs on each chain. Output: evidence/triples.csv (append-only, first row per key wins).
+// so it needs nothing but eth_getLogs on each chain. Output: evidence/triples.csv (rows are never dropped; a re-join of
+// the same react updates its row in place, so a corrected join lands instead of sitting beside the stale one).
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import type { AbiEvent, Log } from "viem";
 import { chain, client } from "./chains.ts";
@@ -124,24 +125,34 @@ export function readTriples(path: string): TripleRow[] {
   });
 }
 
-/** Identity of a row: the first callback per (instance, stage, seq) wins, duplicates are dropped. */
+/** Identity of a row: one react (reactive tx) for one (instance, stage, seq). The trigger is derived, so it is not
+ *  part of the key: a re-join that finds a better trigger replaces the old one instead of adding a twin row. */
 export function rowKey(r: TripleRow): string {
-  return `${r.instance}|${r.stage}|${r.seq}|${r.trigger_tx.toLowerCase()}|${r.reactive_tx.toLowerCase()}`;
+  return `${r.instance}|${r.stage}|${r.seq}|${r.reactive_tx.toLowerCase()}`;
 }
 
-/** Append rows that are not already present. Returns the number written. */
+/** Upsert rows by `rowKey`: new rows are appended; a re-joined row updates its existing row in place, field by field,
+ *  where the new value is non-empty (a later join that misses a leg never blanks one an earlier join found).
+ *  Rows that are not re-joined are kept (history survives RPC log pruning). Returns the number of rows added. */
 export function appendTriples(path: string, rows: TripleRow[]): number {
-  const existing = readTriples(path);
-  const seen = new Set(existing.map(rowKey));
-  const fresh = rows.filter((r) => {
+  const all = readTriples(path);
+  const at = new Map(all.map((r, i) => [rowKey(r), i] as const));
+  let added = 0;
+  for (const r of rows) {
     const k = rowKey(r);
-    if (seen.has(k)) return false;
-    seen.add(k);
-    return true;
-  });
-  const all = [...existing, ...fresh];
+    const i = at.get(k);
+    if (i === undefined) {
+      at.set(k, all.length);
+      all.push(r);
+      added++;
+    } else {
+      const merged = { ...all[i] };
+      for (const c of TRIPLE_COLUMNS) if (r[c] !== "" && r[c] !== undefined) merged[c] = r[c];
+      all[i] = merged;
+    }
+  }
   writeFileSync(path, [TRIPLE_COLUMNS.join(","), ...all.map(toCsvLine)].join("\n") + "\n");
-  return fresh.length;
+  return added;
 }
 
 /** Seconds between hops of a row (NaN when a leg is missing). */

@@ -236,6 +236,33 @@ contract HeirloomVaultTest is HeirloomBase {
         vault.finalizeClaim();
     }
 
+    /// The RC reaches GRACE again only through ARMED, so a newer GRACE snapshot reaching a CLAIMABLE / CLAIM_PENDING
+    /// vault means its REVIVE was superseded before it landed (e.g. callbacks undeliverable for a full T, then the
+    /// GRACE snapshot replaced the un-acked REVIVE). The claim must not outlive that proof of life.
+    function test_superseded_revive_grace_cancels_claim_pending() public {
+        toClaimable();
+        vault.initiateClaim();
+        HeirloomTypes.Snapshot memory s = _snap(vault.lastAppliedSeq() + 2, HeirloomTypes.Phase.GRACE);
+        s.kind = HeirloomTypes.Kind.GRACE;
+        vm.expectEmit(address(vault));
+        emit HeirloomVault.ClaimCancelled(s.seq);
+        _proxySync(s);
+        assertVault(HeirloomTypes.VaultState.GRACE);
+        assertEq(vault.graceEndsAt(), s.graceEndsAt);
+        vm.warp(block.timestamp + CLAIM_DELAY);
+        vm.expectRevert(abi.encodeWithSelector(HeirloomVault.BadState.selector, HeirloomTypes.VaultState.GRACE));
+        vault.finalizeClaim();
+    }
+
+    function test_superseded_revive_grace_closes_claimable() public {
+        toClaimable();
+        HeirloomTypes.Snapshot memory s = _snap(vault.lastAppliedSeq() + 2, HeirloomTypes.Phase.GRACE);
+        s.ownerNonce = vault.ownerNonce() + 7; // even a version mismatch (RC adopted a reorged version) only ever delays
+        _proxySync(s);
+        assertVault(HeirloomTypes.VaultState.GRACE);
+        assertFalse(vault.claimCanInitiate());
+    }
+
     function test_brake_in_claim_pending_cancels_claim() public {
         toClaimable();
         vault.initiateClaim();

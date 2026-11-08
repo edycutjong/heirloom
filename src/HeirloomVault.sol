@@ -228,7 +228,13 @@ contract HeirloomVault is AbstractCallback, IHeirloomVault {
         } else if (s.rcPhase == HeirloomTypes.Phase.GRACE) {
             if (st == HeirloomTypes.VaultState.GRACE) {
                 graceEndsAt = s.graceEndsAt;
-            } else if (current && (st == HeirloomTypes.VaultState.ARMED || st == HeirloomTypes.VaultState.CLAIMABLE)) {
+            } else if (st == HeirloomTypes.VaultState.CLAIMABLE || st == HeirloomTypes.VaultState.CLAIM_PENDING) {
+                // The RC re-enters GRACE only through ARMED, so a newer GRACE snapshot here means it saw life after
+                // the expiry this claim rests on and its REVIVE was superseded before landing. Only ever delays.
+                if (st == HeirloomTypes.VaultState.CLAIM_PENDING) emit ClaimCancelled(s.seq);
+                graceEndsAt = s.graceEndsAt;
+                _setState(HeirloomTypes.VaultState.GRACE, s.seq);
+            } else if (current && st == HeirloomTypes.VaultState.ARMED) {
                 graceEndsAt = s.graceEndsAt;
                 _setState(HeirloomTypes.VaultState.GRACE, s.seq);
             }

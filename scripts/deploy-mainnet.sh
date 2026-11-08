@@ -10,6 +10,8 @@
 # Safety: --execute needs ../specs/mainnet-authorized (the human's go-ahead), only runs with NET=mainnet,
 # stops if planned funding exceeds MAX_REACT, keeps a Base ETH reserve, and logs every sent tx to evidence/mainnet-txs.csv
 # (ts,chain,tx,purpose,cost_native). Tunables below are env vars; a bad tick/ack/claim combination aborts before anything is sent.
+# Resume: rerun the same command after a failure. An instance whose evidence/mainnet-<name>-addresses.txt already names an RC
+# reuses it (and its vault, if recorded) after checking code, owner and T on chain; a funded RC is never deployed twice.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -25,6 +27,9 @@ case "$NET" in
     WATCH_B=0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48          # USDC Ethereum
     CANARY=0x05c84a58FE042275b37db038bAAcD15F410c7bB0           # Chainlink ETH/USD aggregator on Base (AnswerUpdated emitter)
     CANARY_GAP=${CANARY_GAP:-3603}
+    # Second canary on the other watched chain (an Ethereum ingestion stall must also be able to spend the freeze).
+    CANARY_X=0x7d4E742018fb52E48b08BE73d041C18B21de6Fb5         # Chainlink ETH/USD aggregator on Ethereum (evidence/canary-gaps.json)
+    CANARY_X_GAP=${CANARY_X_GAP:-7224}; X_RPC=${ETHEREUM_RPC:-https://ethereum-rpc.publicnode.com}
     ;;
   testnet)
     DEPLOY_ENV=${DEPLOY_ENV:-$HOME/.config/reactive/testnet-deployer.env}
@@ -35,6 +40,8 @@ case "$NET" in
     WATCH_B=0x90721E018E2246a6555755D63418686a1A04FD9f          # tHTD Ethereum Sepolia (testnet-only heartbeat token)
     CANARY=0xa24A68DD788e1D7eb4CA517765CFb2b7e217e7a3
     CANARY_GAP=${CANARY_GAP:-3633}
+    CANARY_X=0x719E22E3D4b690E5d96cCb40619180B5427F14AE         # Chainlink ETH/USD aggregator on Ethereum Sepolia
+    CANARY_X_GAP=${CANARY_X_GAP:-7272}; X_RPC=${ETHEREUM_SEPOLIA_RPC:-https://ethereum-sepolia-rpc.publicnode.com}
     ;;
   *) echo "NET must be mainnet or testnet" >&2; exit 2 ;;
 esac
@@ -52,7 +59,10 @@ MAX_REACT=${MAX_REACT:-100}                            # total REACT this run ma
 MIN_BASE_ETH_WEI=${MIN_BASE_ETH_WEI:-1000000000000000} # keep 0.001 ETH on Base for callback gas
 CRON1000=0xe20b31294d84c3661ddc8f423abb9c70310d0cf172aa2714ead78029b325e3f4
 CRON10000=0xd214e1d84db704ed42d37f538ea9bf71e44ba28bc1cc088b2f5deca654677a56
-BRAKE_WINDOW=${BRAKE_WINDOW:-86400}; MAX_REFUSED=${MAX_REFUSED:-20}; VAULT_FUND=${VAULT_FUND:-0}
+BRAKE_WINDOW=${BRAKE_WINDOW:-86400}; MAX_REFUSED=${MAX_REFUSED:-20}
+# Callbacks are billed to the VAULT in Base ETH (never REACT); an unfunded vault goes into debt and receives nothing.
+# Default = the testnet instances' funding (script/heirloom-deploy.sh); top up later with a transfer + coverDebt().
+VAULT_FUND=${VAULT_FUND:-0.0002}
 
 # name:T:grace:freeze:attest:ack:tick:claimDelay:cron:cap:fundREACT   (A: Cron10000 ~ 7.9 ks on mainnet; B: Cron1000 ~ 790 s)
 if [ "$NET" = mainnet ]; then DEF_A=40; DEF_B=30; else DEF_A=0.05; DEF_B=0.05; fi   # testnet dry run: token amounts only
@@ -68,7 +78,7 @@ logtx() { # chain txhash purpose rpc   -> logs ts,chain,tx,purpose,cost_native; 
   st=$(jq -r .status <<<"$r"); gu=$(cast to-dec "$(jq -r .gasUsed <<<"$r")"); gp=$(cast to-dec "$(jq -r .effectiveGasPrice <<<"$r")")
   cost=$(awk -v g="$gu" -v p="$gp" 'BEGIN{printf "%.12f", g*p/1e18}')
   echo "$(date -u +%FT%TZ),$1,$2,$3,$cost" >> "$LOG"
-  [ "$st" = 0x1 ] || [ "$st" = 1 ] || { echo "TX FAILED (status $st): $2 ($3); see $LOG; do NOT rerun blindly" >&2; exit 8; }
+  [ "$st" = 0x1 ] || [ "$st" = 1 ] || { echo "TX FAILED (status $st): $2 ($3); see $LOG. Rerunning resumes: recorded contracts are checked on chain and reused" >&2; exit 8; }
 }
 
 # ---- preflight (read-only on every mode)
@@ -78,18 +88,29 @@ for a in "$PROXY" "$WATCH_A" "$CANARY"; do
   [ "$(cast code "$a" --rpc-url "$BASE_RPC" | wc -c)" -gt 4 ] || { echo "no contract code at $a on Base ($BASE_CHAIN)" >&2; exit 4; }
 done
 say "proxy $PROXY, token A $WATCH_A, canary $CANARY present on Base"
+[ "$(cast chain-id --rpc-url "$X_RPC")" = "$EXTRA_CHAIN" ] || { echo "Ethereum rpc is not chain $EXTRA_CHAIN" >&2; exit 4; }
+for a in "$WATCH_B" "$CANARY_X"; do
+  [ "$(cast code "$a" --rpc-url "$X_RPC" | wc -c)" -gt 4 ] || { echo "no contract code at $a on chain $EXTRA_CHAIN" >&2; exit 4; }
+done
+say "token B $WATCH_B, canary $CANARY_X present on chain $EXTRA_CHAIN"
 RC_BAL=$(cast balance "$DEPLOYER_ADDRESS" --rpc-url "$RC_RPC"); BASE_BAL=$(cast balance "$DEPLOYER_ADDRESS" --rpc-url "$BASE_RPC")
 say "deployer $DEPLOYER_ADDRESS: RC chain $(cast from-wei "$RC_BAL"), Base $(cast from-wei "$BASE_BAL") ETH"
 
 TOTAL_FUND=0
 for spec in "$A" "$B"; do
   IFS=: read -r NAME T GRACE FREEZE ATTEST ACK TICK CLAIM CRON CAP FUND <<<"$spec"
-  # claimDelay must cover the resend bound: 3 x ceil(ack/tick) x tick + one tick (architecture.md)
+  # claimDelay must cover the resend bound: 3 x ceil(ack/tick) x tick + one tick (enforced again on resume: same spec)
   BOUND=$(( 3 * ((ACK + TICK - 1) / TICK) * TICK + TICK ))
   [ "$CLAIM" -ge "$BOUND" ] || { echo "instance $NAME: claimDelay $CLAIM < resend bound $BOUND" >&2; exit 5; }
   [ "$ATTEST" -ge "$ACK" ] || { echo "instance $NAME: attestEvery < ackTimeout" >&2; exit 5; }
+  if [ "$EXECUTE" = 1 ] && grep -qs '^RC=' "evidence/mainnet-$NAME-addresses.txt"; then
+    say "instance $NAME: RC already recorded (resume); its $FUND REACT is not planned again"; continue
+  fi
   TOTAL_FUND=$(awk -v a="$TOTAL_FUND" -v b="$FUND" 'BEGIN{print a+b}')
 done
+if [ "$EXECUTE" = 1 ]; then
+  awk -v v="$VAULT_FUND" 'BEGIN{exit !(v>0)}' || { echo "VAULT_FUND must be > 0: callbacks are billed to the vault" >&2; exit 5; }
+fi
 awk -v t="$TOTAL_FUND" -v m="$MAX_REACT" 'BEGIN{exit !(t<=m)}' || { echo "planned funding $TOTAL_FUND exceeds MAX_REACT $MAX_REACT" >&2; exit 6; }
 if [ "$EXECUTE" = 1 ]; then
   RC_GAS_MARGIN=${RC_GAS_MARGIN:-2}   # REACT kept back for two RC deploys + setVault gas
@@ -115,7 +136,7 @@ create() { # rpc contract value ctor-signature args...  -> "address txhash"  (dr
     local sim=(cast call --rpc-url "$rpc" --from "$DEPLOYER_ADDRESS" --gas-limit "${SIM_GAS:-8000000}")
     if "${sim[@]}" --value "$wei" --create "$init" >/dev/null 2>/tmp/heirloom-sim.err; then
       echo "simulated-OK -"
-    elif grep -qi "insufficient funds" /tmp/heirloom-sim.err && "${sim[@]}" --value 0 --create "$init" >/dev/null 2>/tmp/heirloom-sim.err; then
+    elif grep -qiE "insufficient funds|OutOfFunds" /tmp/heirloom-sim.err && "${sim[@]}" --value 0 --create "$init" >/dev/null 2>/tmp/heirloom-sim.err; then
       echo "simulated-OK-with-value-0(deployer-unfunded) -"
     else
       echo "SIMULATION FAILED: $(head -c 300 /tmp/heirloom-sim.err)" >&2; echo "FAILED -"; : > "$FAIL_MARK"
@@ -131,7 +152,23 @@ for spec in "$A" "$B"; do
   say "instance $NAME: T=$T grace=$GRACE freeze=$FREEZE attest=$ATTEST ack=$ACK tick=$TICK claimDelay=$CLAIM cap=$CAP fund=$FUND REACT"
   FUND_WEI=$(cast to-wei "$FUND" ether); VFUND_WEI=$(cast to-wei "$VAULT_FUND" ether); ADDRS=evidence/mainnet-$NAME-addresses.txt
   CFG="($T,$GRACE,$FREEZE,$ATTEST,$ACK,$TICK,$BRAKE_WINDOW,$MAX_REFUSED,$CRON,0,$BASE_CHAIN,$PROXY)"
-  if [ "$EXECUTE" = 1 ]; then
+  RC=; VAULT=; RCTX=; VTX=
+  if [ "$EXECUTE" = 1 ] && [ -f "$ADDRS" ]; then   # resume: reuse what this instance already deployed
+    lc() { tr '[:upper:]' '[:lower:]' <<<"$1"; }
+    RC=$(sed -n 's/^RC=//p' "$ADDRS" | tail -1); VAULT=$(sed -n 's/^VAULT=//p' "$ADDRS" | tail -1)
+    stop9() { echo "instance $NAME: $1 — inspect evidence/mainnet-deploy.log; move $ADDRS aside only to deploy afresh" >&2; exit 9; }
+    [ -n "$RC" ] && [ "$(cast code "$RC" --rpc-url "$RC_RPC" | wc -c)" -gt 4 ] || stop9 "$ADDRS names RC '$RC' with no code on $RC_CHAIN"
+    [ "$(lc "$(cast call "$RC" 'owner()(address)' --rpc-url "$RC_RPC")")" = "$(lc "$OWNER")" ] || stop9 "recorded RC watches another owner"
+    [ "$(cast call "$RC" 'T()(uint64)' --rpc-url "$RC_RPC" | awk '{print $1}')" = "$T" ] || stop9 "recorded RC has a different T"
+    [ -z "$VAULT" ] || [ "$(cast code "$VAULT" --rpc-url "$BASE_RPC" | wc -c)" -gt 4 ] || stop9 "recorded vault $VAULT has no code on $BASE_CHAIN"
+    WIRED=$(lc "$(cast call "$RC" 'vault()(address)' --rpc-url "$RC_RPC")")
+    if [ -n "$VAULT" ] && [ "$WIRED" = "$(lc "$VAULT")" ]; then say "instance $NAME: already deployed and wired ($ADDRS); skipped"; IDX=$((IDX + 1)); continue; fi
+    [ "$WIRED" = 0x0000000000000000000000000000000000000000 ] || stop9 "recorded RC is wired to another vault ($WIRED)"
+    say "instance $NAME: resuming from $ADDRS (RC $RC${VAULT:+, vault $VAULT})"
+  fi
+  if [ "$EXECUTE" = 1 ] && [ -n "$RC" ]; then
+    :   # RC reused (resume)
+  elif [ "$EXECUTE" = 1 ]; then
     RC_FROM=$(cast block-number --rpc-url "$RC_RPC"); BASE_FROM=$(cast block-number --rpc-url "$BASE_RPC")
     CREATED=$(create "$RC_RPC" src/HeirloomReactive.sol:HeirloomReactive "$FUND_WEI" "$RC_CTOR" "$OWNER" "$CFG") || { echo "RC deploy failed; check evidence/mainnet-deploy.log" >&2; exit 8; }
     read -r RC RCTX <<<"$CREATED"; [ -n "${RC:-}" ] && [ "$RC" != null ] || { echo "no RC address parsed from: $CREATED" >&2; exit 8; }
@@ -144,17 +181,19 @@ for spec in "$A" "$B"; do
   [ "$EXECUTE" = 1 ] && say "  RC ($RC_CHAIN): $RC" || say "  RC creation $RCSTAT ($RC_CHAIN), predicted address $RC"
   VARGS=("$PROXY" "$RC" "$OWNER" "$HEIR" "$CLAIM" "$CAP" "[$BASE_CHAIN,$EXTRA_CHAIN]" "[$WATCH_A,$WATCH_B]")
   if [ "$EXECUTE" = 1 ]; then
-    CREATED=$(create "$BASE_RPC" src/HeirloomVault.sol:HeirloomVault "$VFUND_WEI" "$VAULT_CTOR" "${VARGS[@]}") || { echo "vault deploy failed; RC $RC is funded and recorded in $ADDRS" >&2; exit 8; }
-    read -r VAULT VTX <<<"$CREATED"; echo "VAULT=$VAULT" >> "$ADDRS"
+    if [ -z "$VAULT" ]; then
+      CREATED=$(create "$BASE_RPC" src/HeirloomVault.sol:HeirloomVault "$VFUND_WEI" "$VAULT_CTOR" "${VARGS[@]}") || { echo "vault deploy failed; RC $RC is funded and recorded in $ADDRS — rerun to resume" >&2; exit 8; }
+      read -r VAULT VTX <<<"$CREATED"; echo "VAULT=$VAULT" >> "$ADDRS"
+      logtx "$BASE_CHAIN" "$VTX" "deploy vault $NAME" "$BASE_RPC"
+    fi
   else
     read -r VAULT VTX < <(create "$BASE_RPC" src/HeirloomVault.sol:HeirloomVault "$VFUND_WEI" "$VAULT_CTOR" "${VARGS[@]}")
   fi
-  logtx "$BASE_CHAIN" "$VTX" "deploy vault $NAME" "$BASE_RPC"
   VSTAT=$VAULT; [ "$EXECUTE" = 1 ] || VAULT=$(cast compute-address "$DEPLOYER_ADDRESS" --nonce "$(( $(cast nonce "$DEPLOYER_ADDRESS" --rpc-url "$BASE_RPC") + IDX ))" | awk '{print $NF}')
   IDX=$((IDX + 1))
   [ "$EXECUTE" = 1 ] && say "  vault ($BASE_CHAIN): $VAULT" || say "  vault creation $VSTAT against predicted RC $RC"
   SETV=(setVault 'setVault(address,(uint256,address)[],(uint256,address,uint64)[])' "$VAULT" \
-    "[($BASE_CHAIN,$WATCH_A),($EXTRA_CHAIN,$WATCH_B)]" "[($BASE_CHAIN,$CANARY,$CANARY_GAP)]")
+    "[($BASE_CHAIN,$WATCH_A),($EXTRA_CHAIN,$WATCH_B)]" "[($BASE_CHAIN,$CANARY,$CANARY_GAP),($EXTRA_CHAIN,$CANARY_X,$CANARY_X_GAP)]")
   if [ "$EXECUTE" = 1 ]; then
     SGAS=(); [ -n "${RC_GAS_LIMIT:-}" ] && SGAS=(--gas-limit "$RC_GAS_LIMIT" --gas-price "${RC_GAS_PRICE:-100gwei}")
     STX=$(cast send "$RC" "${SETV[@]:1}" --rpc-url "$RC_RPC" --private-key "$DEPLOYER_PRIVATE_KEY" --json ${SGAS[@]+"${SGAS[@]}"} | jq -r .transactionHash) || { echo "setVault failed: RC $RC / vault $VAULT are recorded in $ADDRS" >&2; exit 8; }

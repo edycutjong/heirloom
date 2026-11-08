@@ -1,0 +1,12 @@
+{
+ "what": "AnswerUpdated gaps of the Chainlink ETH/USD aggregators used as Ethereum-side canaries (owner-independent liveness feeds)",
+ "measured": "2026-11-08 ~19:40 UTC, last 7000 blocks (~23 h) per chain, updatedAt from the event data",
+ "method": "proxy.aggregator() on the ETH/USD proxy (description() = \"ETH / USD\"), then cast logs AnswerUpdated(int256,uint256,uint256) in 500-block chunks",
+ "rule": "default maxGap = max(measured max gap, 2 x measured median gap)",
+ "feeds": [
+  {"chain": 1, "proxy": "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", "aggregator": "0x7d4E742018fb52E48b08BE73d041C18B21de6Fb5",
+   "updates": 24, "median_gap_s": 3612, "max_gap_s": 3696, "default_max_gap_s": 7224},
+  {"chain": 11155111, "proxy": "0x694AA1769357215DE4FAC081bf1f309aDC325306", "aggregator": "0x719E22E3D4b690E5d96cCb40619180B5427F14AE",
+   "updates": 24, "median_gap_s": 3636, "max_gap_s": 3636, "default_max_gap_s": 7272}
+ ]
+}

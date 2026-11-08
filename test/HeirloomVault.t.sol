@@ -269,6 +269,18 @@ contract HeirloomVaultTest is HeirloomBase {
         assertEq(rc.nextSeq(), seq, "a torn-down RC ignores every log");
     }
 
+    function test_reclaim_only_after_teardown() public {
+        address payable sink = payable(makeAddr("sink"));
+        vm.expectRevert(HeirloomReactive.NotDone.selector);
+        rc.reclaim(sink);
+        _release();
+        vm.prank(owner);
+        vm.expectRevert(HeirloomReactive.NotDeployer.selector);
+        rc.reclaim(sink);
+        rc.reclaim(sink);
+        assertEq(sink.balance, 10 ether);
+    }
+
     function test_retire_tears_down() public {
         ownerCall(abi.encodeCall(HeirloomVault.retire, ()));
         assertVault(HeirloomTypes.VaultState.RETIRED);

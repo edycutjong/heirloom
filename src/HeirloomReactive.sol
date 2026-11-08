@@ -161,6 +161,7 @@ contract HeirloomReactive is AbstractReactive {
     error NotDeployer();
     error AlreadyWired();
     error BadConfig();
+    error NotDone();
 
     // ------------------------------------------------------------------ setup
 
@@ -209,6 +210,14 @@ contract HeirloomReactive is AbstractReactive {
         observedFrom = nowTs;
         lastAttestAt = nowTs;
         balanceAtLastAttest = address(this).balance;
+    }
+
+    /// @notice Return the unspent reserve once the instance is torn down (never before: a live RC needs it).
+    function reclaim(address payable to) external {
+        if (msg.sender != deployer) revert NotDeployer();
+        if (phase != HeirloomTypes.Phase.DONE) revert NotDone();
+        (bool ok,) = to.call{value: address(this).balance}("");
+        if (!ok) revert BadConfig();
     }
 
     /// @notice Funds for reacts and callbacks. Counted so the runway estimate ignores top-ups.

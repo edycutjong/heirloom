@@ -1,6 +1,6 @@
 # Heirloom: demo and proof
 
-Every row below is a real transaction on Reactive Lasna (5318007), Base Sepolia (84532), Ethereum Sepolia (11155111) or Unichain Sepolia (1301), copied from [`evidence/triples.csv`](evidence/triples.csv). Nothing here is simulated. Mainnet rows do not exist yet: the mainnet deploy is a separate step (`scripts/deploy-mainnet.sh`, dry-run only so far), so every claim on this page is a testnet claim.
+Every row below is a real transaction on Reactive Lasna (5318007), Base Sepolia (84532) or Ethereum Sepolia (11155111), copied from [`evidence/triples.csv`](evidence/triples.csv), [`evidence/demo-actions.csv`](evidence/demo-actions.csv) and [`evidence/fresh-loop-runs.csv`](evidence/fresh-loop-runs.csv). Nothing here is simulated. Mainnet rows do not exist yet: the mainnet deploy is a separate step (`scripts/deploy-mainnet.sh`, dry-run only so far), so every claim on this page is a testnet claim.
 
 **Which build.** The testnet instances were deployed from an earlier commit than `HEAD` (before the re-entry lock, `coverDebt()` and the claim-grace fix). The rows prove the loop; the current contracts are what `forge test` runs and what mainnet deploys.
 
@@ -13,7 +13,7 @@ A watched wallet's token activity on an origin chain → a Reactive Network cont
 | Instance | Reactive contract (Lasna) | Vault (Base Sepolia) | T | Notes |
 |---|---|---|---|---|
 | demo | [`0xa3d92EAe…B8b`](https://lasna.reactscan.net/address/0xa3d92EAefb2fc4C972d6Ee524c24F38A93739B8b) | [`0x51365bb9…DBA`](https://sepolia.basescan.org/address/0x51365bb9560dDfA4236fd62d4eF2CB61f78edDBA) | 5 min | full scenario, torn down after the claim |
-| long-t | [`0x80b56204…DC6`](https://lasna.reactscan.net/address/0x80b56204D8860a6B46c08deCd9F01DD1881F9DC6) | [`0x8C37E794…7Be`](https://sepolia.basescan.org/address/0x8C37E79420Cd16e46E4D9FFd4541a87FfFa4e7Be) | 90 days | live and armed; the one to fire a loop against |
+| long-t | [`0x80b56204…DC6`](https://lasna.reactscan.net/address/0x80b56204D8860a6B46c08deCd9F01DD1881F9DC6) | [`0x8C37E794…7Be`](https://sepolia.basescan.org/address/0x8C37E79420Cd16e46E4D9FFd4541a87FfFa4e7Be) | 90 days | armed as of 2026-11-09; funded for days, not its 90-day horizon (`evidence/status.json`); the one to fire a loop against |
 
 Owner (both): `0x12bF8bbD1Eec23B5ab5A44B8d551bbC1d038651C`. Heir: `0x440E03bb3AAdBE65D5Bf2Ad7f84A64c509ff438b`.
 
@@ -64,7 +64,14 @@ Callback stages (GRACE, CANCEL, EXPIRE, ATTEST) have all three legs. VISIT and R
 | `initiateClaim` | [`0xf86669ab…8d`](https://sepolia.basescan.org/tx/0xf86669ab514601ee00a1fc8c0f97e6f0e6e2edb405cc9d496e761f25d91ede8d) |
 | `finalizeClaim` | [`0x13d8677c…3d`](https://sepolia.basescan.org/tx/0x13d8677c445bbfb41a63e33b3405c218bec83b6af7c50018ca34d739caf580d3) |
 
-The scenario's own summary (`evidence/demo-summary.json`): 5 callback rows, 5 of 5 acknowledged, 0 resends, 0 `FreezeUsed`, 3 canary arrivals.
+The scenario's own summary (`evidence/demo-summary.json`): 5 callback rows, 0 stuck, 0 resends, 0 `FreezeUsed`, 3 canary beats. Acknowledged callbacks: `evidence/status.json`, demo instance, `callbacksSent` 5 and `acked` 5.
+
+Teardown check (the finished demo instance holds no filters on Lasna; the live long-t instance holds 10):
+
+```sh
+curl -s -X POST https://lasna-rpc.rnk.dev/ -H 'content-type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"rnk_getFilters","params":[]}' \
+  | jq --arg rc 0xa3d92EAefb2fc4C972d6Ee524c24F38A93739B8b '[.. | objects | select(has("Contract")) | select((.Contract|type)=="string" and (.Contract|ascii_downcase)==($rc|ascii_downcase))] | length'
+```
 
 **Not yet in the evidence:** a REVIVE callback (the cross-chain revive after an expired grace) has no triple. The spec lists it as the fifth stage; the vault owner action is the synchronous cancel and is the path the CANCEL rows show.
 

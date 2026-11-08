@@ -1,0 +1,2 @@
+run_date,instance,origin_chain,origin_tx,reactive_tx,refusal
+2026-11-09,long-t,84532,0x777b953e33748cc005ae19e57c2f480ec54a2244203291ca7162690ab4174d79,0xb622bc82cdbd66bad8d5c14e085d4c080ec253c99b10ad1413675f67e849f226,ZERO_VALUE

@@ -161,6 +161,10 @@ for spec in "$A" "$B"; do
     [ "$(lc "$(cast call "$RC" 'owner()(address)' --rpc-url "$RC_RPC")")" = "$(lc "$OWNER")" ] || stop9 "recorded RC watches another owner"
     [ "$(cast call "$RC" 'T()(uint64)' --rpc-url "$RC_RPC" | awk '{print $1}')" = "$T" ] || stop9 "recorded RC has a different T"
     [ -z "$VAULT" ] || [ "$(cast code "$VAULT" --rpc-url "$BASE_RPC" | wc -c)" -gt 4 ] || stop9 "recorded vault $VAULT has no code on $BASE_CHAIN"
+    if [ -n "$VAULT" ]; then   # the recorded vault must be this RC's and this owner's, or setVault would wire a stranger's vault
+      [ "$(lc "$(cast call "$VAULT" 'rc()(address)' --rpc-url "$BASE_RPC")")" = "$(lc "$RC")" ] || stop9 "recorded vault $VAULT trusts another RC"
+      [ "$(lc "$(cast call "$VAULT" 'owner()(address)' --rpc-url "$BASE_RPC")")" = "$(lc "$OWNER")" ] || stop9 "recorded vault $VAULT has another owner"
+    fi
     WIRED=$(lc "$(cast call "$RC" 'vault()(address)' --rpc-url "$RC_RPC")")
     if [ -n "$VAULT" ] && [ "$WIRED" = "$(lc "$VAULT")" ]; then say "instance $NAME: already deployed and wired ($ADDRS); skipped"; IDX=$((IDX + 1)); continue; fi
     [ "$WIRED" = 0x0000000000000000000000000000000000000000 ] || stop9 "recorded RC is wired to another vault ($WIRED)"

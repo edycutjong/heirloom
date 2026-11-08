@@ -37,13 +37,13 @@ send() { # rpc to sig args... -> "hash status"
   cast send "$@" --rpc-url "$rpc" --private-key "$DEPLOYER_PRIVATE_KEY" --json | jq -r '.transactionHash + " " + .status'
 }
 
-TOKEN_BASE=${TOKEN_BASE:-$(create "$BASE_SEPOLIA_RPC" src/testnet/TestDollar.sol:TestDollar 0)}
-TOKEN_ETH=${TOKEN_ETH:-$(create "$ETHEREUM_SEPOLIA_RPC" src/testnet/TestDollar.sol:TestDollar 0)}
-echo "tHTD Base Sepolia: $TOKEN_BASE  Eth Sepolia: $TOKEN_ETH"
-[ "$(cast call "$TOKEN_BASE" 'balanceOf(address)(uint256)' "$OWNER" --rpc-url "$BASE_SEPOLIA_RPC" | cut -d' ' -f1)" != 0 ] ||
-  echo "mint base: $(send "$BASE_SEPOLIA_RPC" "$TOKEN_BASE" 'mint(address,uint256)' "$OWNER" 100000000)"
-[ "$(cast call "$TOKEN_ETH" 'balanceOf(address)(uint256)' "$OWNER" --rpc-url "$ETHEREUM_SEPOLIA_RPC" | cut -d' ' -f1)" != 0 ] ||
-  echo "mint eth:  $(send "$ETHEREUM_SEPOLIA_RPC" "$TOKEN_ETH" 'mint(address,uint256)' "$OWNER" 100000000)"
+THTD_BASE=${THTD_BASE:-$(create "$BASE_SEPOLIA_RPC" src/testnet/TestDollar.sol:TestDollar 0)}
+THTD_ETH=${THTD_ETH:-$(create "$ETHEREUM_SEPOLIA_RPC" src/testnet/TestDollar.sol:TestDollar 0)}
+echo "tHTD Base Sepolia: $THTD_BASE  Eth Sepolia: $THTD_ETH"
+[ "$(cast call "$THTD_BASE" 'balanceOf(address)(uint256)' "$OWNER" --rpc-url "$BASE_SEPOLIA_RPC" | cut -d' ' -f1)" != 0 ] ||
+  echo "mint base: $(send "$BASE_SEPOLIA_RPC" "$THTD_BASE" 'mint(address,uint256)' "$OWNER" 100000000)"
+[ "$(cast call "$THTD_ETH" 'balanceOf(address)(uint256)' "$OWNER" --rpc-url "$ETHEREUM_SEPOLIA_RPC" | cut -d' ' -f1)" != 0 ] ||
+  echo "mint eth:  $(send "$ETHEREUM_SEPOLIA_RPC" "$THTD_ETH" 'mint(address,uint256)' "$OWNER" 100000000)"
 
 LASNA_FROM=$(cast block-number --rpc-url "$LASNA_RPC")
 BASE_FROM=$(cast block-number --rpc-url "$BASE_SEPOLIA_RPC")
@@ -53,11 +53,11 @@ echo "HeirloomReactive (5318007): $RC"
 
 VAULT=$(create "$BASE_SEPOLIA_RPC" src/HeirloomVault.sol:HeirloomVault "$VAULT_FUND" \
   "$BASE_SEPOLIA_PROXY" "$RC" "$OWNER" "$HEIR" "$CLAIM_DELAY" "$CAP" \
-  "[84532,11155111,84532]" "[$TOKEN_BASE,$TOKEN_ETH,$USDC_BASE_SEPOLIA]")
+  "[84532,11155111,84532]" "[$THTD_BASE,$THTD_ETH,$USDC_BASE_SEPOLIA]")
 echo "HeirloomVault (84532): $VAULT"
 
 echo "setVault: $(send "$LASNA_RPC" "$RC" 'setVault(address,(uint256,address)[],(uint256,address,uint64)[])' "$VAULT" \
-  "[(84532,$TOKEN_BASE),(11155111,$TOKEN_ETH),(84532,$USDC_BASE_SEPOLIA)]" "[(84532,$CANARY_BASE_SEPOLIA,$CANARY_GAP)]")"
+  "[(84532,$THTD_BASE),(11155111,$THTD_ETH),(84532,$USDC_BASE_SEPOLIA)]" "[(84532,$CANARY_BASE_SEPOLIA,$CANARY_GAP)]")"
 
 cat > "$OUT" <<EOF
 INSTANCE=$INSTANCE
@@ -65,8 +65,8 @@ RC=$RC
 VAULT=$VAULT
 OWNER=$OWNER
 HEIR=$HEIR
-TOKEN_BASE=$TOKEN_BASE
-TOKEN_ETH=$TOKEN_ETH
+THTD_BASE=$THTD_BASE
+THTD_ETH=$THTD_ETH
 USDC_BASE=$USDC_BASE_SEPOLIA
 CANARY_BASE=$CANARY_BASE_SEPOLIA
 LASNA_FROM=$LASNA_FROM

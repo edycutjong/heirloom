@@ -1,0 +1,3 @@
+# Public testnet contract addresses (tHTD test token on Base Sepolia / Eth Sepolia), flagged by generic-api-key because the keys were named TOKEN_*; keys renamed to THTD_* afterwards.
+cc4ad945c79c4359fccb4cbdaf849a2be48922cc:evidence/p1b-e2e-addresses.txt:generic-api-key:6
+cc4ad945c79c4359fccb4cbdaf849a2be48922cc:evidence/p1b-e2e-addresses.txt:generic-api-key:7

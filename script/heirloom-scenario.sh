@@ -38,16 +38,16 @@ STRANGER_KEY=$(set -a; source "${STRANGER_ENV:-$HOME/.config/dreamdex/probe.env}
 STEP=${STEP:-all}
 
 if [ "$STEP" = all ] || [ "$STEP" = setup ]; then
-  act approve 84532 "$B" "$K" "$TOKEN_BASE" 'approve(address,uint256)' "$VAULT" 4000000
-  act deposit 84532 "$B" "$K" "$VAULT" 'deposit(address,uint256)' "$TOKEN_BASE" 4000000
-  act heartbeat 11155111 "$ETHEREUM_SEPOLIA_RPC" "$K" "$TOKEN_ETH" 'transfer(address,uint256)' "$HEIR" 1000000
+  act approve 84532 "$B" "$K" "$THTD_BASE" 'approve(address,uint256)' "$VAULT" 4000000
+  act deposit 84532 "$B" "$K" "$VAULT" 'deposit(address,uint256)' "$THTD_BASE" 4000000
+  act heartbeat 11155111 "$ETHEREUM_SEPOLIA_RPC" "$K" "$THTD_ETH" 'transfer(address,uint256)' "$HEIR" 1000000
   act spoof 84532 "$B" "$STRANGER_KEY" "$USDC_BASE" 'transferFrom(address,address,uint256)' "$OWNER" "$HEIR" 0
 fi
 
 if [ "$STEP" = all ] || [ "$STEP" = cancel ]; then
   wait_for "rc phase" phase 1 $((T + 300))
   wait_for "vault state" vstate 1 120
-  act heartbeat 84532 "$B" "$K" "$TOKEN_BASE" 'transfer(address,uint256)' "$HEIR" 1000000
+  act heartbeat 84532 "$B" "$K" "$THTD_BASE" 'transfer(address,uint256)' "$HEIR" 1000000
   wait_for "rc phase" phase 0 120
   wait_for "vault state" vstate 0 120
 fi
@@ -61,6 +61,6 @@ if [ "$STEP" = all ] || [ "$STEP" = expire ]; then
   act finalizeClaim 84532 "$B" "$K" "$VAULT" 'finalizeClaim()'
   wait_for "vault state" vstate 4 60
   wait_for "rc phase" phase 3 180
-  say "heir balance: $(cast call "$TOKEN_BASE" 'balanceOf(address)(uint256)' "$HEIR" --rpc-url "$B")"
+  say "heir balance: $(cast call "$THTD_BASE" 'balanceOf(address)(uint256)' "$HEIR" --rpc-url "$B")"
 fi
 say "scenario done"

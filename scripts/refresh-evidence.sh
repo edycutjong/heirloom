@@ -12,3 +12,6 @@ for f in $(jq -r '.instances[].addresses' deployments/testnet.json); do
   ADDR=$f $TSX scripts/heirloom-triples.ts
 done
 $TSX scripts/evidence-status.ts
+mkdir -p status/data
+cp evidence/status.json evidence/cost.json evidence/triples.json status/data/
+echo "status page data refreshed: status/data/{status,cost,triples}.json"

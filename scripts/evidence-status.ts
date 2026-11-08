@@ -9,10 +9,11 @@ import { appendFileSync, existsSync, readFileSync, writeFileSync } from "node:fs
 import { decodeEventLog, formatEther, parseAbi, type Log } from "viem";
 import { chain, client } from "../packages/reactive-kit/ts/chains.ts";
 
-const LASNA = 5318007, BASE_SEPOLIA = 84532;
 type Hex = `0x${string}`;
 interface Inst { id: string; label: string; addresses: string; fundedReact: number; reclaimedReact?: number; note?: string; costFrom?: number }
-const cfg: { network: string; instances: Inst[] } = JSON.parse(readFileSync("deployments/testnet.json", "utf8"));
+const cfg: { network: string; rcChain?: number; baseChain?: number; instances: Inst[] } = JSON.parse(readFileSync(process.env.DEPLOYMENTS ?? "deployments/testnet.json", "utf8"));
+const LASNA = cfg.rcChain ?? 5318007, BASE_SEPOLIA = cfg.baseChain ?? 84532;
+const SUFFIX = process.env.DEPLOYMENTS?.includes("mainnet") ? "-mainnet" : "";
 
 const rcAbi = parseAbi([
   "event Seen(uint256 indexed chainId, address indexed token, uint256 originTx)",
@@ -59,7 +60,7 @@ async function rcLogs(address: Hex, from: bigint) {
   return out;
 }
 
-const hist = "evidence/cost-history.csv";
+const hist = `evidence/cost-history${SUFFIX}.csv`;
 if (!existsSync(hist)) writeFileSync(hist, "ts,instance,balance_react\n");
 const samples = readFileSync(hist, "utf8").trim().split("\n").slice(1).map((l) => l.split(","));
 const now = Math.floor(Date.now() / 1000);
@@ -79,7 +80,8 @@ for (const inst of cfg.instances) {
   const [lastSeen, lastChain, lastOrigin, deadline, T] = await Promise.all([read("lastSeen"), read("lastChain"), read("lastOriginTx"), read("deadline"), read("T")]);
   const vstate = await tryRead(() => base.readContract({ address: VAULT, abi: vaultAbi, functionName: "state" }) as Promise<number>);
   const bal = Number(formatEther(await lasna.getBalance({ address: RC })));
-  if (!tornDown) appendFileSync(hist, `${now},${inst.id},${bal}\n`);
+  const lastTs = Math.max(0, ...samples.filter((x) => x[1] === inst.id).map((x) => Number(x[0])));
+  if (!tornDown && now - lastTs >= 300) appendFileSync(hist, `${now},${inst.id},${bal}\n`); // idempotent: reruns within 5 min add nothing
 
   // measured REACT/day: slope of the balance samples while the balance only falls (a top-up ends the window)
   const mine = samples.filter((s) => s[1] === inst.id && Number(s[0]) >= (inst.costFrom ?? 0)).map((s) => [Number(s[0]), Number(s[2])] as [number, number]);
@@ -87,7 +89,8 @@ for (const inst of cfg.instances) {
   let win = mine.slice(-1);
   for (let i = mine.length - 2; i >= 0 && mine[i][1] >= mine[i + 1][1]; i--) win = [mine[i], ...win];
   const spanS = win.length > 1 ? win[win.length - 1][0] - win[0][0] : 0;
-  const reactPerDay = !tornDown && spanS >= 3600 ? ((win[0][1] - win[win.length - 1][1]) / spanS) * 86400 : null;
+  const MIN_WINDOW_S = 6 * 3600; // shorter windows miss ATTEST / heartbeat bursts
+  const reactPerDay = !tornDown && spanS >= MIN_WINDOW_S ? ((win[0][1] - win[win.length - 1][1]) / spanS) * 86400 : null;
   const lifeEnd = tornDown ? undefined : now;
   const spent = inst.reclaimedReact !== undefined ? inst.fundedReact - inst.reclaimedReact : inst.fundedReact - bal;
   out.push({
@@ -101,9 +104,9 @@ for (const inst of cfg.instances) {
     heartbeats: count("Seen"), spoofsRefused: count("SpoofRefused"), refusedByReason: refusedBy,
     callbacksSent: new Set(log.filter((d) => d.name === "CallbackSent").map((d) => String(d.args.seq))).size,
     acked: count("Acked"), freezesUsed: count("FreezeUsed"), canaryArrivals: count("CanaryBeat"), brakes: count("SpamBrake"),
-    balanceReact: +bal.toFixed(6), fundedReact: inst.fundedReact, spentReact: +spent.toFixed(6),
+    balanceReact: +bal.toFixed(6), fundedReact: inst.fundedReact, spentReactReported: +spent.toFixed(6), // funded/reclaimed are hand-recorded in deployments/*.json, not measured by this script
     reactPerDay: reactPerDay === null ? null : +reactPerDay.toFixed(6),
-    reactPerMonth: reactPerDay === null ? null : +(reactPerDay * 30).toFixed(4),
+    reactPerMonth: reactPerDay === null ? null : +(reactPerDay * 30).toFixed(4), reactPerMonthBasis: reactPerDay === null ? null : "extrapolated from the measured window",
     fundedThrough: reactPerDay && reactPerDay > 0 ? new Date((now + (bal / reactPerDay) * 86400) * 1000).toISOString().slice(0, 10) : null,
     costWindowHours: +(spanS / 3600).toFixed(2),
   });
@@ -118,9 +121,9 @@ const rows = csv.slice(1).map((l) => {
   return o;
 });
 writeFileSync("evidence/triples.json", JSON.stringify(rows, null, 1) + "\n");
-writeFileSync("evidence/status.json", JSON.stringify({ generatedAt: new Date().toISOString(), network: cfg.network, instances: out }, null, 1) + "\n");
-writeFileSync("evidence/cost.json", JSON.stringify({
-  generatedAt: new Date().toISOString(), unit: "REACT (testnet lREACT)", usd: null,
+writeFileSync(`evidence/status${SUFFIX}.json`, JSON.stringify({ generatedAt: new Date().toISOString(), network: cfg.network, instances: out }, null, 1) + "\n");
+writeFileSync(`evidence/cost${SUFFIX}.json`, JSON.stringify({
+  generatedAt: new Date().toISOString(), unit: cfg.rcChain === 1597 ? "REACT" : "REACT (testnet lREACT)", usd: null,
   usdNote: "no dollar figure: it needs a second REACT price source",
   lines: out.map((i) => ({ id: i.id, reactPerDay: i.reactPerDay, reactPerMonth: i.reactPerMonth, windowHours: i.costWindowHours, balanceReact: i.balanceReact, fundedThrough: i.fundedThrough })),
 }, null, 1) + "\n");

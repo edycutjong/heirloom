@@ -8,7 +8,8 @@ import { decodeEventLog, parseAbi, type Log } from "viem";
 import { appendTriples, buildTriple, type Hex, type TripleRow } from "../packages/reactive-kit/ts/triples.ts";
 import { chain, client } from "../packages/reactive-kit/ts/chains.ts";
 
-const LASNA = 5318007, BASE_SEPOLIA = 84532;
+// RC chain / destination chain: Lasna + Base Sepolia by default; RC_CHAIN=1597 BASE_CHAIN=8453 for a mainnet instance
+const LASNA = Number(process.env.RC_CHAIN ?? 5318007), BASE_SEPOLIA = Number(process.env.BASE_CHAIN ?? 84532);
 const CRON_EMITTER = "0x0000000000000000000000000000000000fffFfF";
 const env = Object.fromEntries(
   readFileSync(process.env.ADDR ?? "evidence/p1b-e2e-addresses.txt", "utf8").trim().split("\n").map((l) => l.split("=") as [string, string]),

@@ -12,13 +12,13 @@
 </head>
 <body>
 <a class="skip" href="#rows">Skip to the transaction rows</a>
-<main class="card" id="card" aria-live="polite">
+<main class="card" id="card">
   <header class="band">
     <div>
       <h1>Heirloom</h1>
       <p class="sub"><span id="label">Loading…</span> <span class="pill" id="net"></span></p>
     </div>
-    <div id="stamp" class="stamp" role="status">—</div>
+    <div id="stamp" class="stamp" role="status" aria-live="polite">—</div>
   </header>
 
   <nav id="tabs" class="tabs" aria-label="Instances"></nav>
@@ -49,7 +49,9 @@
         <button id="initiate" type="button" disabled>Initiate claim</button>
         <button id="finalize" type="button" disabled>Finalize</button>
       </div>
-      <p id="claimmsg" class="msg" role="status"></p>
+      <p id="countdown" class="muted"></p>
+      <ul id="tokens" class="small"></ul>
+      <p id="claimmsg" class="msg" role="status" aria-live="polite"></p>
     </div>
     <p class="small">Fallbacks: <code>scripts/claim.ts</code>, or “Write contract” on the vault’s Basescan page.</p>
   </section>

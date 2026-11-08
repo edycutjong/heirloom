@@ -5,11 +5,19 @@ import { createPublicClient, createWalletClient, custom, defineChain, http, pars
 const EXPLORER = {
   5318007: "https://lasna.reactscan.net/tx/", 84532: "https://sepolia.basescan.org/tx/",
   11155111: "https://sepolia.etherscan.io/tx/", 1301: "https://sepolia.uniscan.xyz/tx/",
-  1597: "https://reactscan.net/tx/", 8453: "https://basescan.org/tx/",
+  1597: "https://reactscan.net/tx/", 8453: "https://basescan.org/tx/", 1: "https://etherscan.io/tx/",
 };
-const CHAIN_NAME = { 5318007: "Lasna", 84532: "Base Sepolia", 11155111: "Eth Sepolia", 1301: "Unichain Sepolia", 1597: "Reactive", 8453: "Base" };
-const lasna = defineChain({ id: 5318007, name: "Reactive Lasna", nativeCurrency: { name: "lREACT", symbol: "lREACT", decimals: 18 }, rpcUrls: { default: { http: ["https://lasna-rpc.rnk.dev/"] } } });
-const baseSep = defineChain({ id: 84532, name: "Base Sepolia", nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 }, rpcUrls: { default: { http: ["https://sepolia.base.org"] } }, blockExplorers: { default: { name: "Basescan", url: "https://sepolia.basescan.org" } } });
+const CHAIN_NAME = { 5318007: "Lasna", 84532: "Base Sepolia", 11155111: "Eth Sepolia", 1301: "Unichain Sepolia", 1597: "Reactive", 8453: "Base", 1: "Ethereum" };
+const NETS = {
+  testnet: { rc: defineChain({ id: 5318007, name: "Reactive Lasna", nativeCurrency: { name: "lREACT", symbol: "lREACT", decimals: 18 }, rpcUrls: { default: { http: ["https://lasna-rpc.rnk.dev/"] } } }),
+             base: defineChain({ id: 84532, name: "Base Sepolia", nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 }, rpcUrls: { default: { http: ["https://sepolia.base.org"] } }, blockExplorers: { default: { name: "Basescan", url: "https://sepolia.basescan.org" } } }),
+             sym: "lREACT", baseName: "Base Sepolia" },
+  mainnet: { rc: defineChain({ id: 1597, name: "Reactive", nativeCurrency: { name: "REACT", symbol: "REACT", decimals: 18 }, rpcUrls: { default: { http: ["https://mainnet-rpc.rnk.dev/"] } } }),
+             base: defineChain({ id: 8453, name: "Base", nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 }, rpcUrls: { default: { http: ["https://base-rpc.publicnode.com"] } }, blockExplorers: { default: { name: "Basescan", url: "https://basescan.org" } } }),
+             sym: "REACT", baseName: "Base" },
+};
+const NET = NETS[new URLSearchParams(location.search).get("net") === "mainnet" ? "mainnet" : "testnet"];
+const lasna = NET.rc, baseSep = NET.base;
 const pubLasna = createPublicClient({ chain: lasna, transport: http() });
 const pubBase = createPublicClient({ chain: baseSep, transport: http() });
 
@@ -17,9 +25,12 @@ const vaultAbi = parseAbi([
   "function state() view returns (uint8)", "function heir() view returns (address)", "function claimReadyAt() view returns (uint64)",
   "function claimDelay() view returns (uint64)", "function claimCanInitiate() view returns (bool)", "function graceEndsAt() view returns (uint64)",
   "function lastSeenMirror() view returns (uint64)", "function lastChainMirror() view returns (uint256)", "function lastOriginTxMirror() view returns (bytes32)",
-  "function runwayDays() view returns (uint32)", "function estateTokenCount() view returns (uint256)", "function estateTokens(uint256) view returns (address)", "function paid(address) view returns (bool)", "function initiateClaim()", "function finalizeClaim()",
+  "function runwayDays() view returns (uint32)", "function estateTokenCount() view returns (uint256)", "function estateTokens(uint256) view returns (address)", "function paid(address) view returns (bool)", "function initiateClaim()", "function finalizeClaim()", "function finalizeToken(address)",
 ]);
-const rcAbi = parseAbi(["function phase() view returns (uint8)", "function deadline() view returns (uint64)", "function lastSeen() view returns (uint64)", "function T() view returns (uint64)"]);
+const rcAbi = parseAbi(["function phase() view returns (uint8)", "function deadline() view returns (uint64)", "function lastSeen() view returns (uint64)", "function T() view returns (uint64)",
+  "function lastChain() view returns (uint256)", "function lastOriginTx() view returns (bytes32)", "function brakedCount() view returns (uint256)", "function runwayDays() view returns (uint32)",
+  "function canaryChains() view returns (uint256[])", "function canaries(uint256) view returns (address aggregator, uint64 maxGap, uint64 lastAt, uint64 maxGapSeen, bool armed)",
+  "function tokens() view returns ((uint256 chainId, address token)[])", "function refusedTotal() view returns (uint32)"]);
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -41,14 +52,15 @@ async function main() {
   triples = (await loadJson("data/triples.json")) ?? [];
   $("gen").textContent = status.generatedAt ? `Evidence generated ${status.generatedAt.slice(0, 19).replace("T", " ")} UTC` : "No evidence snapshot loaded";
   const list = [...status.instances];
-  if (q.get("rc") && q.get("vault")) list.unshift({ id: "custom", label: "Your instance (from the link)", rc: q.get("rc"), vault: q.get("vault"), network: "Lasna + Base Sepolia", custom: true });
+  if (q.get("rc") && q.get("vault")) list.unshift({ id: "custom", label: "Your instance (from the link)", rc: q.get("rc"), vault: q.get("vault"), network: `${NET.rc.name} + ${NET.baseName}`, custom: true });
   if (!list.length) { $("label").textContent = "No instance data"; return; }
   $("tabs").innerHTML = list.map((i, n) => `<button type="button" data-n="${n}">${esc(i.id)}</button>`).join("");
   $("tabs").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) show(list[+b.dataset.n]); });
   show(list.find((i) => i.id === q.get("instance")) ?? list[0]);
 }
 
-function setStamp(txt, cls) { const el = $("stamp"); const prev = el.textContent; el.textContent = txt; el.className = `stamp ${cls ?? ""}`; if (cls === "released" && prev && prev !== txt && !/RELEASED/.test(prev)) el.classList.add("pop"); }
+let lastState = null;
+function setStamp(txt, cls, state) { const el = $("stamp"); el.textContent = txt; el.className = `stamp ${cls ?? ""}`; if (cls === "released" && lastState !== null && lastState < 2 && state >= 2) el.classList.add("pop"); if (state !== undefined) lastState = state; }
 
 async function show(i) {
   current = i;
@@ -60,6 +72,7 @@ async function show(i) {
 }
 
 function renderRows(i) {
+  if (i.custom) { $("tbody").innerHTML = `<tr><td colspan="5">Rows for your own instance are not loaded on this page yet. Open the Reactive explorer for <code>${esc(short(i.rc))}</code>; the state, facts and heir stub above are live.</td></tr>`; return; }
   const rows = triples.filter((t) => t.instance === i.id && t.stage !== "PROBE").reverse();
   if (!rows.length) { $("tbody").innerHTML = `<tr><td colspan="5">No visits stamped yet. Move an allowlisted token or run <code>ping()</code>.</td></tr>`; return; }
   $("tbody").innerHTML = rows.map((t) => {
@@ -74,18 +87,26 @@ function renderRows(i) {
 }
 
 function fact(k, v) { return `<div><dt>${esc(k)}</dt><dd>${v}</dd></div>`; }
+const dur = (sec) => { sec = Math.max(0, Math.round(sec)); const d = Math.floor(sec / 86400), h = Math.floor((sec % 86400) / 3600), m = Math.floor((sec % 3600) / 60), x = sec % 60; return d ? `${d} d ${h} h` : h ? `${h} h ${m} min` : m ? `${m} min ${x} s` : `${x} s`; };
 function renderFacts(i, lv) {
   const last = lv?.lastSeen ?? i.lastSeen, chainId = lv?.lastChain ?? i.lastChain, origin = lv?.lastOrigin ?? i.lastOriginTx;
+  const dl = (lv?.state ?? 0) < 2 ? (lv?.deadline ?? i.deadline) : null;
+  const days = i.deployedAt && !i.tornDown ? ((Date.now() / 1000 - i.deployedAt) / 86400).toFixed(2) : i.tornDown ? "ended" : "—";
+  const canary = lv?.canaries?.length ? lv.canaries.map((c) => c.armed ? `${esc(CHAIN_NAME[c.chain] ?? c.chain)}: ${c.lastAt ? rel(c.lastAt) : "no beat yet"}` : `${esc(CHAIN_NAME[c.chain] ?? c.chain)}: not armed`).join("<br>") : "no canary";
   const parts = [
     fact("Last seen", last ? `${rel(last)}<br>${utc(last)} UTC<br>${esc(CHAIN_NAME[chainId] ?? "")}` : "—"),
-    fact("Last origin tx", origin && /^0x0+$/.test(origin) === false ? link(+chainId, origin) : "—"),
-    fact("Deadline", (lv?.state ?? 0) < 2 && (lv?.deadline ?? i.deadline) ? `${utc(lv?.deadline ?? i.deadline)} UTC<br>${rel(lv?.deadline ?? i.deadline)}` : "—"),
-    fact("Days live", i.daysLive != null ? `${i.daysLive}` : i.tornDown ? "ended" : "—"),
-    fact("Heartbeats · refused", i.heartbeats != null ? `${i.heartbeats} · ${i.spoofsRefused}` : "—"),
-    fact("RC reserve", lv?.balance != null ? `${lv.balance} lREACT` : i.balanceReact != null ? `${i.balanceReact} lREACT` : "—"),
-    fact("Cost", i.reactPerMonth != null ? `${i.reactPerMonth} REACT / month (measured over ${i.costWindowHours} h)<br>funded through ${esc(i.fundedThrough ?? "—")}` : "not yet measured (needs ≥ 1 h of quiet samples)"),
+    fact("Last origin tx", origin && !/^0x0+$/.test(origin) ? link(+chainId, origin) : "—"),
+    fact("Deadline", dl ? `${utc(dl)} UTC<br>${rel(dl)}` : "—"),
+    fact("Canary age (per chain)", canary),
+    fact("Days live", days),
+    fact("Heartbeats · refused", i.heartbeats != null ? `${i.heartbeats} · ${i.spoofsRefused} (as of the evidence snapshot)` : "—"),
+    fact("RC reserve", lv?.balance != null ? `${lv.balance} ${NET.sym}${lv.runway ? `<br>runway ${lv.runway} d (from the last attest)` : ""}` : i.balanceReact != null ? `${i.balanceReact} ${NET.sym}` : "—"),
+    fact("Vault gas reserve", lv?.vaultEth != null ? `${lv.vaultEth} ETH` : "—"),
+    fact("Cost", i.reactPerMonth != null ? `${i.reactPerMonth} ${NET.sym} / month (${esc(i.reactPerMonthBasis ?? "measured")}, ${i.costWindowHours} h window)<br>funded through ${esc(i.fundedThrough ?? "—")}` : "not yet measured (needs a quiet window of at least 6 h)"),
   ];
   $("facts").innerHTML = parts.join("");
+  $("brake").hidden = !(lv?.braked > 0);
+  if (lv?.braked > 0) $("brake").textContent = `BRAKED: ${lv.braked} token(s). Observation blocked; the clock restarts when it lifts.`;
 }
 
 async function live(i) {
@@ -97,21 +118,24 @@ async function live(i) {
       rd("state"), rd("heir"), rd("claimReadyAt"), rd("claimDelay"), rd("claimCanInitiate"), rd("graceEndsAt"), rd("lastSeenMirror"), rd("lastChainMirror"), rd("lastOriginTxMirror"),
     ]);
     const rcr = async (f) => { try { return await pubLasna.readContract({ address: i.rc, abi: rcAbi, functionName: f }); } catch { return null; } };
-    const [deadline, rcSeen] = await Promise.all([rcr("deadline"), rcr("lastSeen")]);
+    const [deadline, rcSeen, rcChain, rcOrigin, braked, runway, cchains] = await Promise.all([rcr("deadline"), rcr("lastSeen"), rcr("lastChain"), rcr("lastOriginTx"), rcr("brakedCount"), rcr("runwayDays"), rcr("canaryChains")]);
     let bal = null; try { bal = (+formatEther(await pubLasna.getBalance({ address: i.rc }))).toFixed(4); } catch {}
-    let unpaid = 0;
+    let vaultEth = null; try { vaultEth = (+formatEther(await pubBase.getBalance({ address: i.vault }))).toFixed(5); } catch {}
+    const canaries = [];
+    for (const c of cchains ?? []) { try { const [, , lastAt, , armed] = await pubLasna.readContract({ address: i.rc, abi: rcAbi, functionName: "canaries", args: [c] }); canaries.push({ chain: Number(c), lastAt: Number(lastAt), armed }); } catch {} }
+    let unpaid = 0; const tokenStatus = [];
     if (Number(state) === 4) {
       const n = Number(await rd("estateTokenCount"));
-      for (let k = 0; k < n; k++) { const t = await rd("estateTokens", [BigInt(k)]); if (!(await rd("paid", [t]))) unpaid++; }
+      for (let k = 0; k < n; k++) { const t = await rd("estateTokens", [BigInt(k)]); const p = await rd("paid", [t]); tokenStatus.push({ token: t, paid: p }); if (!p) unpaid++; }
     }
-    const lv = { unpaid, state: Number(state), heir, claimReadyAt: Number(claimReadyAt), claimDelay: Number(claimDelay), canInit, graceEndsAt: Number(graceEndsAt),
-      lastSeen: Number(rcSeen ?? 0) || Number(lastSeen), lastChain: Number(lastChain), lastOrigin, deadline: deadline ? Number(deadline) : null, balance: bal };
+    const lv = { unpaid, tokenStatus, state: Number(state), heir, claimReadyAt: Number(claimReadyAt), claimDelay: Number(claimDelay), canInit, graceEndsAt: Number(graceEndsAt),
+      lastSeen: Number(rcSeen ?? 0) || Number(lastSeen), lastChain: Number(rcChain ?? 0) || Number(lastChain), lastOrigin: rcOrigin ?? lastOrigin, deadline: deadline ? Number(deadline) : null, balance: bal, vaultEth, braked: Number(braked ?? 0), runway: runway == null ? null : Number(runway), canaries };
     localStorage.setItem(key, JSON.stringify({ ...lv, ts: Date.now() }));
     apply(i, lv);
   } catch (e) {
-    const snap = JSON.parse(localStorage.getItem(key) || "null");
+    let snap = null; try { snap = JSON.parse(localStorage.getItem(key) || "null"); } catch {}
     $("offline").hidden = false;
-    $("offline").textContent = `Can't read Base right now${snap ? `; last snapshot ${new Date(snap.ts).toISOString().slice(0, 19).replace("T", " ")} UTC` : ""}. The rows below come from the committed evidence.`;
+    $("offline").textContent = `Can't read ${NET.baseName} right now${snap ? `; last snapshot ${new Date(snap.ts).toISOString().slice(0, 19).replace("T", " ")} UTC` : ""}. The rows below come from the committed evidence.`;
     if (snap) apply(i, snap); else setStamp(i.vaultState ?? "—", "");
   }
 }
@@ -119,12 +143,13 @@ async function live(i) {
 function apply(i, lv) {
   const s = VSTATE[lv.state];
   const cls = lv.state >= 2 ? "released" : lv.state === 1 ? "outlined" : "";
-  setStamp(lv.state === 1 ? `Dormant — grace until ${utc(lv.graceEndsAt)}` : lv.state === 3 ? `Claim pending — ${utc(lv.claimReadyAt)}` : s, cls);
+  setStamp(lv.state === 1 ? `Dormant — grace until ${utc(lv.graceEndsAt)}` : lv.state === 3 ? `Claim pending — ${utc(lv.claimReadyAt)}` : s, cls, lv.state);
   renderFacts(i, lv);
-  $("stubfacts").innerHTML = fact("Heir", `<span class="v" title="${esc(lv.heir)}">${esc(lv.heir)}</span>`) + fact("Claim delay", `${Math.round(lv.claimDelay / 60)} min`) + fact("Vault state", esc(s));
+  $("stubfacts").innerHTML = fact("Heir", `<span class="v" title="${esc(lv.heir)}">${esc(lv.heir)}</span>`) + fact("Claim delay", dur(lv.claimDelay)) + fact("Vault state", esc(s));
   const show = lv.canInit || lv.state === 3 || lv.state === 2 || (lv.state === 4 && lv.unpaid > 0);
   $("claim").hidden = !show;
   $("claimhead").textContent = lv.state === 4 ? "Released, but some tokens are unpaid." : "Claimable.";
+  $("tokens").innerHTML = (lv.tokenStatus ?? []).map((t) => `<li><code title="${esc(t.token)}">${esc(short(t.token))}</code>: ${t.paid ? "paid" : `failed, <button type="button" class="retry" data-token="${esc(t.token)}">retry</button>`}</li>`).join("");
   $("paidline").hidden = !(lv.state === 4 && lv.unpaid === 0);
   $("paidline").textContent = "Released: every estate token was paid to the heir.";
   $("claim").dataset.vault = i.vault; $("claim").dataset.readyAt = lv.claimReadyAt; $("claim").dataset.canInit = lv.canInit; $("claim").dataset.state = lv.state;
@@ -136,7 +161,7 @@ function syncButtons() {
   $("connect").hidden = !!account; $("connect").textContent = "Connect wallet";
   $("initiate").disabled = !account || d.canInit !== "true";
   $("finalize").disabled = !account || +d.state !== 3 || now < +d.readyAt;
-  if (+d.state === 3 && now < +d.readyAt) $("claimmsg").textContent = `Ready in ${Math.max(0, +d.readyAt - now)} s.`;
+  $("countdown").textContent = +d.state === 3 ? (now < +d.readyAt ? `Ready in ${dur(+d.readyAt - now)}.` : "Ready. Press Finalize.") : "";
 }
 setInterval(() => { if (!$("claim").hidden) syncButtons(); }, 1000);
 
@@ -145,19 +170,20 @@ $("connect").onclick = async () => {
   try {
     wallet = createWalletClient({ chain: baseSep, transport: custom(window.ethereum) });
     [account] = await wallet.requestAddresses();
-    try { await wallet.switchChain({ id: 84532 }); } catch { await wallet.addChain({ chain: baseSep }); }
+    try { await wallet.switchChain({ id: baseSep.id }); } catch { await wallet.addChain({ chain: baseSep }); }
     $("claimmsg").textContent = `Connected ${short(account)}.`; syncButtons();
   } catch (e) { $("claimmsg").textContent = plain(e); }
 };
-const plain = (e) => /insufficient funds/i.test(e?.message) ? "This wallet has no Base Sepolia ETH for gas. Anyone can press the button; ask a friend." : /not ready|NotReady/i.test(e?.message) ? "Not ready yet: wait for the countdown." : /rejected|denied/i.test(e?.message) ? "Cancelled in the wallet." : (e?.shortMessage ?? e?.message ?? "Failed").slice(0, 200);
-async function send(fn) {
+const plain = (e) => /insufficient funds/i.test(e?.message) ? `This wallet has no ${NET.baseName} ETH for gas. Anyone can press the button; ask a friend.` : /not ready|NotReady/i.test(e?.message) ? "Not ready yet: wait for the countdown." : /rejected|denied/i.test(e?.message) ? "Cancelled in the wallet." : (e?.shortMessage ?? e?.message ?? "Failed").slice(0, 200);
+async function send(fn, args = []) {
   try { $("claimmsg").textContent = "Confirm in your wallet…";
-    const hash = await wallet.writeContract({ address: $("claim").dataset.vault, abi: vaultAbi, functionName: fn, account });
-    $("claimmsg").innerHTML = `Sent ${link(84532, hash)}. Waiting…`;
-    await pubBase.waitForTransactionReceipt({ hash }); $("claimmsg").innerHTML = `Done ${link(84532, hash)}.`; await live(current);
+    const hash = await wallet.writeContract({ address: $("claim").dataset.vault, abi: vaultAbi, functionName: fn, args, account });
+    $("claimmsg").innerHTML = `Sent ${link(baseSep.id, hash)}. Waiting…`;
+    await pubBase.waitForTransactionReceipt({ hash }); $("claimmsg").innerHTML = `Done ${link(baseSep.id, hash)}.`; await live(current);
   } catch (e) { $("claimmsg").textContent = plain(e); }
 }
 $("initiate").onclick = () => send("initiateClaim");
+$("tokens").onclick = (e) => { const b = e.target.closest(".retry"); if (b) send("finalizeToken", [b.dataset.token]); };
 $("finalize").onclick = () => send("finalizeClaim");
 
 main();

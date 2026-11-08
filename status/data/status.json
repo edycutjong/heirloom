@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-08T18:31:01.312Z",
+ "generatedAt": "2026-11-08T18:44:00.848Z",
  "network": "Reactive Lasna (5318007) + Base Sepolia (84532); heartbeats from Ethereum Sepolia (11155111)",
  "instances": [
   {
@@ -20,7 +20,7 @@
    "lastOriginTx": "0x2082f0bc5c04108e8393bb2b58451b5a58c90a057aa0ccc6a2e2d8aee05def00",
    "deadline": 1801937322,
    "deployedAt": 1794160666,
-   "daysLive": 0.023,
+   "daysLive": 0.032,
    "heartbeats": 6,
    "spoofsRefused": 2,
    "refusedByReason": {
@@ -31,13 +31,14 @@
    "freezesUsed": 0,
    "canaryArrivals": 0,
    "brakes": 0,
-   "balanceReact": 0.370775,
+   "balanceReact": 0.357351,
    "fundedReact": 0.5,
-   "spentReact": 0.129225,
+   "spentReactReported": 0.142649,
    "reactPerDay": null,
    "reactPerMonth": null,
+   "reactPerMonthBasis": null,
    "fundedThrough": null,
-   "costWindowHours": 0
+   "costWindowHours": 0.22
   },
   {
    "id": "demo",
@@ -70,9 +71,10 @@
    "brakes": 0,
    "balanceReact": 0,
    "fundedReact": 0.5,
-   "spentReact": 0.4201,
+   "spentReactReported": 0.4201,
    "reactPerDay": null,
    "reactPerMonth": null,
+   "reactPerMonthBasis": null,
    "fundedThrough": null,
    "costWindowHours": 0
   },
@@ -107,9 +109,10 @@
    "brakes": 0,
    "balanceReact": 0,
    "fundedReact": 2,
-   "spentReact": 1.2554,
+   "spentReactReported": 1.2554,
    "reactPerDay": null,
    "reactPerMonth": null,
+   "reactPerMonthBasis": null,
    "fundedThrough": null,
    "costWindowHours": 0
   }

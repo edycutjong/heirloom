@@ -59,3 +59,4 @@ tbody tr:hover td{background:rgba(201,191,168,.35)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 @media (max-width:1100px){.stub:before,.stub:after{display:none}}
 @media (max-width:639px){.pill{white-space:normal;display:inline-block;margin:6px 0 0}.sub{overflow-wrap:anywhere}html,body{overflow-x:hidden}}
+.retry{font:600 16px var(--font-body);background:transparent;border:1px solid var(--before);color:var(--before);padding:2px 10px;cursor:pointer}.retry:hover{background:var(--rule)}

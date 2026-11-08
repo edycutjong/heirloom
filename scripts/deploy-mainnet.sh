@@ -4,10 +4,10 @@
 #
 #   scripts/deploy-mainnet.sh                    # DRY RUN on mainnet RPCs: read-only preflight + unsent simulations
 #   NET=testnet scripts/deploy-mainnet.sh        # DRY RUN against the Lasna / Base Sepolia pair
-#   scripts/deploy-mainnet.sh --execute          # spends real funds; refuses unless $AUTH_FILE exists (see below)
+#   scripts/deploy-mainnet.sh --execute          # spends real funds; refuses unless ../specs/mainnet-authorized exists
 #
 # Keys: $DEPLOY_ENV (default ~/.config/reactive/mainnet-deployer.env, testnet: testnet-deployer.env). Never in the repo.
-# Safety: --execute needs AUTH_FILE (default ../specs/mainnet-authorized, the human's go-ahead), only runs with NET=mainnet,
+# Safety: --execute needs ../specs/mainnet-authorized (the human's go-ahead), only runs with NET=mainnet,
 # stops if planned funding exceeds MAX_REACT, keeps a Base ETH reserve, and logs every sent tx to evidence/mainnet-txs.csv
 # (ts,chain,tx,purpose,cost_native). Tunables below are env vars; a bad tick/ack/claim combination aborts before anything is sent.
 set -euo pipefail
@@ -40,7 +40,7 @@ case "$NET" in
 esac
 if [ "$EXECUTE" = 1 ]; then
   [ "$NET" = mainnet ] || { echo "--execute is mainnet-only; the testnet pair is dry-run here (use script/heirloom-deploy.sh for live testnet instances)" >&2; exit 2; }
-  AUTH_FILE=${AUTH_FILE:-../specs/mainnet-authorized}
+  AUTH_FILE=../specs/mainnet-authorized   # fixed path on purpose: not overridable from the environment
   [ -f "$AUTH_FILE" ] || { echo "refusing to spend: $AUTH_FILE does not exist (the human's go-ahead)" >&2; exit 3; }
 fi
 set -a; source "$DEPLOY_ENV"; set +a
@@ -62,11 +62,13 @@ B=${B:-B:172800:21600:21600:86400:1800:800:43200:$CRON1000:5000000:${B_FUND:-$DE
 LOG=evidence/mainnet-txs.csv
 [ "$EXECUTE" = 0 ] || [ -f "$LOG" ] || echo "ts,chain,tx,purpose,cost_native" > "$LOG"
 say() { echo "[$NET$([ "$EXECUTE" = 1 ] || echo ' DRY-RUN')] $*"; }
-logtx() { # chain txhash purpose rpc
+logtx() { # chain txhash purpose rpc   -> logs ts,chain,tx,purpose,cost_native; aborts if the tx did not succeed
   [ "$EXECUTE" = 1 ] || return 0
-  local r; r=$(cast receipt "$2" --rpc-url "$4" --json)
-  local cost; cost=$(jq -r '(.gasUsed|tonumber) * (.effectiveGasPrice|tonumber) / 1e18' <<<"$r" 2>/dev/null || echo "?")
+  local r st gu gp cost; r=$(cast receipt "$2" --rpc-url "$4" --json)
+  st=$(jq -r .status <<<"$r"); gu=$(cast to-dec "$(jq -r .gasUsed <<<"$r")"); gp=$(cast to-dec "$(jq -r .effectiveGasPrice <<<"$r")")
+  cost=$(awk -v g="$gu" -v p="$gp" 'BEGIN{printf "%.12f", g*p/1e18}')
   echo "$(date -u +%FT%TZ),$1,$2,$3,$cost" >> "$LOG"
+  [ "$st" = 0x1 ] || [ "$st" = 1 ] || { echo "TX FAILED (status $st): $2 ($3); see $LOG; do NOT rerun blindly" >&2; exit 8; }
 }
 
 # ---- preflight (read-only on every mode)
@@ -90,8 +92,10 @@ for spec in "$A" "$B"; do
 done
 awk -v t="$TOTAL_FUND" -v m="$MAX_REACT" 'BEGIN{exit !(t<=m)}' || { echo "planned funding $TOTAL_FUND exceeds MAX_REACT $MAX_REACT" >&2; exit 6; }
 if [ "$EXECUTE" = 1 ]; then
-  awk -v b="$(cast from-wei "$RC_BAL")" -v t="$TOTAL_FUND" 'BEGIN{exit !(b>=t)}' || { echo "deployer holds less than the planned $TOTAL_FUND REACT" >&2; exit 6; }
-  [ "$BASE_BAL" -ge "$MIN_BASE_ETH_WEI" ] || { echo "deployer Base ETH below reserve" >&2; exit 6; }
+  RC_GAS_MARGIN=${RC_GAS_MARGIN:-2}   # REACT kept back for two RC deploys + setVault gas
+  awk -v b="$(cast from-wei "$RC_BAL")" -v t="$TOTAL_FUND" -v m="$RC_GAS_MARGIN" 'BEGIN{exit !(b>=t+m)}' || { echo "deployer holds less than planned $TOTAL_FUND REACT + $RC_GAS_MARGIN gas margin" >&2; exit 6; }
+  NEED_BASE=$(( MIN_BASE_ETH_WEI + 2 * $(cast to-wei "$VAULT_FUND" ether) + ${BASE_GAS_MARGIN_WEI:-2000000000000000} ))
+  [ "$BASE_BAL" -ge "$NEED_BASE" ] || { echo "deployer Base ETH $BASE_BAL below reserve + vault funds + gas margin ($NEED_BASE wei)" >&2; exit 6; }
 fi
 
 RC_CTOR="constructor(address,(uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint32,uint256,uint256,uint256,address))"
@@ -100,12 +104,14 @@ create() { # rpc contract value ctor-signature args...  -> "address txhash"  (dr
   local rpc=$1 c=$2 v=$3 sig=$4; shift 4
   local gas=(); [ "$rpc" = "$RC_RPC" ] && [ -n "${RC_GAS_LIMIT:-}" ] && gas=(--gas-limit "$RC_GAS_LIMIT" --gas-price "${RC_GAS_PRICE:-100gwei}")
   if [ "$EXECUTE" = 1 ]; then
-    forge create "$c" --broadcast --rpc-url "$rpc" --private-key "$DEPLOYER_PRIVATE_KEY" --value "$v" --json \
-      ${gas[@]+"${gas[@]}"} --constructor-args "$@" | sed -n "/^{/,\$p" | jq -r '.deployedTo + " " + .transactionHash'
+    local raw; raw=$(forge create "$c" --broadcast --rpc-url "$rpc" --private-key "$DEPLOYER_PRIVATE_KEY" --value "$v" --json \
+      ${gas[@]+"${gas[@]}"} --constructor-args "$@" 2>&1) || { echo "forge create failed: $raw" >&2; echo "$raw" >> evidence/mainnet-deploy.log; return 1; }
+    echo "$raw" >> evidence/mainnet-deploy.log
+    echo "$raw" | sed -n "/^{/,\$p" | jq -r '.deployedTo + " " + .transactionHash'
   else
     local code; code=$(forge inspect "$c" bytecode 2>/dev/null)
     local init="$code$(cast abi-encode "$sig" "$@" | sed 's/^0x//')"
-    local wei; wei=$(cast to-wei "${v%ether}" ether 2>/dev/null || echo 0)
+    local wei=$v
     local sim=(cast call --rpc-url "$rpc" --from "$DEPLOYER_ADDRESS" --gas-limit "${SIM_GAS:-8000000}")
     if "${sim[@]}" --value "$wei" --create "$init" >/dev/null 2>/tmp/heirloom-sim.err; then
       echo "simulated-OK -"
@@ -123,17 +129,26 @@ forge build >/dev/null 2>&1
 for spec in "$A" "$B"; do
   IFS=: read -r NAME T GRACE FREEZE ATTEST ACK TICK CLAIM CRON CAP FUND <<<"$spec"
   say "instance $NAME: T=$T grace=$GRACE freeze=$FREEZE attest=$ATTEST ack=$ACK tick=$TICK claimDelay=$CLAIM cap=$CAP fund=$FUND REACT"
+  FUND_WEI=$(cast to-wei "$FUND" ether); VFUND_WEI=$(cast to-wei "$VAULT_FUND" ether); ADDRS=evidence/mainnet-$NAME-addresses.txt
   CFG="($T,$GRACE,$FREEZE,$ATTEST,$ACK,$TICK,$BRAKE_WINDOW,$MAX_REFUSED,$CRON,0,$BASE_CHAIN,$PROXY)"
   if [ "$EXECUTE" = 1 ]; then
-    read -r RC RCTX < <(create "$RC_RPC" src/HeirloomReactive.sol:HeirloomReactive "${FUND}ether" "$RC_CTOR" "$OWNER" "$CFG")
+    RC_FROM=$(cast block-number --rpc-url "$RC_RPC"); BASE_FROM=$(cast block-number --rpc-url "$BASE_RPC")
+    CREATED=$(create "$RC_RPC" src/HeirloomReactive.sol:HeirloomReactive "$FUND_WEI" "$RC_CTOR" "$OWNER" "$CFG") || { echo "RC deploy failed; check evidence/mainnet-deploy.log" >&2; exit 8; }
+    read -r RC RCTX <<<"$CREATED"; [ -n "${RC:-}" ] && [ "$RC" != null ] || { echo "no RC address parsed from: $CREATED" >&2; exit 8; }
+    printf 'INSTANCE=mainnet-%s\nRC=%s\nOWNER=%s\nHEIR=%s\nLASNA_FROM=%s\nBASE_FROM=%s\nT=%s\nGRACE=%s\nATTEST=%s\nCLAIM_DELAY=%s\n' "$NAME" "$RC" "$OWNER" "$HEIR" "$RC_FROM" "$BASE_FROM" "$T" "$GRACE" "$ATTEST" "$CLAIM" > "$ADDRS"   # persisted at once: a later failure must not orphan funded contracts
     logtx "$RC_CHAIN" "$RCTX" "deploy RC $NAME (+$FUND REACT)" "$RC_RPC"
   else
-    read -r RCSTAT RCTX < <(create "$RC_RPC" src/HeirloomReactive.sol:HeirloomReactive "${FUND}ether" "$RC_CTOR" "$OWNER" "$CFG")
+    read -r RCSTAT RCTX < <(create "$RC_RPC" src/HeirloomReactive.sol:HeirloomReactive "$FUND_WEI" "$RC_CTOR" "$OWNER" "$CFG")
     RC=$(cast compute-address "$DEPLOYER_ADDRESS" --nonce "$(( $(cast nonce "$DEPLOYER_ADDRESS" --rpc-url "$RC_RPC") + IDX ))" | awk '{print $NF}')
   fi
   [ "$EXECUTE" = 1 ] && say "  RC ($RC_CHAIN): $RC" || say "  RC creation $RCSTAT ($RC_CHAIN), predicted address $RC"
-  read -r VAULT VTX < <(create "$BASE_RPC" src/HeirloomVault.sol:HeirloomVault "$VAULT_FUND" "$VAULT_CTOR" \
-    "$PROXY" "$RC" "$OWNER" "$HEIR" "$CLAIM" "$CAP" "[$BASE_CHAIN,$EXTRA_CHAIN]" "[$WATCH_A,$WATCH_B]")
+  VARGS=("$PROXY" "$RC" "$OWNER" "$HEIR" "$CLAIM" "$CAP" "[$BASE_CHAIN,$EXTRA_CHAIN]" "[$WATCH_A,$WATCH_B]")
+  if [ "$EXECUTE" = 1 ]; then
+    CREATED=$(create "$BASE_RPC" src/HeirloomVault.sol:HeirloomVault "$VFUND_WEI" "$VAULT_CTOR" "${VARGS[@]}") || { echo "vault deploy failed; RC $RC is funded and recorded in $ADDRS" >&2; exit 8; }
+    read -r VAULT VTX <<<"$CREATED"; echo "VAULT=$VAULT" >> "$ADDRS"
+  else
+    read -r VAULT VTX < <(create "$BASE_RPC" src/HeirloomVault.sol:HeirloomVault "$VFUND_WEI" "$VAULT_CTOR" "${VARGS[@]}")
+  fi
   logtx "$BASE_CHAIN" "$VTX" "deploy vault $NAME" "$BASE_RPC"
   VSTAT=$VAULT; [ "$EXECUTE" = 1 ] || VAULT=$(cast compute-address "$DEPLOYER_ADDRESS" --nonce "$(( $(cast nonce "$DEPLOYER_ADDRESS" --rpc-url "$BASE_RPC") + IDX ))" | awk '{print $NF}')
   IDX=$((IDX + 1))
@@ -141,19 +156,17 @@ for spec in "$A" "$B"; do
   SETV=(setVault 'setVault(address,(uint256,address)[],(uint256,address,uint64)[])' "$VAULT" \
     "[($BASE_CHAIN,$WATCH_A),($EXTRA_CHAIN,$WATCH_B)]" "[($BASE_CHAIN,$CANARY,$CANARY_GAP)]")
   if [ "$EXECUTE" = 1 ]; then
-    STX=$(cast send "$RC" "${SETV[@]:1}" --rpc-url "$RC_RPC" --private-key "$DEPLOYER_PRIVATE_KEY" --json | jq -r .transactionHash)
+    SGAS=(); [ -n "${RC_GAS_LIMIT:-}" ] && SGAS=(--gas-limit "$RC_GAS_LIMIT" --gas-price "${RC_GAS_PRICE:-100gwei}")
+    STX=$(cast send "$RC" "${SETV[@]:1}" --rpc-url "$RC_RPC" --private-key "$DEPLOYER_PRIVATE_KEY" --json ${SGAS[@]+"${SGAS[@]}"} | jq -r .transactionHash) || { echo "setVault failed: RC $RC / vault $VAULT are recorded in $ADDRS" >&2; exit 8; }
     logtx "$RC_CHAIN" "$STX" "setVault $NAME" "$RC_RPC"
     say "  setVault: $STX"
-    OUT=evidence/mainnet-$NAME-addresses.txt
-    printf 'INSTANCE=mainnet-%s\nRC=%s\nVAULT=%s\nOWNER=%s\nHEIR=%s\nT=%s\nGRACE=%s\nATTEST=%s\nCLAIM_DELAY=%s\n' \
-      "$NAME" "$RC" "$VAULT" "$OWNER" "$HEIR" "$T" "$GRACE" "$ATTEST" "$CLAIM" > "$OUT"
-    say "  wrote $OUT"
+    say "  wrote $ADDRS"
   else
     # simulate calldata encoding only (the RC does not exist yet in a dry run)
     say "  setVault calldata ok: $(cast calldata "${SETV[@]:1}" | cut -c1-18)… "
   fi
 done
-if [ "$EXECUTE" = 1 ]; then say "done; first ATTEST lands after one attestEvery; run scripts/refresh-evidence.sh"
+if [ "$EXECUTE" = 1 ]; then say "done; first ATTEST lands after one attestEvery; add the instances to deployments/mainnet.json, then DEPLOYMENTS=deployments/mainnet.json scripts/refresh-evidence.sh"
 else
   [ ! -e "$FAIL_MARK" ] || { say "dry run FAILED: a simulated deploy reverted"; exit 7; }
   say "dry run complete: every creation simulated OK; nothing was sent"

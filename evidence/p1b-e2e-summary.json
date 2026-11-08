@@ -1,0 +1,32 @@
+{
+  "instance": "p1b-e2e",
+  "rc": "0xC52A3df18aa1346AB0B92f24bC89a012B3908144",
+  "vault": "0xf05d55CeeF3D5DFA5FC8D052c0D3ad523eD618af",
+  "callbackRows": 8,
+  "stages": {
+    "VISIT": 3,
+    "REFUSED": 1,
+    "ATTEST": 4,
+    "GRACE": 2,
+    "CANCEL": 1,
+    "EXPIRE": 1,
+    "TEARDOWN": 1
+  },
+  "canaryBeats": 2,
+  "freezeUsed": 0,
+  "stuck": 0,
+  "resends": 0,
+  "teardown": {
+    "method": "rnk_getFilters on Lasna (2026-11-09), filters whose Configs list the RC as subscriber",
+    "rc_filters_after_teardown": 0,
+    "control": "P1a probe RCs 0xe4A0\u20261909 and 0x6818\u202647C9 still show 4 filters each (never unsubscribed)",
+    "filters_version": 1901
+  },
+  "lreact": {
+    "funded": "1.2 at deploy + 0.8 top-up (tx 0xe35bc63f\u2026deae)",
+    "reclaimed": "0.7445973 (reclaim tx 0x4d87b098\u2026a48c)",
+    "spent": "1.2554027",
+    "window": "deploy 17:30 UTC to teardown 17:43:49 UTC, Cron10 throughout"
+  },
+  "scenario_log": "evidence/p1b-e2e-actions.csv; heir tHTD balance after release 5000000 (4 estate + 1 heartbeat transfer)"
+}

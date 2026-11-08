@@ -126,7 +126,7 @@ export function readTriples(path: string): TripleRow[] {
 
 /** Identity of a row: the first callback per (instance, stage, seq) wins, duplicates are dropped. */
 export function rowKey(r: TripleRow): string {
-  return `${r.instance}|${r.stage}|${r.seq}|${r.trigger_tx.toLowerCase()}`;
+  return `${r.instance}|${r.stage}|${r.seq}|${r.trigger_tx.toLowerCase()}|${r.reactive_tx.toLowerCase()}`;
 }
 
 /** Append rows that are not already present. Returns the number written. */

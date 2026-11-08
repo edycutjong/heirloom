@@ -96,13 +96,14 @@ say "token B $WATCH_B, canary $CANARY_X present on chain $EXTRA_CHAIN"
 RC_BAL=$(cast balance "$DEPLOYER_ADDRESS" --rpc-url "$RC_RPC"); BASE_BAL=$(cast balance "$DEPLOYER_ADDRESS" --rpc-url "$BASE_RPC")
 say "deployer $DEPLOYER_ADDRESS: RC chain $(cast from-wei "$RC_BAL"), Base $(cast from-wei "$BASE_BAL") ETH"
 
-TOTAL_FUND=0
+TOTAL_FUND=0; VAULTS_TO_DEPLOY=0
 for spec in "$A" "$B"; do
   IFS=: read -r NAME T GRACE FREEZE ATTEST ACK TICK CLAIM CRON CAP FUND <<<"$spec"
   # claimDelay must cover the resend bound: 3 x ceil(ack/tick) x tick + one tick (enforced again on resume: same spec)
   BOUND=$(( 3 * ((ACK + TICK - 1) / TICK) * TICK + TICK ))
   [ "$CLAIM" -ge "$BOUND" ] || { echo "instance $NAME: claimDelay $CLAIM < resend bound $BOUND" >&2; exit 5; }
   [ "$ATTEST" -ge "$ACK" ] || { echo "instance $NAME: attestEvery < ackTimeout" >&2; exit 5; }
+  grep -qs '^VAULT=0x' "evidence/mainnet-$NAME-addresses.txt" || VAULTS_TO_DEPLOY=$((VAULTS_TO_DEPLOY + 1))
   if [ "$EXECUTE" = 1 ] && grep -qs '^RC=' "evidence/mainnet-$NAME-addresses.txt"; then
     say "instance $NAME: RC already recorded (resume); its $FUND REACT is not planned again"; continue
   fi
@@ -115,7 +116,7 @@ awk -v t="$TOTAL_FUND" -v m="$MAX_REACT" 'BEGIN{exit !(t<=m)}' || { echo "planne
 if [ "$EXECUTE" = 1 ]; then
   RC_GAS_MARGIN=${RC_GAS_MARGIN:-2}   # REACT kept back for two RC deploys + setVault gas
   awk -v b="$(cast from-wei "$RC_BAL")" -v t="$TOTAL_FUND" -v m="$RC_GAS_MARGIN" 'BEGIN{exit !(b>=t+m)}' || { echo "deployer holds less than planned $TOTAL_FUND REACT + $RC_GAS_MARGIN gas margin" >&2; exit 6; }
-  NEED_BASE=$(( MIN_BASE_ETH_WEI + 2 * $(cast to-wei "$VAULT_FUND" ether) + ${BASE_GAS_MARGIN_WEI:-2000000000000000} ))
+  NEED_BASE=$(( MIN_BASE_ETH_WEI + VAULTS_TO_DEPLOY * $(cast to-wei "$VAULT_FUND" ether) + ${BASE_GAS_MARGIN_WEI:-2000000000000000} ))
   [ "$BASE_BAL" -ge "$NEED_BASE" ] || { echo "deployer Base ETH $BASE_BAL below reserve + vault funds + gas margin ($NEED_BASE wei)" >&2; exit 6; }
 fi
 
@@ -156,14 +157,18 @@ for spec in "$A" "$B"; do
   if [ "$EXECUTE" = 1 ] && [ -f "$ADDRS" ]; then   # resume: reuse what this instance already deployed
     lc() { tr '[:upper:]' '[:lower:]' <<<"$1"; }
     RC=$(sed -n 's/^RC=//p' "$ADDRS" | tail -1); VAULT=$(sed -n 's/^VAULT=//p' "$ADDRS" | tail -1)
-    stop9() { echo "instance $NAME: $1 — inspect evidence/mainnet-deploy.log; move $ADDRS aside only to deploy afresh" >&2; exit 9; }
+    # Never advise moving $ADDRS aside while it names a live RC: a fresh run would fund a second RC.
+    stop9() { echo "instance $NAME: $1 — the recorded RC does not match this invocation: rerun with the OWNER/spec it was deployed with (see $ADDRS), or reclaim it before deploying afresh; inspect evidence/mainnet-deploy.log" >&2; exit 9; }
+    stopv() { echo "instance $NAME: $1 — delete ONLY the VAULT= line in $ADDRS (keep RC=) and rerun to deploy a fresh vault for RC $RC" >&2; exit 9; }
     [ -n "$RC" ] && [ "$(cast code "$RC" --rpc-url "$RC_RPC" | wc -c)" -gt 4 ] || stop9 "$ADDRS names RC '$RC' with no code on $RC_CHAIN"
     [ "$(lc "$(cast call "$RC" 'owner()(address)' --rpc-url "$RC_RPC")")" = "$(lc "$OWNER")" ] || stop9 "recorded RC watches another owner"
     [ "$(cast call "$RC" 'T()(uint64)' --rpc-url "$RC_RPC" | awk '{print $1}')" = "$T" ] || stop9 "recorded RC has a different T"
-    [ -z "$VAULT" ] || [ "$(cast code "$VAULT" --rpc-url "$BASE_RPC" | wc -c)" -gt 4 ] || stop9 "recorded vault $VAULT has no code on $BASE_CHAIN"
-    if [ -n "$VAULT" ]; then   # the recorded vault must be this RC's and this owner's, or setVault would wire a stranger's vault
-      [ "$(lc "$(cast call "$VAULT" 'rc()(address)' --rpc-url "$BASE_RPC")")" = "$(lc "$RC")" ] || stop9 "recorded vault $VAULT trusts another RC"
-      [ "$(lc "$(cast call "$VAULT" 'owner()(address)' --rpc-url "$BASE_RPC")")" = "$(lc "$OWNER")" ] || stop9 "recorded vault $VAULT has another owner"
+    [ -z "$VAULT" ] || [ "$(cast code "$VAULT" --rpc-url "$BASE_RPC" | wc -c)" -gt 4 ] || stopv "recorded vault $VAULT has no code on $BASE_CHAIN"
+    if [ -n "$VAULT" ]; then   # the recorded vault must match THIS invocation, or setVault would wire the wrong estate
+      [ "$(lc "$(cast call "$VAULT" 'rc()(address)' --rpc-url "$BASE_RPC")")" = "$(lc "$RC")" ] || stopv "recorded vault $VAULT trusts another RC"
+      [ "$(lc "$(cast call "$VAULT" 'owner()(address)' --rpc-url "$BASE_RPC")")" = "$(lc "$OWNER")" ] || stopv "recorded vault $VAULT has another owner"
+      [ "$(lc "$(cast call "$VAULT" 'heir()(address)' --rpc-url "$BASE_RPC")")" = "$(lc "$HEIR")" ] || stopv "recorded vault $VAULT names another heir than HEIR"
+      [ "$(cast call "$VAULT" 'claimDelay()(uint64)' --rpc-url "$BASE_RPC" | awk '{print $1}')" = "$CLAIM" ] || stopv "recorded vault $VAULT has claimDelay != $CLAIM"
     fi
     WIRED=$(lc "$(cast call "$RC" 'vault()(address)' --rpc-url "$RC_RPC")")
     if [ -n "$VAULT" ] && [ "$WIRED" = "$(lc "$VAULT")" ]; then say "instance $NAME: already deployed and wired ($ADDRS); skipped"; IDX=$((IDX + 1)); continue; fi
@@ -187,7 +192,9 @@ for spec in "$A" "$B"; do
   if [ "$EXECUTE" = 1 ]; then
     if [ -z "$VAULT" ]; then
       CREATED=$(create "$BASE_RPC" src/HeirloomVault.sol:HeirloomVault "$VFUND_WEI" "$VAULT_CTOR" "${VARGS[@]}") || { echo "vault deploy failed; RC $RC is funded and recorded in $ADDRS — rerun to resume" >&2; exit 8; }
-      read -r VAULT VTX <<<"$CREATED"; echo "VAULT=$VAULT" >> "$ADDRS"
+      read -r VAULT VTX <<<"$CREATED"
+      [[ "${VAULT:-}" =~ ^0x[0-9a-fA-F]{40}$ ]] || { echo "no vault address parsed from: $CREATED; RC $RC stays recorded in $ADDRS (no VAULT= line written) — rerun to resume" >&2; exit 8; }
+      echo "VAULT=$VAULT" >> "$ADDRS"
       logtx "$BASE_CHAIN" "$VTX" "deploy vault $NAME" "$BASE_RPC"
     fi
   else

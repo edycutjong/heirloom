@@ -1,5 +1,5 @@
 // Day-1 probe evidence: rebuilds evidence/triples.csv (PROBE rows), evidence/probe-roundtrip.csv and
-// evidence/probe-cron.csv from on-chain logs only. Usage: pnpm triples  (reads evidence/probe-addresses.env + probe-origins.csv)
+// evidence/probe-cron.csv from on-chain logs only. Usage: pnpm triples  (reads evidence/probe-addresses.txt + probe-origins.csv)
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { parseAbiItem, type AbiEvent } from "viem";
 import { getLogsChunked, buildTriple, appendTriples, blockTs, readTriples, hopSeconds, parseCsvLine, type Hex } from "../packages/reactive-kit/ts/triples.ts";
@@ -7,7 +7,7 @@ import { chain, client } from "../packages/reactive-kit/ts/chains.ts";
 
 const LASNA = 5318007, BASE_SEPOLIA = 84532;
 const env = Object.fromEntries(
-  readFileSync(process.env.ADDR_FILE ?? "evidence/probe-addresses.env", "utf8").trim().split("\n").map((l) => l.split("=") as [string, string]),
+  readFileSync(process.env.ADDR_FILE ?? "evidence/probe-addresses.txt", "utf8").trim().split("\n").map((l) => l.split("=") as [string, string]),
 );
 const RC = env.PROBE_RC as Hex, CB = env.PROBE_CB as Hex;
 const origins = readFileSync("evidence/probe-origins.csv", "utf8").trim().split("\n").slice(1).map(parseCsvLine)

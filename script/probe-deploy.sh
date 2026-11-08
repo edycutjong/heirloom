@@ -24,4 +24,4 @@ echo "watch Base Sepolia USDC: $(send 'watchToken(uint256,address)' 84532 $USDC_
 echo "watch Eth Sepolia USDC:  $(send 'watchToken(uint256,address)' 11155111 $USDC_ETH_SEPOLIA)"
 echo "watch Uni Sepolia USDC:  $(send 'watchToken(uint256,address)' 1301 $USDC_UNI_SEPOLIA)"
 echo "watch Ack (Pinged):      $(send 'watchAck()')"
-printf 'PROBE_CB=%s\nPROBE_RC=%s\n' "$CB" "$RC" > "${ADDR_FILE:-evidence/probe-addresses.env}"
+printf 'PROBE_CB=%s\nPROBE_RC=%s\n' "$CB" "$RC" > "${ADDR_FILE:-evidence/probe-addresses.txt}"

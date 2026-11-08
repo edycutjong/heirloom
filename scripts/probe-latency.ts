@@ -9,7 +9,7 @@ import { observe } from "../packages/reactive-kit/ts/latency.ts";
 import { client } from "../packages/reactive-kit/ts/chains.ts";
 import type { Hex } from "../packages/reactive-kit/ts/triples.ts";
 
-const env = Object.fromEntries(readFileSync(process.env.ADDR_FILE ?? "evidence/probe-addresses.env", "utf8").trim().split("\n").map((l) => l.split("=")));
+const env = Object.fromEntries(readFileSync(process.env.ADDR_FILE ?? "evidence/probe-addresses.txt", "utf8").trim().split("\n").map((l) => l.split("=")));
 const RC = env.PROBE_RC as Hex, CB = env.PROBE_CB as Hex;
 const USDC = "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as const;
 const OUT = "evidence/latency-wallclock.csv";

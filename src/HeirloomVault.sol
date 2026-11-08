@@ -22,7 +22,8 @@ interface IERC20Min {
 contract HeirloomVault is AbstractCallback, IHeirloomVault {
     uint256 public constant MAX_TOKENS = 8;
     uint64 public constant MIN_CLAIM_DELAY = 60; // the two-step claim must be two steps
-    uint256 internal constant TOKEN_CALL_GAS = 300_000; // per estate-token call on the payout paths (isolation budget)
+    uint256 internal constant TOKEN_CALL_GAS = 300_000; // per estate-token call in the multi-token loops (isolation budget)
+    uint256 internal constant RECOVERY_RESERVE = 60_000; // kept back on a single-token retry for the writes after the call
 
     address public immutable owner;
     address public immutable rc; // informational; authorization uses _CALLBACK_SENDER
@@ -116,7 +117,9 @@ contract HeirloomVault is AbstractCallback, IHeirloomVault {
         uint256[] memory chainIds_,
         address[] memory tokens_
     ) payable AbstractCallback(IPayable(payable(proxy_)), callbackSender_) {
-        if (owner_ == address(0) || heir_ == address(0) || callbackSender_ == address(0)) revert ZeroAddress();
+        if (owner_ == address(0) || heir_ == address(0) || callbackSender_ == address(0)) {
+            revert ZeroAddress();
+        }
         if (claimDelay_ < MIN_CLAIM_DELAY) revert ClaimDelayTooShort();
         owner = owner_;
         heir = heir_;
@@ -185,7 +188,7 @@ contract HeirloomVault is AbstractCallback, IHeirloomVault {
         _setState(HeirloomTypes.VaultState.RETIRED, lastAppliedSeq);
         for (uint256 i; i < estateTokens.length; i++) {
             address t = estateTokens[i];
-            (bool okB, uint256 bal) = _balanceOf(t);
+            (bool okB, uint256 bal) = _balanceOf(t, TOKEN_CALL_GAS);
             if (!okB || bal == 0) continue;
             // a paused/blacklisted token must not block retirement (the RC would keep billing CRON); `sweep` recovers it
             if (!_tokenCall(t, abi.encodeCall(IERC20Min.transfer, (owner, bal)), TOKEN_CALL_GAS)) emit RetireFailed(t);
@@ -200,11 +203,7 @@ contract HeirloomVault is AbstractCallback, IHeirloomVault {
     // ------------------------------------------------------------------ the callback
 
     /// @inheritdoc IHeirloomVault
-    function sync(address rvm, HeirloomTypes.Snapshot calldata s)
-        external
-        onlyServiceProvider
-        onlyCallbackSender(rvm)
-    {
+    function sync(address rvm, HeirloomTypes.Snapshot calldata s) external onlyServiceProvider onlyCallbackSender(rvm) {
         if (_terminal()) {
             emit Ack(s.seq, ownerNonce, ownerActionId, true);
             return;
@@ -280,15 +279,17 @@ contract HeirloomVault is AbstractCallback, IHeirloomVault {
         _setState(HeirloomTypes.VaultState.RELEASED, lastAppliedSeq);
         emit EstateReleased();
         for (uint256 i; i < estateTokens.length; i++) {
-            _release(estateTokens[i]);
+            _release(estateTokens[i], false);
         }
     }
 
-    /// @notice Retry a token whose transfer failed at finalize (paused / blacklisted). Anyone may call.
+    /// @notice Retry a token whose transfer failed at finalize (paused / blacklisted, or a token that needs more than
+    ///         the loop's fixed per-token gas). Anyone may call. A single-token retry forwards the caller's gas, so a
+    ///         cooperative high-gas token is always recoverable; a hostile one can only waste the caller's own gas.
     function finalizeToken(address token) external nonReentrant {
         if (state != HeirloomTypes.VaultState.RELEASED) revert BadState(state);
         if (!isEstateToken[token]) revert ZeroAddress();
-        _release(token);
+        _release(token, true);
     }
 
     /// @notice After RELEASED, anything left that is not an unpaid estate token (direct transfers, top-ups after
@@ -359,17 +360,19 @@ contract HeirloomVault is AbstractCallback, IHeirloomVault {
         state = to;
     }
 
-    function _release(address token) internal {
+    function _release(address token, bool single) internal {
         if (paid[token]) return;
-        // Never reverts: one broken token must not block the others (or keep the reactive contract alive). Token calls
-        // get a fixed gas budget and at most one returned word is copied, so no token can eat the payout transaction.
-        (bool okB, uint256 bal) = _balanceOf(token);
+        // Never reverts: one broken token must not block the others (or keep the reactive contract alive). In the loop,
+        // token calls get a fixed gas budget and at most one returned word is copied, so no token can eat the payout
+        // transaction; a single-token retry (`single`) gets the caller's gas instead (the ceiling must not strand a token).
+        (bool okB, uint256 bal) = _balanceOf(token, single ? _recoveryGas() : TOKEN_CALL_GAS);
         if (!okB) {
             emit ReleaseFailed(token);
             return;
         }
         address to = payee();
-        if (_tokenCall(token, abi.encodeCall(IERC20Min.transfer, (to, bal)), TOKEN_CALL_GAS)) {
+        if (_tokenCall(token, abi.encodeCall(IERC20Min.transfer, (to, bal)), single ? _recoveryGas() : TOKEN_CALL_GAS))
+        {
             paid[token] = true;
             emit Released(to, token, bal);
         } else {
@@ -383,7 +386,9 @@ contract HeirloomVault is AbstractCallback, IHeirloomVault {
             if (!okN) revert TransferFailed2(token);
             return;
         }
-        if (!_tokenCall(token, abi.encodeCall(IERC20Min.transfer, (to, amount)), gasleft())) revert TransferFailed2(token);
+        if (!_tokenCall(token, abi.encodeCall(IERC20Min.transfer, (to, amount)), gasleft())) {
+            revert TransferFailed2(token);
+        }
     }
 
     function _safeTransferFrom(address token, address from, address to, uint256 amount) internal {
@@ -409,12 +414,17 @@ contract HeirloomVault is AbstractCallback, IHeirloomVault {
         return ok && (len == 0 || (len >= 32 && word == 1));
     }
 
-    function _balanceOf(address token) internal view returns (bool ok, uint256 bal) {
+    function _recoveryGas() internal view returns (uint256) {
+        uint256 g = gasleft();
+        return g > RECOVERY_RESERVE ? g - RECOVERY_RESERVE : 0;
+    }
+
+    function _balanceOf(address token, uint256 gas_) internal view returns (bool ok, uint256 bal) {
         if (token.code.length == 0) return (false, 0);
         bytes memory data = abi.encodeCall(IERC20Min.balanceOf, (address(this)));
         uint256 len;
         assembly ("memory-safe") {
-            ok := staticcall(TOKEN_CALL_GAS, token, add(data, 0x20), mload(data), 0, 0)
+            ok := staticcall(gas_, token, add(data, 0x20), mload(data), 0, 0)
             len := returndatasize()
             if gt(len, 31) {
                 returndatacopy(0, 0, 32)

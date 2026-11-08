@@ -26,7 +26,8 @@ contract ReenteringOwner {
     receive() external payable {
         if (tried) return; // re-enter once (retire() pays this contract too)
         tried = true;
-        try vault.retire() {} catch {
+        try vault.retire() {}
+        catch {
             reentryReverted = true;
         }
     }
@@ -76,6 +77,45 @@ contract GasEaterToken {
     }
 }
 
+/// Cooperative ERC-20 whose balanceOf and/or transfer need more than the 300k loop budget (heavy hooks/accounting).
+contract HeavyToken {
+    mapping(address => uint256) internal _bal;
+    bool public immutable heavyBalance;
+    bool public immutable heavyTransfer;
+
+    constructor(bool heavyBalance_, bool heavyTransfer_) {
+        heavyBalance = heavyBalance_;
+        heavyTransfer = heavyTransfer_;
+    }
+
+    function _burn() internal view {
+        uint256 start = gasleft();
+        while (start - gasleft() < 400_000) {}
+    }
+
+    function mint(address to, uint256 v) external {
+        _bal[to] += v;
+    }
+
+    function balanceOf(address a) external view returns (uint256) {
+        if (heavyBalance) _burn();
+        return _bal[a];
+    }
+
+    function transferFrom(address from, address to, uint256 v) external returns (bool) {
+        _bal[from] -= v;
+        _bal[to] += v;
+        return true;
+    }
+
+    function transfer(address to, uint256 v) external returns (bool) {
+        if (heavyTransfer) _burn();
+        _bal[msg.sender] -= v;
+        _bal[to] += v;
+        return true;
+    }
+}
+
 contract HeirloomHardeningTest is HeirloomBase {
     function setUp() public override {
         super.setUp();
@@ -117,6 +157,36 @@ contract HeirloomHardeningTest is HeirloomBase {
         assertEq(usdcBase.balanceOf(heir) - before, 2e6, "the good token is paid despite the two hostile ones");
         assertFalse(v.paid(address(two)), "a non-1 return word is a failed transfer, not a revert");
         assertFalse(v.paid(address(eater)));
+    }
+
+    // ------------------------------------------------------------------ a2a r04: single-token recovery above the loop budget
+
+    function test_finalizeToken_recovers_a_token_above_the_loop_gas_budget() public {
+        HeavyToken heavyXfer = new HeavyToken(false, true);
+        HeavyToken heavyBal = new HeavyToken(true, false);
+        heavyXfer.mint(owner, 1e6);
+        heavyBal.mint(owner, 1e6);
+        HeirloomVault v = _bareVault(owner);
+        vm.startPrank(owner);
+        v.deposit(address(heavyXfer), 1e6);
+        v.deposit(address(heavyBal), 1e6);
+        usdcBase.transfer(address(v), 2e6);
+        v.deposit(address(usdcBase), 0);
+        vm.stopPrank();
+        _expire(v);
+        v.initiateClaim();
+        vm.warp(block.timestamp + CLAIM_DELAY);
+        uint256 before = usdcBase.balanceOf(heir);
+        v.finalizeClaim{gas: 3_000_000}();
+        assertEq(usdcBase.balanceOf(heir) - before, 2e6, "the loop pays the good token");
+        assertFalse(v.paid(address(heavyXfer)), "the loop keeps its fixed per-token budget (transfer)");
+        assertFalse(v.paid(address(heavyBal)), "the loop keeps its fixed per-token budget (balanceOf)");
+        v.finalizeToken{gas: 2_000_000}(address(heavyXfer));
+        v.finalizeToken{gas: 2_000_000}(address(heavyBal));
+        assertTrue(v.paid(address(heavyXfer)), "an isolated retry gets the caller's gas (expensive transfer)");
+        assertTrue(v.paid(address(heavyBal)), "an isolated retry gets the caller's gas (expensive balanceOf)");
+        assertEq(heavyXfer.balanceOf(heir), 1e6);
+        assertEq(heavyBal.balanceOf(heir), 1e6);
     }
 
     // ------------------------------------------------------------------ a2a r03: foreign CallbackFailure
@@ -163,7 +233,8 @@ contract HeirloomHardeningTest is HeirloomBase {
         s.ownerNonce = v.ownerNonce();
         s.ownerActionId = v.ownerActionId();
         s.graceEndsAt = uint64(block.timestamp);
-        (bool ok,) = proxy.executeCallback(address(v), abi.encodeCall(HeirloomVault.sync, (address(0), s)), 1e6, address(rc));
+        (bool ok,) =
+            proxy.executeCallback(address(v), abi.encodeCall(HeirloomVault.sync, (address(0), s)), 1e6, address(rc));
         assertTrue(ok, "sync");
         assertEq(uint8(v.state()), uint8(HeirloomTypes.VaultState.CLAIMABLE));
     }

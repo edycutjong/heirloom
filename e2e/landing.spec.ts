@@ -67,3 +67,53 @@ test.describe("release tag, stamped at build time", () => {
     expect(apiCalls).toEqual([]);
   });
 });
+
+test.describe("architecture diagram", () => {
+  test("every text run sits inside its box, clear of the border, in the page's own fonts", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+    await page.evaluate(() => document.fonts.ready);
+    const report = await page.evaluate(() => {
+      const bad: string[] = [];
+      document.querySelectorAll<SVGGElement>("#arch .ax-box").forEach((g) => {
+        const r = (g.querySelector(".ax-card") as SVGRectElement).getBBox();
+        g.querySelectorAll<SVGTextElement>("text").forEach((t) => {
+          const b = t.getBBox();
+          if (b.x < r.x + 8 || b.x + b.width > r.x + r.width - 8) bad.push(`${g.id}: "${t.textContent}" ${b.x.toFixed(0)}..${(b.x + b.width).toFixed(0)} in ${r.x}..${r.x + r.width}`);
+        });
+      });
+      const fams = new Set([...document.querySelectorAll("#arch text")].map((t) => getComputedStyle(t).fontFamily.split(",")[0].replace(/"/g, "")));
+      return { bad, fams: [...fams].sort() };
+    });
+    expect(report.bad).toEqual([]);
+    expect(report.fams).toEqual(["Cutive Mono", "Work Sans"]);
+  });
+
+  test("the wire panel replays the loop while the diagram is on screen", async ({ page }) => {
+    await page.goto("/");
+    await page.locator("#arch").scrollIntoViewIfNeeded();
+    await expect(page.locator("#ax-cap0")).toHaveText("1 / 4 · A TRANSFER");
+    await expect(page.locator("#ax-l2")).toHaveClass(/lit/, { timeout: 3000 });
+    await expect(page.locator("#ax-cap0")).toHaveText("2 / 4 · A $0 SPOOF", { timeout: 6000 });
+    await expect(page.locator("#ax-refused")).toHaveClass(/on/, { timeout: 4000 });
+  });
+
+  test("reduced motion keeps the static diagram; phones get the stacked ledger instead", async ({ browser }) => {
+    const base = test.info().project.use.baseURL;
+    const still = await browser.newContext({ reducedMotion: "reduce", baseURL: base });
+    let page = await still.newPage();
+    await page.goto("/");
+    await page.locator("#arch").scrollIntoViewIfNeeded();
+    await page.waitForTimeout(1500);
+    await expect(page.locator("#ax-cap0")).toHaveText("HOW TO READ IT");
+    expect(await page.locator("#arch .lit, #arch .on").count()).toBe(0);
+    await still.close();
+    const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, baseURL: base });
+    page = await phone.newPage();
+    await page.goto("/");
+    await expect(page.locator("#arch")).toBeHidden();
+    await expect(page.locator(".arch-phone .ap-card")).toHaveCount(8);
+    await expect(page.locator(".arch-phone")).toBeVisible();
+    await phone.close();
+  });
+});

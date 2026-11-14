@@ -1,12 +1,25 @@
 version: 2
 updates:
-  - package-ecosystem: github-actions
-    directory: /
-    schedule: { interval: weekly }
+  # pnpm-lock.yaml is read by the npm ecosystem. Only the root has a manifest (packages/reactive-kit/ts is plain source).
   - package-ecosystem: npm
     directory: /
-    schedule: { interval: weekly }
+    schedule:
+      interval: monthly
     open-pull-requests-limit: 5
-  - package-ecosystem: gitsubmodule
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      # Majors (TypeScript 7, @types/node 26, …) are migrations, not maintenance: tested by hand on a branch, never unattended.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+  - package-ecosystem: github-actions
     directory: /
-    schedule: { interval: monthly }
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    groups:
+      actions:
+        patterns: ["*"]
+# No gitsubmodule block on purpose: lib/ pins the exact forge-std, reactive-lib-omni and reactive-test-lib commits the
+# deployed testnet contracts were built from. Bumping them would let the source drift from what is on-chain.

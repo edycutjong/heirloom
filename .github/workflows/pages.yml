@@ -1,10 +1,11 @@
 name: pages
-# Publishes the landing (docs/), the deck (docs/pitch/) and the status card (status/) to GitHub Pages.
-# The repo is private until submission; the job is skipped (not failed) while it is private.
+# Publishes the landing + judge page (docs/), the deck (docs/pitch/) and the status card (status/) to GitHub Pages.
+# The latest release tag is stamped into the pages at build time (scripts/build-site.sh); release.yml re-runs this
+# workflow after each release, and the pages refresh the tag from the GitHub API at runtime.
 on:
   push:
     branches: [main]
-    paths: ["docs/**", "status/**", ".github/workflows/pages.yml"]
+    paths: ["docs/**", "status/**", "scripts/build-site.sh", ".github/workflows/pages.yml"]
   workflow_dispatch:
 permissions:
   contents: read
@@ -21,16 +22,17 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0  # tags, for the build-time release tag
       - name: Assemble the site
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          mkdir -p _site
-          cp -R docs/. _site/
-          cp -R status _site/status
-          touch _site/.nojekyll
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+          RELEASE_TAG=$(gh release view --json tagName -q .tagName 2>/dev/null || true) sh scripts/build-site.sh
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

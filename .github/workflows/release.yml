@@ -1,0 +1,70 @@
+name: release
+
+# Semantic version from Angular commit prefixes since the last tag: feat → minor, fix/perf → patch,
+# feat!/fix!/BREAKING CHANGE → major; docs/chore/test/ci/style/refactor alone → no release.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write  # push the tag and create the Release
+  actions: write   # re-run pages.yml so the site's build-time release tag is the new one
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0  # full history and tags: commits since the last tag decide the bump
+
+      - name: Compute next version from Angular commits
+        id: ver
+        run: |
+          set -euo pipefail
+          # here-strings, not `echo | grep -q`: with pipefail, grep -q exiting early can SIGPIPE echo and hide a match
+          LAST=$(git describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null || echo "")
+          if [ -z "$LAST" ]; then RANGE="HEAD"; CUR="0.0.0"; else RANGE="${LAST}..HEAD"; CUR="${LAST#v}"; fi
+          LOG=$(git log --format=%B "$RANGE")
+          if [ -z "$(echo "$LOG" | tr -d '[:space:]')" ]; then echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          BUMP=none
+          grep -qE '^(feat|fix|perf)(\(.+\))?!:|^BREAKING CHANGE:' <<< "$LOG" && BUMP="major"
+          [ "$BUMP" = none ] && grep -qE '^feat(\(.+\))?:' <<< "$LOG" && BUMP="minor"
+          [ "$BUMP" = none ] && grep -qE '^(fix|perf)(\(.+\))?:' <<< "$LOG" && BUMP="patch"
+          if [ "$BUMP" = none ]; then
+            echo "No releasable commits since ${LAST:-the beginning}."
+            echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          IFS=. read -r MA MI PA <<< "$CUR"
+          case "$BUMP" in
+            major) MA=$((MA+1)); MI=0; PA=0 ;;
+            minor) MI=$((MI+1)); PA=0 ;;
+            patch) PA=$((PA+1)) ;;
+          esac
+          NEXT="v${MA}.${MI}.${PA}"
+          echo "Bump: $BUMP  ${LAST:-none} -> $NEXT"
+          { echo "next=$NEXT"; echo "bump=$BUMP"; echo "skip=false"; } >> "$GITHUB_OUTPUT"
+
+      - name: Tag and publish the release
+        if: steps.ver.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEXT: ${{ steps.ver.outputs.next }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$NEXT" -m "$NEXT"
+          git push origin "$NEXT"
+          gh release create "$NEXT" --generate-notes --title "$NEXT" --verify-tag
+
+      - name: Rebuild the Pages site with the new tag
+        if: steps.ver.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run pages.yml --ref main

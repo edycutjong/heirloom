@@ -1,8 +1,9 @@
 <div align="center">
-  <h1>Heirloom ⏳</h1>
+  <img src="docs/assets/brand/icon-animated.svg" alt="Heirloom mark: the card's stamps stop, RELEASED lands, the heir stub tears free" width="112">
+  <h1>Heirloom</h1>
   <p><em>A dead-man's switch for a self-custody wallet. It reads silence across chains, so there is no keeper and no check-in button.</em></p>
 
-  <img src="docs/architecture.svg" alt="Heirloom architecture: origin chains feed the Reactive Network, which calls back into a vault on Base" width="100%">
+  <img src="docs/assets/brand/readme-hero-animated.svg" alt="Heirloom — releases a vault on Base to your heir once your wallet goes quiet across chains. The card's violet stamps stop; a stranger's $0 row is refused; silence outlasts grace; the oxblood RELEASED stamp lands." width="100%">
 
   <p>Every on-chain and security claim below links to a transaction or a test. Testnet only so far: Reactive Lasna with Base Sepolia. The mainnet deploy is scripted and dry-run, not yet run.</p>
 
@@ -11,7 +12,7 @@
   <br/>
 
   [![For Judges](https://img.shields.io/badge/For_Judges-30--second_path-8E2B1D?style=for-the-badge)](https://edycutjong.github.io/heirloom/judge/)
-  [![Built for Reactive Omni Buildathon](https://img.shields.io/badge/DoraHacks-Reactive_Omni_Buildathon-8b5cf6?style=for-the-badge)](https://dorahacks.io/hackathon/reactive-omni-buildathon/detail)
+  [![Built for Reactive Omni Buildathon](https://img.shields.io/badge/DoraHacks-Reactive_Omni_Buildathon-4A3E8C?style=for-the-badge)](https://dorahacks.io/hackathon/reactive-omni-buildathon/detail)
 
   <br/>
 
@@ -53,6 +54,8 @@ States: `ARMED → GRACE → CLAIMABLE → CLAIM_PENDING → RELEASED`. Any watc
 | Tests | Foundry with the Reactive Network's Test Lib, via an Omni adapter in `packages/reactive-kit` |
 | Scripts | TypeScript with viem, run with `tsx` |
 | Status page | static `status/` (HTML + one ES module), read-only live chain reads plus the heir's claim panel |
+
+<p align="center"><img src="docs/architecture.svg" alt="Heirloom architecture: origin chains feed the Reactive Network, which calls back into a vault on Base" width="100%"></p>
 
 The diagram source is [`docs/architecture.svg`](docs/architecture.svg).
 

@@ -1,7 +1,7 @@
 #!/bin/sh
 # Assemble the GitHub Pages site into _site/: the landing + deck + judge page (docs/) and the status card (status/).
-# Every [data-release] link gets the latest release tag as its build-time text; the pages refresh it from the GitHub
-# API at runtime and keep this text on any failure. RELEASE_TAG overrides the tag (pages.yml passes the published one).
+# Every [data-release] link gets the latest release tag as its text at build time; release.yml re-runs pages.yml after
+# each release, so the pages make no runtime API call. RELEASE_TAG overrides the tag (pages.yml passes the published one).
 set -eu
 cd "$(dirname "$0")/.."
 TAG=${RELEASE_TAG:-$(git describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null || true)}

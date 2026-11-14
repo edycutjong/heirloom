@@ -1,9 +1,19 @@
+@font-face{font-family:"Sorts Mill Goudy";src:url(../assets/fonts/sorts-mill-goudy-400.woff2) format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Work Sans";src:url(../assets/fonts/work-sans-var.woff2) format("woff2");font-weight:300 700;font-style:normal;font-display:swap}
+@font-face{font-family:"Cutive Mono";src:url(../assets/fonts/cutive-mono-400.woff2) format("woff2");font-weight:400;font-style:normal;font-display:swap}
 :root{--bg:#EFE8D8;--ink:#1E1A15;--muted:#6F675A;--before:#4A3E8C;--after:#8E2B1D;--rule:#C9BFA8;
 --font-display:"Sorts Mill Goudy","Goudy Old Style",Georgia,serif;--font-body:"Work Sans","Helvetica Neue",Arial,sans-serif;--font-data:"Cutive Mono","Courier New",monospace}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 18px/1.5 var(--font-body);font-variant-numeric:tabular-nums}
 .skip{position:absolute;left:-999px}.skip:focus{left:8px;top:8px;background:var(--bg);padding:8px;z-index:9}
-.card{max-width:1080px;margin:24px auto;padding:28px 32px;border:2px solid var(--ink);background:var(--bg);position:relative}
+/* site header: back to the landing, the judge page, the deck and the source */
+.site{max-width:1080px;margin:18px auto 0;display:flex;align-items:center;gap:20px;padding:0 2px}
+.site .brand{display:flex;align-items:center;gap:10px;margin-right:auto;font:400 24px/1 var(--font-display);color:var(--ink);text-decoration:none}
+.site .brand img{width:24px;height:24px;display:block}
+.site nav{display:flex;flex-wrap:wrap;gap:6px 20px;font:15px var(--font-body)}
+.site nav a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--rule);padding-bottom:1px}
+.site nav a:hover{border-bottom-color:var(--ink);text-decoration:none}
+.card{max-width:1080px;margin:14px auto 24px;padding:28px 32px;border:2px solid var(--ink);background:var(--bg);position:relative}
 .band{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:2px solid var(--ink);padding-bottom:16px}
 h1{font:400 48px/1.05 var(--font-display);margin:0}
 h2{font:400 28px/1.2 var(--font-display);margin:28px 0 10px}
@@ -48,8 +58,8 @@ a:focus-visible,button:focus-visible{outline:3px solid var(--before);outline-off
 .msg{min-height:1.5em;margin:6px 0}.small{font-size:16px;color:var(--muted)}
 code{font-family:var(--font-data)}
 footer{margin-top:26px;border-top:1px solid var(--rule);padding-top:10px;font-size:16px;color:var(--muted)}
-@media (max-width:1023px){.card{margin:0;border-width:0 0 2px;padding:20px}}
-@media (max-width:639px){h1{font-size:40px}.stamp{font-size:22px;max-width:60%}.band{flex-direction:column-reverse;align-items:stretch}.stamp{align-self:flex-end}
+@media (max-width:1023px){.card{margin:0;border-width:2px 0;padding:20px}.site{margin:0;padding:14px 20px}}
+@media (max-width:639px){.site nav{gap:4px 14px;font-size:14px}.site .brand{font-size:21px}h1{font-size:40px}.stamp{font-size:22px;max-width:60%}.band{flex-direction:column-reverse;align-items:stretch}.stamp{align-self:flex-end}
  thead{display:none}tr{display:block;border-bottom:1px solid var(--rule);padding:8px 0}td{display:inline-block;border:0;padding:2px 10px 2px 0}td.kind{display:block}}
 [hidden]{display:none!important}
 a,button{transition:color .15s ease,background-color .15s ease,filter .15s ease,transform .1s ease}
@@ -60,3 +70,4 @@ tbody tr:hover td{background:rgba(201,191,168,.35)}
 @media (max-width:1100px){.stub:before,.stub:after{display:none}}
 @media (max-width:639px){.pill{white-space:normal;display:inline-block;margin:6px 0 0}.sub{overflow-wrap:anywhere}html,body{overflow-x:hidden}}
 .retry{font:600 16px var(--font-body);background:transparent;border:1px solid var(--before);color:var(--before);padding:2px 10px;cursor:pointer}.retry:hover{background:var(--rule)}
+@media (max-width:420px){.site nav a[href^="https://github.com"]{display:none}}

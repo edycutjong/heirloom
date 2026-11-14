@@ -182,12 +182,5 @@ PRIVATE_KEY=0x… pnpm exec tsx scripts/trigger-spoof.ts   <span class="c"># any
 <footer>
   <div class="wrap">Heirloom · MIT · built by Edy Cu for the Reactive Omni Buildathon · release <a data-release href="https://github.com/edycutjong/heirloom/releases/latest">latest</a></div>
 </footer>
-<script>
-// Latest release tag: the markup holds the build-time tag; refresh it from the GitHub API, and stay silent on any failure.
-(function(){var els=document.querySelectorAll('[data-release]');if(!els.length||!window.fetch)return;
-fetch('https://api.github.com/repos/edycutjong/heirloom/releases/latest',{headers:{Accept:'application/vnd.github+json'}})
-.then(function(r){return r.ok?r.json():null}).then(function(j){if(!j||!/^v\d/.test(j.tag_name||''))return;
-[].forEach.call(els,function(e){e.textContent=j.tag_name;});}).catch(function(){});})();
-</script>
 </body>
 </html>

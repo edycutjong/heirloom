@@ -1,7 +1,7 @@
 name: pages
 # Publishes the landing + judge page (docs/), the deck (docs/pitch/) and the status card (status/) to GitHub Pages.
 # The latest release tag is stamped into the pages at build time (scripts/build-site.sh); release.yml re-runs this
-# workflow after each release, and the pages refresh the tag from the GitHub API at runtime.
+# workflow after each release. The pages make no runtime GitHub API call (an unauthenticated call hits the rate limit).
 on:
   push:
     branches: [main]

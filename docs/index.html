@@ -18,7 +18,6 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Silence pays your heir: the Heirloom access card with violet visit stamps, a refused $0 row, an oxblood RELEASED stamp across its silent rows and the heir stub torn free">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:creator" content="Edy Cu">
 <link rel="icon" href="assets/icon-32.png" sizes="32x32" type="image/png">
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
@@ -92,11 +91,12 @@ a{color:inherit}
 .q-grace{position:absolute;top:-4px;bottom:-4px;border:1.5px dashed var(--before);background:color-mix(in srgb,var(--before) 8%,transparent)}
 .q-T{position:absolute;top:-7px;bottom:-7px;width:0;border-left:1.5px solid var(--ink)}
 .q-T span{position:absolute;top:100%;left:-2px;margin-top:3px;font:400 11px var(--font-data);color:var(--ink);white-space:nowrap}
-.released{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%) rotate(-6deg);font:400 46px/1 var(--font-display);letter-spacing:.14em;
+.released{position:absolute;left:32%;top:60%;transform:translate(-50%,-50%) rotate(-6deg);font:400 38px/1 var(--font-display);letter-spacing:.14em;
   color:var(--after);border:4px double var(--after);padding:8px 22px 3px;white-space:nowrap;pointer-events:none;border-radius:3px;
   background:color-mix(in srgb,var(--bg-card) 72%,transparent);text-shadow:0 0 1px color-mix(in srgb,var(--after) 50%,transparent);mix-blend-mode:multiply}
-.ripple{position:absolute;left:50%;top:52%;width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:50%;border:3px solid var(--after);opacity:0;pointer-events:none}
-.card:not(.armed) .quiet .q-top,.card:not(.armed) .quiet .q-track,.card.rel .quiet .q-top,.card.rel .quiet .q-track{opacity:.32;transition:opacity .5s ease .2s}
+.ripple{position:absolute;left:32%;top:60%;width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:50%;border:3px solid var(--after);opacity:0;pointer-events:none}
+/* once released the pencil and the gauge ghost under the stamp; the reading ("10:32 grace ran out") stays legible beside it */
+.card:not(.armed) .quiet :is(.q-lab,.tally,.q-track),.card.rel .quiet :is(.q-lab,.tally,.q-track){opacity:.32;transition:opacity .5s ease .2s}
 
 /* the heir stub: perforated, torn free on release */
 .stub{position:relative;margin:0 -24px;border-top:2px dashed var(--ink);padding:12px 24px 14px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;
@@ -225,8 +225,7 @@ h1 em{color:var(--after);font-style:italic}
 /* closing: the mark in its drawer, one sentence, the links */
 .close{background:radial-gradient(ellipse 60% 80% at 20% 50%,color-mix(in srgb,var(--bg),white 50%),transparent 70%)}
 .close-grid{display:grid;grid-template-columns:200px minmax(0,1fr);gap:48px;align-items:center}
-.drawer-tile{background:var(--bg-drawer);border-radius:6px;padding:24px;box-shadow:0 18px 40px rgba(30,26,21,.28)}
-.drawer-tile img{display:block;width:100%;height:auto}
+.drawer-tile img{display:block;width:100%;height:auto;filter:drop-shadow(0 18px 26px rgba(30,26,21,.32))}
 /* receipts */
 .receipts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink)}
 .receipts>div{padding:26px 22px 22px;border-right:1px solid var(--rule)}
@@ -257,7 +256,9 @@ section{padding:84px 0}
 /* how */
 .arch{margin-top:40px;border:1.5px solid var(--ink);background:var(--bg);padding:18px}
 .arch img{display:block;width:100%;height:auto}
-.arch-phone{display:none}
+.arch .arch-phone,.arch .arch-open{display:none}
+.arch-open{margin:14px 0 0;font:13px var(--font-data)}
+.arch-open a{color:var(--before);text-underline-offset:3px}
 .bento{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0;margin-top:36px;border-top:1.5px solid var(--ink);border-left:1px solid var(--rule)}
 .cell{padding:26px 24px 28px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);position:relative}
 .cell:nth-child(1){grid-column:1/5;grid-row:1/3}.cell:nth-child(2){grid-column:5/7}.cell:nth-child(3){grid-column:5/7}
@@ -265,6 +266,7 @@ section{padding:84px 0}
 .cell .art{margin-top:24px;border:1.5px solid var(--ink);background:var(--bg);padding:6px 16px 4px;
   background-image:repeating-linear-gradient(180deg,transparent 0 35px,color-mix(in srgb,var(--rule) 45%,transparent) 35px 36px)}
 .cell .art .row:last-child{border-bottom:0}
+.cell .art .row.k-grace .stamp{border-style:dashed}
 .cell svg{width:40px;height:40px;color:var(--before);display:block;margin-bottom:16px}
 .cell h3{font-size:27px;line-height:1.1}
 .cell p{font-size:15.5px;margin-top:10px;max-width:34em}
@@ -276,6 +278,7 @@ section{padding:84px 0}
 .void .att{font-size:16px;color:var(--muted);text-decoration:line-through;text-decoration-thickness:1.5px;text-decoration-color:var(--ink)}
 .void .res{font-size:15.5px}
 .void code{font-size:12.5px;color:var(--before);word-break:break-word}
+.void .att code{display:inline-block;color:inherit;text-decoration:line-through;text-decoration-thickness:1.5px;text-decoration-color:var(--ink)}
 /* remarks: the ink band */
 .remarks{background:var(--ink);color:var(--bg);
   background-image:radial-gradient(ellipse at 85% 0%,color-mix(in srgb,var(--before) 22%,transparent),transparent 60%)}
@@ -324,7 +327,9 @@ footer .stamp-line{grid-column:1/-1;max-width:none;font:12.5px var(--font-data);
   .hero-band{background:none}.hero-band::after{display:none}
   .hero{grid-template-columns:minmax(0,1fr);gap:0;padding:26px 0 52px}
   .hero-copy{display:contents}
-  .hero .badge{order:1;justify-self:start}.hero h1{order:2}.mat{order:3}.hero .sub{order:4}.hero .cta{order:5}.hero .cta-links{order:6}.hero .netline{order:7}
+  .hero .badge{order:1;justify-self:start}.hero h1{order:2}.hero .cta{order:3;margin:0 0 22px}.mat{order:4}.hero .sub{order:5}.hero .cta-links{order:6}.hero .netline{order:7}
+  .receipts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .receipts>div:nth-child(2){border-right:0}.receipts>div:nth-child(-n+2){border-bottom:1px solid var(--rule)}
   .mat{background:var(--bg-drawer);margin:4px -28px 30px;padding:20px 28px 26px;overflow:hidden;
     background-image:radial-gradient(ellipse 80% 40% at 40% 0%,rgba(255,233,200,.1),transparent 70%)}
   .nav ul{display:none}.nav .wrap{justify-content:space-between}
@@ -335,21 +340,19 @@ footer .stamp-line{grid-column:1/-1;max-width:none;font:12.5px var(--font-data);
   section{padding:60px 0}
   h1{font-size:clamp(42px,11.6vw,58px);margin:14px 0 16px}
   h1 .lead{font-size:.46em}
-  .receipts{grid-template-columns:repeat(2,minmax(0,1fr))}
   .receipts>div{padding:20px 14px 18px}
-  .receipts>div:nth-child(2){border-right:0}.receipts>div:nth-child(-n+2){border-bottom:1px solid var(--rule)}
   .bento{grid-template-columns:minmax(0,1fr)}.cell{grid-column:auto!important;grid-row:auto!important}
   .faq-grid{grid-template-columns:minmax(0,1fr);gap:24px}
-  .cta .btn{flex:1 1 100%;justify-content:center}
+  .cta .btn{flex:1 1 calc(50% - 6px);justify-content:center;padding-left:12px;padding-right:12px}
+  .hero .cta .btn{flex:1 1 0}.hero .cta .long{display:none}
   .void{grid-template-columns:minmax(0,1fr);gap:4px}
   .rmk{grid-template-columns:minmax(0,1fr);gap:4px}
   .slips{grid-template-columns:minmax(0,1fr)}.slip{margin:0 0 -1.5px}
   footer .wrap{grid-template-columns:minmax(0,1fr)}
-  .arch-wide{display:none}.arch-phone{display:block}
-  .frame-scroll{height:460px}
+  .arch .arch-wide{display:none}.arch .arch-phone,.arch .arch-open{display:block}.arch{padding:16px 16px 18px}
   .net-row{grid-template-columns:minmax(0,1fr) auto;gap:6px 14px}
   .net-role,.net-proof{grid-column:1/-1}
-  .close-grid{grid-template-columns:minmax(0,1fr);gap:22px}.drawer-tile{width:120px;padding:14px}
+  .close-grid{grid-template-columns:minmax(0,1fr);gap:22px}.drawer-tile{width:112px}
   .mat{margin:2px -18px 26px;padding:14px 12px 22px}
   .plate{font-size:11px;margin-bottom:10px}.plate .more,.badge .trk{display:none}
   .badge{font-size:11px}
@@ -363,7 +366,7 @@ footer .stamp-line{grid-column:1/-1;max-width:none;font:12.5px var(--font-data);
   .quiet{min-height:84px;padding:9px 0 12px}
   .q-top{gap:8px}.q-lab{font-size:10.5px;letter-spacing:.08em}.q-read{font-size:10.5px}.q-read b{font-size:18px}
   .tally{height:22px}
-  .released{font-size:32px;padding:6px 14px 2px;border-width:3px}
+  .released{font-size:28px;padding:6px 12px 2px;border-width:3px;top:68%;left:38%}.ripple{top:68%;left:38%}
   .stub{margin:0 -13px;padding:10px 13px 12px;grid-template-columns:minmax(0,1fr) auto;font-size:11px}
   .stub-who{grid-column:1;grid-row:1}.stub .paid{grid-column:2;grid-row:1/3;font-size:12px}
   .stub-cd{grid-column:1;grid-row:2}.stub-tx{grid-column:1/-1;grid-row:3;margin-top:4px}
@@ -372,6 +375,7 @@ footer .stamp-line{grid-column:1/-1;max-width:none;font:12.5px var(--font-data);
   .nav .btn.deck,.nav .ver{display:none}
 }
 @media (min-width:1041px) and (max-height:820px){ .hero{padding-top:14px} .hero-copy{padding-top:20px} .plate{margin-bottom:8px} .row{min-height:33px;padding:3px 0} .quiet{min-height:92px;padding:8px 0 12px} .card{padding-top:14px} h1{margin:16px 0 18px} }
+@media (max-width:600px){ .frame-scroll{aspect-ratio:780/1172} .frame-scroll img{height:100%;object-fit:cover;object-position:top} }
 @media (max-width:380px){ .receipts{grid-template-columns:minmax(0,1fr)} .receipts>div{border-right:0!important;border-bottom:1px solid var(--rule)} .receipts>div:last-child{border-bottom:0} }
 @media print{
   .nav,.plate button,.copy span,.skip{display:none}
@@ -396,7 +400,7 @@ footer .stamp-line{grid-column:1/-1;max-width:none;font:12.5px var(--font-data);
       <li><a href="#faq">FAQ</a></li>
       <li><a href="judge/">For judges</a></li>
     </ul>
-    <a class="ver" data-release href="https://github.com/edycutjong/heirloom/releases/latest" title="Latest release">v0.3.0</a>
+    <a class="ver" data-release href="https://github.com/edycutjong/heirloom/releases/latest" title="Latest release">v0.4.0</a>
     <a class="btn deck" href="pitch/">Pitch deck</a>
     <a class="btn solid" href="https://github.com/edycutjong/heirloom"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5.5 4 1.5 8l4 4M10.5 4l4 4-4 4"/></svg>Source</a>
   </div>
@@ -408,10 +412,10 @@ footer .stamp-line{grid-column:1/-1;max-width:none;font:12.5px var(--font-data);
     <div class="hero-copy">
       <a class="badge" href="https://dorahacks.io/hackathon/reactive-omni-buildathon/detail">Reactive Omni Buildathon<span class="trk"> · Set It and Forget It</span></a>
       <h1><span class="lead">When your wallet goes quiet,</span> silence <em>pays your heir.</em></h1>
-      <p class="sub">If you die with crypto in your own wallet, nobody gets it. Heirloom's reactive contract counts your ordinary transfers of the tokens you list as proof of life. When they stop for the period you set, a grace window opens on Base, and any value-carrying transfer of a listed token cancels it. If none comes, the vault pays your heir in two presses anyone can make. <b>No check-in button. No keeper.</b></p>
+      <p class="sub">If you die with crypto in your own wallet, nobody gets it. Heirloom's reactive contract counts your ordinary transfers of the tokens you list as proof of life. When they stop for the period you set, a grace window opens; any value-carrying transfer of a listed token cancels it. If none comes, two presses anyone can make pay your heir from the vault. <b>No check-in button. No keeper.</b></p>
       <div class="cta">
-        <a class="btn solid" href="judge/">For judges: the 30-second path</a>
-        <a class="btn" href="https://github.com/edycutjong/heirloom"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5.5 4 1.5 8l4 4M10.5 4l4 4-4 4"/></svg>Source on GitHub</a>
+        <a class="btn solid" href="judge/">For judges<span class="long">: the 30-second path</span></a>
+        <a class="btn" href="https://github.com/edycutjong/heirloom"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5.5 4 1.5 8l4 4M10.5 4l4 4-4 4"/></svg>Source<span class="long"> on GitHub</span></a>
       </div>
       <p class="cta-links"><a href="pitch/">Pitch deck</a><a href="status/">Live status card</a></p>
       <p class="netline"><span class="stamp">TESTNET</span><span><b>Reactive Lasna</b> · <b>Base Sepolia</b> · <b>Ethereum Sepolia</b></span><span>Mainnet: not deployed, no mainnet transactions</span></p>
@@ -446,7 +450,7 @@ footer .stamp-line{grid-column:1/-1;max-width:none;font:12.5px var(--font-data);
         </div>
       </div>
       </div>
-      <div class="mat-cap"><p>The demo run, from <code>evidence/triples.csv</code> and <code>evidence/demo-actions.csv</code>: 2 graces, 1 cancel, 1 release, 5 of 5 callbacks acknowledged. Recorded 2026-11-08, 18:02–18:26 UTC; replayed ×120. Times: Lasna blocks (claim row: send time). One pencil mark per minute of silence; grace opens on the first Cron tick past T.</p></div>
+      <div class="mat-cap"><p>The demo run (<code>evidence/triples.csv</code>, <code>demo-actions.csv</code>): 2 graces, 1 cancel, 1 release, 5 of 5 callbacks acknowledged. Recorded 2026-11-08 18:02–18:26 UTC, replayed ×120; times are Lasna blocks (claim row: send time). One pencil mark per minute of silence.</p></div>
     </div>
   </div>
 </div></div>
@@ -468,7 +472,7 @@ footer .stamp-line{grid-column:1/-1;max-width:none;font:12.5px var(--font-data);
       <div class="net-row s-testnet"><p class="net-name">Base Sepolia<small>chain 84532</small></p><span class="stamp">TESTNET</span><p class="net-role">HeirloomVault: callbacks land here; the two-step claim pays out here</p><p class="net-proof">claim paid: <a href="https://sepolia.basescan.org/tx/0x13d8677c445bbfb41a63e33b3405c218bec83b6af7c50018ca34d739caf580d3">0x13d8…80d3</a></p></div>
       <div class="net-row s-testnet"><p class="net-name">Ethereum Sepolia<small>chain 11155111</small></p><span class="stamp">TESTNET</span><p class="net-role">A watched origin chain: transfers there count as proof of life</p><p class="net-proof">heartbeat: <a href="https://sepolia.etherscan.io/tx/0xbc2c6b8b69649105fc56b15fac5f792b9117da76f9f01c5d6ef71442140bac55">0xbc2c…ac55</a></p></div>
       <div class="net-row s-probe"><p class="net-name">Unichain Sepolia<small>chain 1301</small></p><span class="stamp">PROBE ONLY</span><p class="net-role">A subscription probe on build day 1 (2026-11-08); no Heirloom instance watches it yet</p><p class="net-proof">probe origin: <a href="https://sepolia.uniscan.xyz/tx/0xf99e9d2940c75137dd29a51c84ea788339e95bc5ee960e213b77723c86ef1cc7">0xf99e…1cc7</a></p></div>
-      <div class="net-row s-none"><p class="net-name">Reactive mainnet + Base<small>chains 1597 + 8453</small></p><span class="stamp">NOT DEPLOYED</span><p class="net-role">Two instances planned: T = 90 days and T = 48 h</p><p class="net-proof">scripted, never run; no mainnet transactions</p></div>
+      <div class="net-row s-none"><p class="net-name">Reactive mainnet + Base<small>chains 1597 + 8453</small></p><span class="stamp">NOT DEPLOYED</span><p class="net-role">Two instances planned: T&nbsp;=&nbsp;90&nbsp;days and T&nbsp;=&nbsp;48&nbsp;h</p><p class="net-proof">scripted, never run; no mainnet transactions</p></div>
     </div>
   </div>
 </section>
@@ -481,9 +485,9 @@ footer .stamp-line{grid-column:1/-1;max-width:none;font:12.5px var(--font-data);
       <figure style="margin:0">
         <div class="frame">
           <div class="frame-bar"><i></i><i></i><span>status/ · demo instance</span><a href="status/">Open it live</a></div>
-          <div class="frame-scroll"><img src="assets/img/status-demo-top.webp" width="1600" height="1047" alt="The Heirloom status card for the demo instance: RELEASED stamp, live facts, and the first access-card rows with origin, reactive and callback hashes" loading="lazy"></div>
+          <div class="frame-scroll"><picture><source media="(max-width:600px)" srcset="assets/img/status-demo-phone.webp" width="780" height="1700"><img src="assets/img/status-demo-top.webp" width="1600" height="1047" alt="The Heirloom status card for the demo instance: RELEASED stamp, live facts, and the first access-card rows with origin, reactive and callback hashes" loading="lazy"></picture></div>
         </div>
-        <figcaption class="cap">Screenshot of <code>status/</code>, captured 2026-11-08 20:47 UTC, cropped after the third row; the full card has ten rows and the heir stub. <a href="status/">Open it live</a>.</figcaption>
+        <figcaption class="cap">Capture of <code>status/</code>, 2026-11-08 20:47 UTC, cropped; the full card has ten rows and the heir stub. <a href="status/">Open it live</a>.</figcaption>
       </figure>
       <figure style="margin:0">
         <div class="term-wrap">
@@ -522,12 +526,13 @@ refusal   ZERO_VALUE</pre>
         <li><code>react()</code> on Lasna: filter, then stamp <code>lastSeen</code></li>
         <li>Cron: silence ran out → callback</li>
         <li><code>HeirloomVault</code> on Base: grace → claimable</li>
-        <li>Heir: <code>initiateClaim</code> → <code>finalizeClaim</code></li>
+        <li>Claim: <code>initiateClaim</code> → <code>finalizeClaim</code> (anyone may press; the heir is paid)</li>
       </ol>
+      <p class="arch-open"><a href="architecture.svg">Open the full diagram (SVG)</a></p>
     </div>
     <div class="bento">
       <div class="cell"><h3>Silence is the signal</h3><p>Every value-carrying transfer of an allowlisted token out of your address, on each watched chain, is a visit stamp. The same transfer at $0 is struck through.</p><span class="chip">SYSTEM.subscribe</span>
-        <div class="art" aria-label="Two real rows from the demo card"><div class="row k-visit" data-t="2" data-life="2"><time datetime="2026-11-08T18:02:48Z">18:02:48</time><span class="what"><span>Token transfer</span><small>Ethereum Sepolia · <a href="https://sepolia.etherscan.io/tx/0xbc2c6b8b69649105fc56b15fac5f792b9117da76f9f01c5d6ef71442140bac55">0xbc2c…ac55</a></small></span><span class="stamp">VISIT</span></div><div class="row k-refused" data-t="5"><time datetime="2026-11-08T18:02:51Z">18:02:51</time><span class="what"><span>$0 USDC transfer</span><small>Base Sepolia · <a href="https://sepolia.basescan.org/tx/0xaac45c5d961a6daf07676707c49b2422f72f24c0d90c06025f9033ade90b52e9">0xaac4…52e9</a></small></span><span class="stamp">REFUSED</span></div></div></div>
+        <div class="art" aria-label="Four real rows from the demo card"><div class="row k-visit" data-t="2" data-life="2"><time datetime="2026-11-08T18:02:48Z">18:02:48</time><span class="what"><span>Token transfer</span><small>Ethereum Sepolia · <a href="https://sepolia.etherscan.io/tx/0xbc2c6b8b69649105fc56b15fac5f792b9117da76f9f01c5d6ef71442140bac55">0xbc2c…ac55</a></small></span><span class="stamp">VISIT</span></div><div class="row k-refused" data-t="5"><time datetime="2026-11-08T18:02:51Z">18:02:51</time><span class="what"><span>$0 USDC transfer</span><small>Base Sepolia · <a href="https://sepolia.basescan.org/tx/0xaac45c5d961a6daf07676707c49b2422f72f24c0d90c06025f9033ade90b52e9">0xaac4…52e9</a></small></span><span class="stamp">REFUSED</span></div><div class="row k-grace" data-t="348"><time datetime="2026-11-08T18:08:34Z">18:08:34</time><span class="what"><span>Silence past T: grace opens</span><small>callback <a href="https://sepolia.basescan.org/tx/0xde28408b0cb45115d6bde3464bf03255e356a5411d666c0c7f617bee3d209488">0xde28…9488</a></small></span><span class="stamp">DORMANT</span></div><div class="row k-visit" data-t="356" data-life="356"><time datetime="2026-11-08T18:08:42Z">18:08:42</time><span class="what"><span>Owner transfer cancels the grace</span><small>Base Sepolia · <a href="https://sepolia.basescan.org/tx/0x2082f0bc5c04108e8393bb2b58451b5a58c90a057aa0ccc6a2e2d8aee05def00">0x2082…ef00</a></small></span><span class="stamp">VISIT</span></div></div></div>
       <div class="cell"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5h18M11 35h18M13 5c0 9 14 9 14 15s-14 6-14 15M27 5c0 9-14 9-14 15s14 6 14 15"/><path d="M16 30h8"/></svg><h3>The clock is a Cron topic</h3><p>Reactive's Cron measures silence, grace and the attest. No server keeps time.</p><span class="chip">CRON</span></div>
       <div class="cell"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 12h28M6 20h28M6 28h28"/><path d="M4 22l32-6" stroke-width="2.4"/></svg><h3>Spoofs are struck through</h3><p>A $0 transfer is refused first in <code>react()</code> and logged. A token you have not listed is never subscribed, so it never counts.</p><span class="chip">SpoofRefused</span></div>
       <div class="cell"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 24c4-1 7-6 10-10 3-4 8-5 11-2l4 1-3 2c0 7-6 13-14 13-3 0-6-1-8-4z"/><path d="M27 15h.01"/><path d="M14 33l-2 4M19 33l1 4"/></svg><h3>A deaf network buys one extension</h3><p>An owner-independent Chainlink feed proves a chain is still heard; on a chain with a canary, a gap freezes the countdown once, capped.</p><span class="chip">canary</span></div>
@@ -573,7 +578,6 @@ refusal   ZERO_VALUE</pre>
     </div>
     <div class="after-slips">
       <span>Every origin, reactive and callback hash: <a href="https://github.com/edycutjong/heirloom/blob/main/DEMO.md">DEMO.md</a></span>
-      <span>Cost per month: not published yet (the window is under the 6 h the meter needs)</span>
     </div>
   </div>
 </section>
@@ -586,7 +590,7 @@ refusal   ZERO_VALUE</pre>
       <details><summary>What if I just go travelling for a month?</summary><p>You choose the silence period at deploy; the long-running testnet instance uses 90 days. Silence first opens a grace window, and any value-carrying transfer of a listed token, or any action of yours on the vault, cancels it. You can withdraw from the vault at any time before release.</p></details>
       <details><summary>Can a stranger fake my life, or cause my release?</summary><p>Neither a spoof nor an unlisted token counts as life: $0 transfers are refused and logged, and tokens you have not listed are never subscribed. Only your silence can start a release; a sustained spam spray can delay one, never cause one (Remark 1).</p></details>
       <details><summary>What if the Reactive Network stops hearing a chain?</summary><p>An owner-independent Chainlink ETH/USD feed acts as a canary. If its updates stop arriving, the countdown freezes once, capped, so a short outage cannot trigger a release. The Ethereum feeds measured so far update about hourly (medians 3,612 s and 3,636 s over about 23 h).</p></details>
-      <details><summary>What is real, and what is not yet?</summary><p>Real: every transaction on this page is on a public testnet (Reactive Lasna, Base Sepolia and Ethereum Sepolia, plus one Unichain Sepolia probe), linked to its explorer, and the tests run the whole loop. Not yet: mainnet. The mainnet deploy is scripted but has never run; no mainnet transaction exists. The testnet rows come from a build earlier than HEAD; mainnet deploys HEAD.</p></details>
+      <details><summary>What is real, and what is not yet?</summary><p>Real: every transaction on this page is on a public testnet (Reactive Lasna, Base Sepolia and Ethereum Sepolia, plus one Unichain Sepolia probe), linked to its explorer, and the tests run the whole loop. Not yet: mainnet (scripted, never run; no mainnet transaction exists). The testnet rows come from a build earlier than HEAD; mainnet deploys HEAD.</p></details>
       <details><summary>What does it cost to keep running?</summary><p>Not published yet. The long-running instance&#x27;s measured window is shorter than the 6 hours the meter needs, and a dollar figure needs a second REACT price source. Refused reacts are billed too, which is why the filter runs first and a spam brake bounds it.</p></details>
     </div>
   </div>
@@ -624,7 +628,7 @@ refusal   ZERO_VALUE</pre>
       <li><a href="https://github.com/edycutjong/heirloom/blob/main/docs/DX-REPORT.md">DX report</a></li>
       <li><a href="https://dorahacks.io/hackathon/reactive-omni-buildathon/detail">The buildathon</a></li>
     </ul>
-    <p class="stamp-line">Evidence generated 2026-11-09 00:19 UTC · numbers from <code>evidence/</code> · release <a data-release href="https://github.com/edycutjong/heirloom/releases/latest">v0.3.0</a></p>
+    <p class="stamp-line">Evidence generated 2026-11-09 00:19 UTC · numbers from <code>evidence/</code> · release <a data-release href="https://github.com/edycutjong/heirloom/releases/latest">v0.4.0</a></p>
   </div>
 </footer>
 
@@ -727,13 +731,6 @@ var Heirloom = {
     cio.observe(card);
   }
 })();
-</script>
-<script>
-// Latest release tag: the markup holds the build-time tag; refresh it from the GitHub API, and stay silent on any failure.
-(function(){var els=document.querySelectorAll('[data-release]');if(!els.length||!window.fetch)return;
-fetch('https://api.github.com/repos/edycutjong/heirloom/releases/latest',{headers:{Accept:'application/vnd.github+json'}})
-.then(function(r){return r.ok?r.json():null}).then(function(j){if(!j||!/^v\d/.test(j.tag_name||''))return;
-[].forEach.call(els,function(e){e.textContent=j.tag_name;});}).catch(function(){});})();
 </script>
 </body>
 </html>

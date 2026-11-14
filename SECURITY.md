@@ -17,5 +17,6 @@ Out of scope: `src/probe/`, `src/testnet/` (spike and test-token helpers), third
 
 ## Automated checks
 
-Every push runs `forge test`, gitleaks over full history, and Slither (see `.github/workflows/`). Known design limits are listed under
+Every push runs `forge test` with coverage gates, gitleaks over full history, `pnpm audit`, Slither and CodeQL (see `.github/workflows/`);
+Dependabot alerts, secret scanning and push protection are on. Known design limits are listed under
 "Known limits" in the README.

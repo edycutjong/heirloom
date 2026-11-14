@@ -106,12 +106,12 @@ That window holds the run above; for your own run use `--from-block $((B-300))` 
 The contracts are tested with the Reactive Network's own Test Lib, driven through an adapter in `packages/reactive-kit` because the library cannot drive an Omni contract as shipped (see [docs/DX-REPORT.md](docs/DX-REPORT.md) finding 1).
 
 ```sh
-forge test                       # Ran 4 test suites: 104 tests passed, 0 failed, 0 skipped
-FOUNDRY_PROFILE=kit forge test   # Ran 4 test suites: 23 tests passed, 0 failed, 0 skipped
-pnpm test:ts                     # tests 6, pass 6, fail 0
+forge test                       # Ran 8 test suites: 164 tests passed, 0 failed, 0 skipped
+FOUNDRY_PROFILE=kit forge test   # Ran 5 test suites: 27 tests passed, 0 failed, 0 skipped
+pnpm test:ts                     # Test Files 2 passed, Tests 25 passed
 ```
 
-Those are the counts from the run that produced this page (2026-11-08 UTC).
+Those are the counts at the latest test update (2026-11-14 UTC); the first version of this page (2026-11-08) ran 104, 23 and 6.
 
 ## Cost and latency
 

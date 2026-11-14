@@ -6,10 +6,11 @@
 
   <p>Every on-chain and security claim below links to a transaction or a test. Testnet only so far: Reactive Lasna with Base Sepolia. The mainnet deploy is scripted and dry-run, not yet run.</p>
 
-  <p><a href="https://edycutjong.github.io/heirloom/">Landing page</a> · <a href="https://edycutjong.github.io/heirloom/pitch/">Pitch deck</a> · <a href="https://edycutjong.github.io/heirloom/status/">Live status card</a> (GitHub Pages, published from <code>docs/</code> and <code>status/</code> once the repo is public)</p>
+  <p><a href="https://edycutjong.github.io/heirloom/judge/"><b>For judges</b></a> · <a href="https://edycutjong.github.io/heirloom/">Landing page</a> · <a href="https://edycutjong.github.io/heirloom/pitch/">Pitch deck</a> · <a href="https://edycutjong.github.io/heirloom/status/">Live status card</a> (GitHub Pages, published from <code>docs/</code> and <code>status/</code>)</p>
 
   <br/>
 
+  [![For Judges](https://img.shields.io/badge/For_Judges-30--second_path-8E2B1D?style=for-the-badge)](https://edycutjong.github.io/heirloom/judge/)
   [![Built for Reactive Omni Buildathon](https://img.shields.io/badge/DoraHacks-Reactive_Omni_Buildathon-8b5cf6?style=for-the-badge)](https://dorahacks.io/hackathon/reactive-omni-buildathon/detail)
 
   <br/>
@@ -19,6 +20,8 @@
   ![Foundry](https://img.shields.io/badge/Foundry-tested-orange?style=flat)
   [![License](https://img.shields.io/badge/License-MIT-yellow)](https://opensource.org/licenses/MIT)
   [![CI](https://github.com/edycutjong/heirloom/actions/workflows/ci.yml/badge.svg)](https://github.com/edycutjong/heirloom/actions/workflows/ci.yml)
+  [![CodeQL](https://github.com/edycutjong/heirloom/actions/workflows/codeql.yml/badge.svg)](https://github.com/edycutjong/heirloom/actions/workflows/codeql.yml)
+  [![Release](https://img.shields.io/github/v/release/edycutjong/heirloom?sort=semver)](https://github.com/edycutjong/heirloom/releases/latest)
 
 </div>
 
@@ -83,10 +86,13 @@ The demo instance ran the full scenario on live networks: grace twice, one cance
 
 | Check | Result |
 |---|---|
-| Contract tests (`forge test`) | 104 passed, 0 failed |
-| Shared kit tests (`FOUNDRY_PROFILE=kit forge test`) | 23 passed, 0 failed |
-| TypeScript tests (`pnpm test:ts`) | 6 passed, 0 failed |
-| Rows in `evidence/triples.csv` | 40 (22 with a callback leg, 18 reactive-only) across probe, short-T and long-T instances |
+| Contract tests (`forge test`) | 164 passed, 0 failed |
+| Shared kit tests (`FOUNDRY_PROFILE=kit forge test`) | 27 passed, 0 failed |
+| TypeScript tests (`pnpm test:ts`) | 25 passed, 0 failed |
+| Coverage, `src/` contracts (`forge coverage`, gated in CI) | lines 611/611, functions 90/90, branches 182/183: the one left is the `if (c.armed) return;` guard at `src/HeirloomReactive.sol:509`, which no caller can reach (the gate allows it by name and fails if it ever becomes reachable) |
+| Coverage, kit contracts (`FOUNDRY_PROFILE=kit forge coverage`) | lines 64/64, functions 20/20, branches 13/13 |
+| Coverage, TypeScript kit (`pnpm test:coverage`, thresholds 100) | lines 126/126, functions 29/29, branches 101/101 |
+| Rows in `evidence/triples.csv` | 43 (22 with a callback leg, 21 reactive-only) across probe, short-T and long-T instances |
 
 ### Attacks defeated
 
@@ -123,29 +129,44 @@ The demo instance ran the full scenario on live networks: grace twice, one cance
 git clone --recurse-submodules https://github.com/edycutjong/heirloom && cd heirloom
 pnpm install
 pnpm exec tsx scripts/trigger-spoof.ts --dry-run   # simulate a spoof against the live long-t instance
+PRIVATE_KEY=0x… pnpm exec tsx scripts/trigger-spoof.ts   # the real thing: any Base Sepolia key with a little ETH
 ```
+
+Live-script settings (RPC overrides, keys) are listed in [`.env.example`](.env.example); the tests need none of them.
 
 ## 🧪 Testing & CI
 
 ```sh
-forge test                       # contracts
-FOUNDRY_PROFILE=kit forge test   # reactive-kit
-pnpm typecheck && pnpm test:ts   # TypeScript
+forge test                             # contracts
+FOUNDRY_PROFILE=kit forge test         # reactive-kit
+pnpm typecheck && pnpm test:coverage   # TypeScript (vitest, coverage thresholds 100)
+pnpm e2e                               # Playwright against the assembled Pages site
 ```
 
-CI (`.github/workflows/ci.yml`) runs the same suites on every push; `.github/workflows/security.yml` adds gitleaks over full history and Slither, Dependabot keeps actions and npm deps current. See [SECURITY.md](SECURITY.md) and [CONTRIBUTING.md](CONTRIBUTING.md).
+| Stage (`.github/workflows/ci.yml`) | What runs |
+|---|---|
+| 1 · Quality | `forge fmt --check`, `forge test` (both profiles), `forge coverage` gated by `scripts/coverage-gate.py`, `tsc`, vitest with coverage |
+| 2 · Security | gitleaks over full history (`gitleaks.yml`), `pnpm audit --audit-level high`, Slither (advisory) |
+| 3 · Build | `forge build --sizes`, shell scripts parse, Pages site assembled and every local link checked |
+| 4 · E2E | Playwright: landing, deck, `/judge/` with no session, status card, no horizontal scroll at 375/768/1440 px |
+| 5 · Performance | Lighthouse CI on landing, `/judge/` and deck (advisory) |
+| 6 · Deploy Gate | main only; passes only when every stage did |
+
+CodeQL (`codeql.yml`) scans the TypeScript and JavaScript; Dependabot sends grouped monthly minor/patch updates for npm and Actions (majors and `lib/` submodules are pinned on purpose); `release.yml` tags a semantic version from conventional commits. See [SECURITY.md](SECURITY.md) and [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## 📁 Project Structure
 
 ```
 src/             HeirloomReactive, HeirloomVault, shared types; src/probe/ (Day-1 spike), src/testnet/ (test token)
-test/            Foundry suites: reactive, vault, hardening, probe
+test/            Foundry suites: reactive, vault, hardening, probe, coverage
 packages/reactive-kit/   shared MIT helpers: Test Lib adapter, absence watch, ack/resend ledger, triple logger, latency observer
 scripts/         triples, status and cost recompute, trigger-spoof, mainnet deploy (dry-run)
 script/          deploy and scenario shell scripts
 status/          static status page
+e2e/             Playwright specs for the Pages site
 evidence/        triples.csv and the raw measurements
-docs/            DX-REPORT.md, architecture.svg
+docs/            landing (index.html), judge/, pitch/, DX-REPORT.md, architecture.svg
+JUDGE.md         the judge page in Markdown: claim, 30-second path, receipts, limits
 ```
 
 ## 🗺️ Roadmap
@@ -159,6 +180,7 @@ docs/            DX-REPORT.md, architecture.svg
 
 ## 📽️ Demo Materials
 
+- For judges, the 30-second path: [JUDGE.md](JUDGE.md) · [web version](https://edycutjong.github.io/heirloom/judge/)
 - Every transaction, with a command to fire your own: [DEMO.md](DEMO.md)
 - Measured platform facts: [docs/DX-REPORT.md](docs/DX-REPORT.md)
 

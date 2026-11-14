@@ -30,6 +30,8 @@ jobs:
         with:
           submodules: recursive
       - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.9.0  # pinned: coverage branch counting differs between forge releases
       - uses: pnpm/action-setup@v6
         with:
           version: 10
@@ -97,6 +99,8 @@ jobs:
         with:
           submodules: recursive
       - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.9.0  # pinned: coverage branch counting differs between forge releases
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
@@ -115,6 +119,8 @@ jobs:
           submodules: recursive
           fetch-depth: 0
       - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.9.0  # pinned: coverage branch counting differs between forge releases
       - name: forge build --sizes (EIP-170 size check for every deployable contract)
         run: forge build --sizes
       - name: Shell scripts parse

@@ -86,11 +86,11 @@ The demo instance ran the full scenario on live networks: grace twice, one cance
 
 | Check | Result |
 |---|---|
-| Contract tests (`forge test`) | 164 passed, 0 failed |
+| Contract tests (`forge test`) | 168 passed, 0 failed |
 | Shared kit tests (`FOUNDRY_PROFILE=kit forge test`) | 27 passed, 0 failed |
 | TypeScript tests (`pnpm test:ts`) | 25 passed, 0 failed |
-| Coverage, `src/` contracts (`forge coverage`, gated in CI) | lines 611/611, functions 90/90, branches 182/183: the one left is the `if (c.armed) return;` guard at `src/HeirloomReactive.sol:509`, which no caller can reach (the gate allows it by name and fails if it ever becomes reachable) |
-| Coverage, kit contracts (`FOUNDRY_PROFILE=kit forge coverage`) | lines 64/64, functions 20/20, branches 13/13 |
+| Coverage, `src/` contracts (`forge coverage`, forge 1.9.0, gated in CI) | lines 611/611, functions 90/90, branches 202/203: the one left is the `if (c.armed) return;` guard at `src/HeirloomReactive.sol:509`, which no caller can reach (the gate allows it by name and fails if it ever becomes reachable) |
+| Coverage, kit contracts (`FOUNDRY_PROFILE=kit forge coverage`) | lines 64/64, functions 20/20, branches 17/17 |
 | Coverage, TypeScript kit (`pnpm test:coverage`, thresholds 100) | lines 126/126, functions 29/29, branches 101/101 |
 | Rows in `evidence/triples.csv` | 43 (22 with a callback leg, 21 reactive-only) across probe, short-T and long-T instances |
 

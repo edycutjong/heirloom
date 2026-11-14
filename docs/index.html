@@ -230,6 +230,7 @@ footer p{font-size:14.5px;color:color-mix(in srgb,var(--bg) 75%,var(--ink));marg
 footer ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;font-size:15px}
 footer ul a{text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--bg) 35%,transparent);transition:border-color .2s}
 footer ul a:hover{border-color:var(--bg)}
+footer .stamp-line a{color:inherit;text-underline-offset:3px}
 footer .stamp-line{grid-column:1/-1;max-width:none;font:12.5px var(--font-data);color:color-mix(in srgb,var(--bg) 80%,var(--ink));border-top:1px solid color-mix(in srgb,var(--bg) 18%,transparent);padding-top:18px}
 /* responsive */
 @media (max-width:1040px){
@@ -279,6 +280,7 @@ footer .stamp-line{grid-column:1/-1;max-width:none;font:12.5px var(--font-data);
       <li><a href="#how">How it works</a></li>
       <li><a href="#remarks">Limits</a></li>
       <li><a href="#faq">FAQ</a></li>
+      <li><a href="judge/">For judges</a></li>
     </ul>
     <a class="btn deck" href="pitch/">Pitch deck</a>
     <a class="btn solid" href="https://github.com/edycutjong/heirloom"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5.5 4 1.5 8l4 4M10.5 4l4 4-4 4"/></svg>Source</a>
@@ -296,6 +298,7 @@ footer .stamp-line{grid-column:1/-1;max-width:none;font:12.5px var(--font-data);
         <a class="btn solid" href="https://github.com/edycutjong/heirloom"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5.5 4 1.5 8l4 4M10.5 4l4 4-4 4"/></svg>Source on GitHub</a>
         <a class="btn" href="pitch/">Pitch deck</a>
         <a class="btn" href="status/">Live status card</a>
+        <a class="btn" href="judge/">For judges</a>
       </div>
       <p class="proof"><span>Testnet: Reactive Lasna + Base Sepolia · mainnet scripted, dry-run, not yet run</span>
         <button class="copy" type="button" data-copy="pnpm exec tsx scripts/trigger-spoof.ts --dry-run">pnpm exec tsx scripts/trigger-spoof.ts --dry-run <span>Copy</span></button></p>
@@ -325,9 +328,9 @@ footer .stamp-line{grid-column:1/-1;max-width:none;font:12.5px var(--font-data);
 </div></div>
 <div class="wrap">
   <div class="receipts" aria-label="Receipts">
-    <div><span class="num" data-to="104">104</span><p>contract tests passing; the whole loop runs in <code style="display:inline">forge test</code> on the Reactive Test Lib</p><code>README · Engineering Rigor</code></div>
+    <div><span class="num" data-to="164">164</span><p>contract tests passing; the whole loop runs in <code style="display:inline">forge test</code> on the Reactive Test Lib</p><code>README · Engineering Rigor</code></div>
     <div><span class="num"><span data-to="5">5</span> of 5</span><p>callbacks the demo vault acknowledged, 0 resends</p><code>evidence/status.json</code></div>
-    <div><span class="num" data-to="40">40</span><p>rows in the evidence ledger, 22 of them with a callback leg</p><code>evidence/triples.csv</code></div>
+    <div><span class="num" data-to="43">43</span><p>rows in the evidence ledger, 22 of them with a callback leg</p><code>evidence/triples.csv</code></div>
     <div><span class="num" data-to="0">0</span><p>subscriptions left on Lasna after the release: the contract removes its own</p><code>DEMO.md · rnk_getFilters</code></div>
   </div>
 </div>
@@ -459,6 +462,7 @@ refusal   ZERO_VALUE</pre>
       <p>A dead-man's switch with no server to die with you. Built by Edy Cu for the Reactive Omni Buildathon, track Set It and Forget It. MIT licensed.</p>
     </div>
     <ul>
+      <li><a href="judge/">For judges</a></li>
       <li><a href="https://github.com/edycutjong/heirloom">Source on GitHub</a></li>
       <li><a href="pitch/">Pitch deck</a></li>
       <li><a href="status/">Status card</a></li>
@@ -466,7 +470,7 @@ refusal   ZERO_VALUE</pre>
       <li><a href="https://github.com/edycutjong/heirloom/blob/main/docs/DX-REPORT.md">DX report</a></li>
       <li><a href="https://dorahacks.io/hackathon/reactive-omni-buildathon/detail">The buildathon</a></li>
     </ul>
-    <p class="stamp-line">Evidence generated 2026-11-08 19:23 UTC · numbers from <code>evidence/</code> · v0.0.0-dev</p>
+    <p class="stamp-line">Evidence generated 2026-11-08 19:23 UTC · numbers from <code>evidence/</code> · <a data-release href="https://github.com/edycutjong/heirloom/releases/latest">latest release</a></p>
   </div>
 </footer>
 
@@ -542,6 +546,13 @@ var Heirloom = {
     cio.observe(card);
   }
 })();
+</script>
+<script>
+// Latest release tag: the markup holds the build-time tag; refresh it from the GitHub API, and stay silent on any failure.
+(function(){var els=document.querySelectorAll('[data-release]');if(!els.length||!window.fetch)return;
+fetch('https://api.github.com/repos/edycutjong/heirloom/releases/latest',{headers:{Accept:'application/vnd.github+json'}})
+.then(function(r){return r.ok?r.json():null}).then(function(j){if(!j||!/^v\d/.test(j.tag_name||''))return;
+[].forEach.call(els,function(e){e.textContent=j.tag_name;});}).catch(function(){});})();
 </script>
 </body>
 </html>

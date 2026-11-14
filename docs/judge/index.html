@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heirloom for judges: the claim, a 30-second path, the receipts</title>
+<meta name="description" content="One page for judges: Heirloom's claim, a 30-second click path through live testnet transactions, real receipts, the reproduce command and the honest limits. No wallet, no sign-in.">
+<meta name="author" content="Edy Cu">
+<meta name="theme-color" content="#EFE8D8">
+<link rel="canonical" href="https://edycutjong.github.io/heirloom/judge/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Heirloom">
+<meta property="og:title" content="Heirloom for judges">
+<meta property="og:description" content="The claim, a 30-second path through live Reactive Lasna and Base Sepolia transactions, the receipts and the limits.">
+<meta property="og:url" content="https://edycutjong.github.io/heirloom/judge/">
+<meta property="og:image" content="https://edycutjong.github.io/heirloom/assets/og.png?v=62d776ad">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The Heirloom access card: visit stamps, a refused $0 row, and an oxblood RELEASED stamp">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../assets/icon-180.png">
+<link rel="preload" href="../assets/fonts/sorts-mill-goudy-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/work-sans-var.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face{font-family:"Sorts Mill Goudy";src:url(../assets/fonts/sorts-mill-goudy-400.woff2) format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Work Sans";src:url(../assets/fonts/work-sans-var.woff2) format("woff2");font-weight:300 700;font-style:normal;font-display:swap}
+@font-face{font-family:"Cutive Mono";src:url(../assets/fonts/cutive-mono-400.woff2) format("woff2");font-weight:400;font-style:normal;font-display:swap}
+:root{--bg:#EFE8D8;--ink:#1E1A15;--muted:#6F675A;--before:#4A3E8C;--after:#8E2B1D;--rule:#C9BFA8;
+  --font-display:"Sorts Mill Goudy","Goudy Old Style",Georgia,serif;--font-body:"Work Sans","Helvetica Neue",Arial,sans-serif;--font-data:"Cutive Mono","Courier New",monospace}
+*,*::before,*::after{box-sizing:border-box}
+::selection{background:var(--before);color:var(--bg)}
+:focus-visible{outline:2px solid var(--before);outline-offset:3px}
+html{overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.6 var(--font-body);-webkit-font-smoothing:antialiased}
+a{color:var(--before);text-underline-offset:3px;transition:color .2s}
+a:hover{color:var(--ink)}
+h1,h2{font-family:var(--font-display);font-weight:400;margin:0}
+p{margin:0}
+code,.mono{font-family:var(--font-data);font-size:.92em}
+.wrap{max-width:900px;margin:0 auto;padding:0 24px}
+.skip{position:absolute;left:-999px;top:8px;background:var(--ink);color:var(--bg);padding:8px 12px;z-index:9}
+.skip:focus{left:8px}
+header.top{border-bottom:1px solid var(--rule)}
+header.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;height:60px}
+.brand{display:flex;align-items:center;gap:10px;font:400 22px var(--font-display);color:var(--ink);text-decoration:none}
+.brand svg{width:26px;height:26px}
+.top nav{display:flex;gap:18px;font-size:14.5px}
+.top nav a{color:var(--muted);text-decoration:none;border-bottom:1.5px solid transparent;padding:4px 0;transition:color .2s,border-color .2s}
+.top nav a:hover{color:var(--ink);border-color:var(--ink)}
+main{padding:44px 0 64px}
+.lab{font:13px var(--font-data);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font-size:clamp(34px,5vw,50px);line-height:1.08;margin:10px 0 18px}
+.claim{font:400 clamp(21px,2.6vw,26px)/1.35 var(--font-display);border-left:3px solid var(--before);padding:4px 0 4px 18px;max-width:40em}
+.meta{margin-top:16px;font:13px var(--font-data);color:var(--muted)}
+section{margin-top:46px}
+h2{font-size:30px;line-height:1.15;margin-bottom:6px}
+h2 .n{font:14px var(--font-data);color:var(--muted);margin-right:10px;vertical-align:middle}
+.sub{color:var(--muted);font-size:15.5px;margin-bottom:16px}
+ol.path{list-style:none;counter-reset:s;margin:0;padding:0;border-top:1.5px solid var(--ink)}
+ol.path li{counter-increment:s;display:grid;grid-template-columns:44px minmax(0,1fr);gap:4px 12px;padding:14px 0;border-bottom:1px solid var(--rule)}
+ol.path li::before{content:counter(s);font:400 28px/1 var(--font-display);color:var(--before)}
+ol.path b{font-weight:600}
+ol.path .tx{display:block;font:13.5px/1.7 var(--font-data);color:var(--muted);overflow-wrap:anywhere}
+ol.path .tx a{color:var(--before)}
+ol.path .tx a:hover{color:var(--ink)}
+table{width:100%;border-collapse:collapse;font-size:15.5px}
+th,td{text-align:left;padding:9px 10px 9px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font:12.5px var(--font-data);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:400;border-bottom:1.5px solid var(--ink)}
+td.v{font:15px var(--font-data)}
+td code{overflow-wrap:anywhere}
+pre{background:var(--ink);color:var(--bg);font:13.5px/1.6 var(--font-data);padding:16px 18px;overflow-x:auto;margin:0 0 10px;white-space:pre}
+pre .c{color:color-mix(in srgb,var(--muted) 45%,var(--bg))}
+.ci{font-size:14.5px;color:var(--muted)}
+ul.limits{margin:0;padding-left:20px}
+ul.limits li{margin:8px 0}
+ul.links{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+ul.links a{display:block;border:1.5px solid var(--ink);padding:10px 12px;color:var(--ink);text-decoration:none;transition:background .2s,color .2s}
+ul.links a:hover{background:var(--ink);color:var(--bg)}
+ul.links small{display:block;font:12px var(--font-data);color:var(--muted)}
+ul.links a:hover small{color:color-mix(in srgb,var(--bg) 75%,var(--ink))}
+footer{border-top:1px solid var(--rule);padding:22px 0 34px;font:13px var(--font-data);color:var(--muted)}
+footer a{color:var(--muted)}
+@media (max-width:640px){.top nav{display:none}
+  table,tbody,tr,td{display:block}thead{display:none}
+  tr{padding:10px 0;border-bottom:1px solid var(--rule)}td{border:0;padding:2px 0}td.v{font-size:16px}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="../"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="5" width="26" height="22" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 20h26" stroke="currentColor" stroke-width="1.6" stroke-dasharray="2 2"/><path d="M9 11h10M9 15h7" stroke="#4A3E8C" stroke-width="2"/><rect x="17" y="9" width="10" height="7" transform="rotate(-12 22 12.5)" fill="none" stroke="#8E2B1D" stroke-width="1.8"/></svg>Heirloom</a>
+    <nav aria-label="Site">
+      <a href="../">Landing</a>
+      <a href="../pitch/">Pitch deck</a>
+      <a href="../status/">Status card</a>
+      <a href="https://github.com/edycutjong/heirloom">Source</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+<div class="wrap">
+  <p class="lab">For judges · no wallet, no sign-in</p>
+  <h1>Heirloom in one page.</h1>
+  <p class="claim" id="claim">Your wallet goes quiet and the vault remembers your partner. A Reactive dead-man's switch: no keeper, no check-in button, spoofs refused.</p>
+  <p class="meta">Track: Set It and Forget It · Reactive Lasna (5318007) + Base Sepolia (84532) · testnet only, mainnet not yet run · release <a data-release href="https://github.com/edycutjong/heirloom/releases/latest">latest</a></p>
+
+  <section aria-labelledby="path">
+    <h2 id="path"><span class="n">01</span>The 30-second path</h2>
+    <p class="sub">Every link is a real transaction on a public explorer. The demo instance ran with T = 5 min on 2026-11-08 (UTC).</p>
+    <ol class="path">
+      <li><div><b>Open the live status card.</b> It reads both testnet instances straight from the chain: the 90-day one is armed, the demo one is released.
+        <span class="tx"><a href="../status/">edycutjong.github.io/heirloom/status/</a></span></div></li>
+      <li><div><b>Silence opens a grace window.</b> A Reactive CRON tick saw no owner activity for T, so the reactive contract asked the Base vault to enter GRACE.
+        <span class="tx">CRON <a href="https://lasna.reactscan.net/tx/0x9535fa9d6409fb168cba654e2b53c499770c409fb6cafe61fa6d648549cd10a0">0x9535fa9d…10a0</a> → react <a href="https://lasna.reactscan.net/tx/0xe4d5fb4d7d811d13c35781eabf43cfcdc6fe03f972291299ca01b3df77d74e5d">0xe4d5fb4d…4e5d</a> → callback <a href="https://sepolia.basescan.org/tx/0xde28408b0cb45115d6bde3464bf03255e356a5411d666c0c7f617bee3d209488">0xde28408b…9488</a></span></div></li>
+      <li><div><b>An ordinary owner transfer cancels it.</b> No button: a token transfer on Base Sepolia was the proof of life.
+        <span class="tx">origin <a href="https://sepolia.basescan.org/tx/0x2082f0bc5c04108e8393bb2b58451b5a58c90a057aa0ccc6a2e2d8aee05def00">0x2082f0bc…ef00</a> → react <a href="https://lasna.reactscan.net/tx/0x99bb1f2241f3b067a91e4130343e0d8a6bfe8245aa658b4e639329c4ed2899fe">0x99bb1f22…99fe</a> → callback <a href="https://sepolia.basescan.org/tx/0x217b43e3027b9ead0bf1f1af33137ab12b8a9a4f69c4202fec9d82bf62f390ce">0x217b43e3…90ce</a></span></div></li>
+      <li><div><b>A stranger's $0 transfer is refused.</b> <code>transferFrom(owner, you, 0)</code> from another wallet; the long-T reactive contract logged <code>SpoofRefused</code> with reason <code>ZERO_VALUE</code>.
+        <span class="tx">origin <a href="https://sepolia.basescan.org/tx/0x777b953e33748cc005ae19e57c2f480ec54a2244203291ca7162690ab4174d79">0x777b953e…4d79</a> → react <a href="https://lasna.reactscan.net/tx/0xb622bc82cdbd66bad8d5c14e085d4c080ec253c99b10ad1413675f67e849f226">0xb622bc82…f226</a></span></div></li>
+      <li><div><b>Silence again, grace runs out, the heir is paid.</b> EXPIRE makes the vault claimable; the two-step claim pays only the heir (<code>0x440E…438b</code>).
+        <span class="tx">EXPIRE callback <a href="https://sepolia.basescan.org/tx/0xabb5147f4da4bb94174c142612cdde6dfbcac89f7c206f757d24426d8a6e0401">0xabb5147f…0401</a> · initiateClaim <a href="https://sepolia.basescan.org/tx/0xf86669ab514601ee00a1fc8c0f97e6f0e6e2edb405cc9d496e761f25d91ede8d">0xf86669ab…de8d</a> · finalizeClaim <a href="https://sepolia.basescan.org/tx/0x13d8677c445bbfb41a63e33b3405c218bec83b6af7c50018ca34d739caf580d3">0x13d8677c…80d3</a></span></div></li>
+      <li><div><b>The contract cleans up after itself.</b> After the payout, <code>react()</code> removed its own subscriptions: the finished demo instance holds 0 filters on Lasna.
+        <span class="tx">teardown <a href="https://lasna.reactscan.net/tx/0x1eb6d631129b1db49bac2a230b10632214460809939c29e517d614021c25a988">0x1eb6d631…a988</a> · check command in <a href="https://github.com/edycutjong/heirloom/blob/main/DEMO.md">DEMO.md</a></span></div></li>
+    </ol>
+  </section>
+
+  <section aria-labelledby="receipts">
+    <h2 id="receipts"><span class="n">02</span>Receipts</h2>
+    <p class="sub">Each number has a file behind it in the repo.</p>
+    <table>
+      <thead><tr><th scope="col">Measure</th><th scope="col">Value</th><th scope="col">Source</th></tr></thead>
+      <tbody>
+        <tr><td>Rows in the triple log (origin or CRON → reactive → callback)</td><td class="v">43 (22 with a callback leg)</td><td><code>evidence/triples.csv</code></td></tr>
+        <tr><td>Demo instance callbacks acknowledged</td><td class="v">5 of 5, 0 resends</td><td><code>evidence/status.json</code>, <code>evidence/demo-summary.json</code></td></tr>
+        <tr><td>Demo scenario</td><td class="v">2 graces, 1 cancel, 1 expiry, claim, teardown</td><td><code>evidence/demo-summary.json</code></td></tr>
+        <tr><td>Contract tests (<code>forge test</code>)</td><td class="v" data-count="forge">164 passed</td><td><code>test/</code></td></tr>
+        <tr><td>Shared kit tests (<code>FOUNDRY_PROFILE=kit forge test</code>)</td><td class="v" data-count="kit">27 passed</td><td><code>packages/reactive-kit/test/</code></td></tr>
+        <tr><td>TypeScript tests (<code>pnpm test:coverage</code>)</td><td class="v">25 passed</td><td><code>packages/reactive-kit/ts/</code></td></tr>
+        <tr><td>Line coverage: <code>src/</code> contracts · kit contracts · TypeScript kit</td><td class="v" data-count="cov">611/611 · 64/64 · 126/126</td><td>CI Stage 1 gate; branches 182/183 in <code>src/</code> (the one left is an unreachable guard, <code>HeirloomReactive.sol:509</code>, allowed by name)</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section aria-labelledby="repro">
+    <h2 id="repro"><span class="n">03</span>Reproduce it yourself</h2>
+    <p class="sub">The real path: fire a spoof from any Base Sepolia wallet against the live long-T instance and watch the reactive contract refuse it on Lasna.</p>
+<pre><code>git clone --recurse-submodules https://github.com/edycutjong/heirloom &amp;&amp; cd heirloom
+pnpm install
+PRIVATE_KEY=0x… pnpm exec tsx scripts/trigger-spoof.ts   <span class="c"># any Base Sepolia key with a little ETH; sends a real tx</span></code></pre>
+    <p class="ci">CI / deterministic replay (not the product, no network): <code>forge test &amp;&amp; FOUNDRY_PROFILE=kit forge test &amp;&amp; pnpm test:coverage</code>. No key? <code>pnpm exec tsx scripts/trigger-spoof.ts --dry-run</code> simulates the same call with <code>eth_call</code> and sends nothing.</p>
+  </section>
+
+  <section aria-labelledby="limits">
+    <h2 id="limits"><span class="n">04</span>Honest limits</h2>
+    <ul class="limits">
+      <li><b>No mainnet evidence yet.</b> The mainnet deploy is scripted and dry-run, not run. Every transaction on this page is testnet.</li>
+      <li><b>The testnet instances predate <code>HEAD</code>.</b> They were deployed before the re-entry lock, <code>coverDebt()</code> and the claim-grace fix; the rows prove the loop, the current contracts are what the tests run.</li>
+      <li><b>Native ETH and silent grace.</b> Native ETH transfers emit no ERC-20 <code>Transfer</code> log, so they are not proof of life, and nobody is notified when a grace window opens.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="links">
+    <h2 id="links"><span class="n">05</span>Links</h2>
+    <ul class="links">
+      <li><a href="https://github.com/edycutjong/heirloom">Repository<small>github.com/edycutjong/heirloom</small></a></li>
+      <li><a href="https://github.com/edycutjong/heirloom/blob/main/DEMO.md">DEMO.md<small>every tx, with a command to fire your own</small></a></li>
+      <li><a href="../status/">Live status card<small>reads the chain in your browser</small></a></li>
+      <li><a href="../">Landing page<small>the story in one scroll</small></a></li>
+      <li><a href="../pitch/">Pitch deck<small>10 slides</small></a></li>
+      <li><a href="https://github.com/edycutjong/heirloom/blob/main/JUDGE.md">JUDGE.md<small>this page, in the repo</small></a></li>
+    </ul>
+  </section>
+</div>
+</main>
+
+<footer>
+  <div class="wrap">Heirloom · MIT · built by Edy Cu for the Reactive Omni Buildathon · release <a data-release href="https://github.com/edycutjong/heirloom/releases/latest">latest</a></div>
+</footer>
+<script>
+// Latest release tag: the markup holds the build-time tag; refresh it from the GitHub API, and stay silent on any failure.
+(function(){var els=document.querySelectorAll('[data-release]');if(!els.length||!window.fetch)return;
+fetch('https://api.github.com/repos/edycutjong/heirloom/releases/latest',{headers:{Accept:'application/vnd.github+json'}})
+.then(function(r){return r.ok?r.json():null}).then(function(j){if(!j||!/^v\d/.test(j.tag_name||''))return;
+[].forEach.call(els,function(e){e.textContent=j.tag_name;});}).catch(function(){});})();
+</script>
+</body>
+</html>

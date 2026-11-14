@@ -116,13 +116,18 @@ contract AckLedgerTest is Test {
 }
 
 contract FailureHarness {
-    function isFailure(IReactive.LogRecord calldata l, uint256 c, address proxy, address target) external pure returns (bool) {
+    function isFailure(IReactive.LogRecord calldata l, uint256 c, address proxy, address target)
+        external
+        pure
+        returns (bool)
+    {
         return CallbackFailureWatch.isFailure(l, c, proxy, target);
     }
 
     function decode(IReactive.LogRecord calldata l) external pure returns (bytes4 sel, uint256 rvm, uint256 seq) {
         bytes memory p = CallbackFailureWatch.payload(l);
-        return (CallbackFailureWatch.selectorOf(p), CallbackFailureWatch.argWord(p, 0), CallbackFailureWatch.argWord(p, 1));
+        return
+            (CallbackFailureWatch.selectorOf(p), CallbackFailureWatch.argWord(p, 0), CallbackFailureWatch.argWord(p, 1));
     }
 }
 

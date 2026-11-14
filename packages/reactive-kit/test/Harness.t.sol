@@ -56,7 +56,9 @@ contract EchoReactive is AbstractReactive {
     function wire(address token_, address owner_, address dest_, bool anyChain) external {
         token = token_;
         dest = dest_;
-        SYSTEM.subscribe(anyChain ? 0 : originChain, token_, TRANSFER, uint256(uint160(owner_)), REACTIVE_IGNORE, REACTIVE_IGNORE);
+        SYSTEM.subscribe(
+            anyChain ? 0 : originChain, token_, TRANSFER, uint256(uint160(owner_)), REACTIVE_IGNORE, REACTIVE_IGNORE
+        );
         SYSTEM.subscribe(destChain, dest_, ACK, REACTIVE_IGNORE, REACTIVE_IGNORE, REACTIVE_IGNORE);
     }
 
@@ -65,7 +67,14 @@ contract EchoReactive is AbstractReactive {
     }
 
     function cronOn() external {
-        SYSTEM.subscribe(block.chainid, CronTopics.LEGACY_SYSTEM_ADDR, CronTopics.CRON10, REACTIVE_IGNORE, REACTIVE_IGNORE, REACTIVE_IGNORE);
+        SYSTEM.subscribe(
+            block.chainid,
+            CronTopics.LEGACY_SYSTEM_ADDR,
+            CronTopics.CRON10,
+            REACTIVE_IGNORE,
+            REACTIVE_IGNORE,
+            REACTIVE_IGNORE
+        );
     }
 
     function react(LogRecord calldata log_) external onlySystem {
@@ -126,7 +135,8 @@ contract HarnessTest is OmniReactiveTest {
 
     function test_non_owner_transfer_not_delivered() public {
         rc.wire(address(token), owner, address(dest), false);
-        CallbackResult[] memory r = step(makeAddr("other"), address(token), abi.encodeCall(MiniToken.transfer, (address(1), 5)));
+        CallbackResult[] memory r =
+            step(makeAddr("other"), address(token), abi.encodeCall(MiniToken.transfer, (address(1), 5)));
         assertCallbacks(r, 0);
     }
 

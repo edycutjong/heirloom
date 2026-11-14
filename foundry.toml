@@ -22,3 +22,11 @@ out = "out-kit"
 
 [fmt]
 line_length = 120
+# Frozen on purpose: src/ and the kit sources are what the testnet instances were built from (reformatting changes the
+# metadata hash), and README cites line numbers in the two older suites. Every other Solidity file is format-checked.
+ignore = [
+  "src/**/*.sol",
+  "packages/reactive-kit/src/*.sol",
+  "test/HeirloomReactive.t.sol",
+  "test/HeirloomVault.t.sol",
+]

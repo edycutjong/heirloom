@@ -69,7 +69,8 @@ abstract contract OmniReactiveTest is Test {
 
     /// @notice Deliver one log to every matching subscriber as the system contract. Returns how many reacted.
     function deliver(IReactive.LogRecord memory log) internal returns (uint256 n) {
-        address[] memory subs = sys.matching(log.chainId, log.contractAddress, log.topic0, log.topic1, log.topic2, log.topic3);
+        address[] memory subs =
+            sys.matching(log.chainId, log.contractAddress, log.topic0, log.topic1, log.topic2, log.topic3);
         for (uint256 i; i < subs.length; i++) {
             vm.prank(SYSTEM_ADDR);
             IReactive(payable(subs[i])).react(log);
@@ -84,8 +85,10 @@ abstract contract OmniReactiveTest is Test {
         vm.recordLogs();
         vm.getRecordedLogs(); // drop reactive-side logs: only destination logs feed back
         for (uint256 i; i < reqs.length; i++) {
-            address injected = injectOverride != address(0) ? injectOverride : (injectRequester ? reqs[i].requester : address(this));
-            (bool ok, bytes memory ret) = proxy.executeCallback(reqs[i].recipient, reqs[i].payload, reqs[i].gasLimit, injected);
+            address injected =
+                injectOverride != address(0) ? injectOverride : (injectRequester ? reqs[i].requester : address(this));
+            (bool ok, bytes memory ret) =
+                proxy.executeCallback(reqs[i].recipient, reqs[i].payload, reqs[i].gasLimit, injected);
             results[i] = CallbackResult(reqs[i].chainId, reqs[i].recipient, reqs[i].gasLimit, reqs[i].payload, ok, ret);
         }
         emitted = _toRecords(vm.getRecordedLogs());
@@ -154,10 +157,18 @@ abstract contract OmniReactiveTest is Test {
         require(quiet, "OmniReactiveTest: no quiescence within MAX_CYCLES");
     }
 
-    function _concat(CallbackResult[] memory a, CallbackResult[] memory b) internal pure returns (CallbackResult[] memory c) {
+    function _concat(CallbackResult[] memory a, CallbackResult[] memory b)
+        internal
+        pure
+        returns (CallbackResult[] memory c)
+    {
         c = new CallbackResult[](a.length + b.length);
-        for (uint256 i; i < a.length; i++) c[i] = a[i];
-        for (uint256 i; i < b.length; i++) c[a.length + i] = b[i];
+        for (uint256 i; i < a.length; i++) {
+            c[i] = a[i];
+        }
+        for (uint256 i; i < b.length; i++) {
+            c[a.length + i] = b[i];
+        }
     }
 
     function _bubble(bytes memory ret) internal pure {

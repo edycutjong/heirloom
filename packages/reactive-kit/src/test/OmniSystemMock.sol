@@ -38,7 +38,9 @@ contract OmniSystemMock {
 
     event Subscribed(address indexed subscriber, uint256 chainId, address contractAddr, uint256 t0, uint256 t1);
     event Unsubscribed(address indexed subscriber, uint256 chainId, address contractAddr, uint256 t0, uint256 t1);
-    event CallbackRequested(address indexed requester, uint256 indexed chainId, address indexed recipient, uint64 gasLimit);
+    event CallbackRequested(
+        address indexed requester, uint256 indexed chainId, address indexed recipient, uint64 gasLimit
+    );
 
     error NoSpecificCriterion();
 
@@ -64,7 +66,8 @@ contract OmniSystemMock {
         emit Unsubscribed(msg.sender, chainId, c, t0, t1);
     }
 
-    function requestCallbackV_1_0(ISystemContract.CallbackConfiguration_V_1_0 memory c) external { // forge-lint: disable-line(mixed-case-function)
+    function requestCallbackV_1_0(ISystemContract.CallbackConfiguration_V_1_0 memory c) external {
+        // forge-lint: disable-line(mixed-case-function)
         _enqueue(c);
     }
 

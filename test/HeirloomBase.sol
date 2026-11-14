@@ -133,7 +133,8 @@ abstract contract HeirloomBase is OmniReactiveTest {
             chains[i] = refs[i].chainId;
             toks[i] = refs[i].token;
         }
-        vault = new HeirloomVault{value: 1 ether}(address(proxy), address(rc), owner, heir, CLAIM_DELAY, CAP, chains, toks);
+        vault =
+            new HeirloomVault{value: 1 ether}(address(proxy), address(rc), owner, heir, CLAIM_DELAY, CAP, chains, toks);
         onChain(address(vault), BASE);
         onChain(address(proxy), BASE);
         HeirloomReactive.CanaryInit[] memory cans = new HeirloomReactive.CanaryInit[](canaryGap == 0 ? 0 : 1);

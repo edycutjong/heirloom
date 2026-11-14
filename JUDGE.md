@@ -1,6 +1,6 @@
 # Heirloom for judges
 
-> Your wallet goes quiet and the vault remembers your partner. A Reactive dead-man's switch: no keeper, no check-in button, spoofs refused.
+> When your wallet goes quiet, silence pays your heir. A Reactive dead-man's switch: no keeper, no check-in button, spoofs refused.
 
 Web version (no wallet, no sign-in): **https://edycutjong.github.io/heirloom/judge/**. Track: **Set It and Forget It**. Everything below is testnet (Reactive Lasna 5318007 + Base Sepolia 84532); the mainnet deploy is scripted and dry-run, not yet run.
 

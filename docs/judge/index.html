@@ -53,7 +53,9 @@ main{padding:44px 0 64px}
 .lab{font:13px var(--font-data);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 h1{font-size:clamp(34px,5vw,50px);line-height:1.08;margin:10px 0 18px}
 .claim{font:400 clamp(21px,2.6vw,26px)/1.35 var(--font-display);border-left:3px solid var(--before);padding:4px 0 4px 18px;max-width:40em}
-.meta{margin-top:16px;font:13px var(--font-data);color:var(--muted)}
+.meta{margin-top:16px;font:13px/1.6 var(--font-data);color:var(--muted-ink,#655D51)}
+.banner{margin:26px 0 0;border-radius:10px;overflow:hidden;box-shadow:0 14px 34px rgba(30,26,21,.22)}
+.banner img{display:block;width:100%;height:auto}
 section{margin-top:46px}
 h2{font-size:30px;line-height:1.15;margin-bottom:6px}
 h2 .n{font:14px var(--font-data);color:var(--muted);margin-right:10px;vertical-align:middle}
@@ -105,22 +107,23 @@ footer a{color:var(--muted)}
 <div class="wrap">
   <p class="lab">For judges · no wallet, no sign-in</p>
   <h1>Heirloom in one page.</h1>
-  <p class="claim" id="claim">Your wallet goes quiet and the vault remembers your partner. A Reactive dead-man's switch: no keeper, no check-in button, spoofs refused.</p>
-  <p class="meta">Track: Set It and Forget It · Reactive Lasna (5318007) + Base Sepolia (84532) · testnet only, mainnet not yet run · release <a data-release href="https://github.com/edycutjong/heirloom/releases/latest">latest</a></p>
+  <p class="claim" id="claim">When your wallet goes quiet, silence pays your heir. A Reactive dead-man's switch: no keeper, no check-in button, spoofs refused.</p>
+  <figure class="banner"><img src="../assets/brand/readme-hero-animated.svg" width="1280" height="320" alt="Heirloom: releases a vault on Base to your heir once your wallet goes quiet across chains. The card's violet stamps stop; a $0 row from a non-owner wallet is refused; silence outlasts grace; the oxblood RELEASED stamp lands."></figure>
+  <p class="meta">Track: Set It and Forget It · testnet only: Reactive Lasna (5318007) and Base Sepolia (84532), heartbeats from Ethereum Sepolia (11155111) · mainnet not deployed (scripted, never run; no mainnet transactions) · release <a data-release href="https://github.com/edycutjong/heirloom/releases/latest">latest</a></p>
 
   <section aria-labelledby="path">
     <h2 id="path"><span class="n">01</span>The 30-second path</h2>
     <p class="sub">Every link is a real transaction on a public explorer. The demo instance ran with T = 5 min on 2026-11-08 (UTC).</p>
     <ol class="path">
-      <li><div><b>Open the live status card.</b> It reads both testnet instances straight from the chain: the 90-day one is armed, the demo one is released.
+      <li><div><b>Open the live status card.</b> It reads both testnet instances straight from the chain. At the last evidence refresh (2026-11-09 00:19 UTC) the 90-day one was armed; the demo one is released.
         <span class="tx"><a href="../status/">edycutjong.github.io/heirloom/status/</a></span></div></li>
       <li><div><b>Silence opens a grace window.</b> A Reactive CRON tick saw no owner activity for T, so the reactive contract asked the Base vault to enter GRACE.
         <span class="tx">CRON <a href="https://lasna.reactscan.net/tx/0x9535fa9d6409fb168cba654e2b53c499770c409fb6cafe61fa6d648549cd10a0">0x9535fa9d…10a0</a> → react <a href="https://lasna.reactscan.net/tx/0xe4d5fb4d7d811d13c35781eabf43cfcdc6fe03f972291299ca01b3df77d74e5d">0xe4d5fb4d…4e5d</a> → callback <a href="https://sepolia.basescan.org/tx/0xde28408b0cb45115d6bde3464bf03255e356a5411d666c0c7f617bee3d209488">0xde28408b…9488</a></span></div></li>
       <li><div><b>An ordinary owner transfer cancels it.</b> No button: a token transfer on Base Sepolia was the proof of life.
         <span class="tx">origin <a href="https://sepolia.basescan.org/tx/0x2082f0bc5c04108e8393bb2b58451b5a58c90a057aa0ccc6a2e2d8aee05def00">0x2082f0bc…ef00</a> → react <a href="https://lasna.reactscan.net/tx/0x99bb1f2241f3b067a91e4130343e0d8a6bfe8245aa658b4e639329c4ed2899fe">0x99bb1f22…99fe</a> → callback <a href="https://sepolia.basescan.org/tx/0x217b43e3027b9ead0bf1f1af33137ab12b8a9a4f69c4202fec9d82bf62f390ce">0x217b43e3…90ce</a></span></div></li>
-      <li><div><b>A stranger's $0 transfer is refused.</b> <code>transferFrom(owner, you, 0)</code> from another wallet; the long-T reactive contract logged <code>SpoofRefused</code> with reason <code>ZERO_VALUE</code>.
+      <li><div><b>A $0 transfer from a non-owner wallet is refused.</b> <code>transferFrom(owner, you, 0)</code> from another wallet (here the heir's key); the long-T reactive contract logged <code>SpoofRefused</code> with reason <code>ZERO_VALUE</code>.
         <span class="tx">origin <a href="https://sepolia.basescan.org/tx/0x777b953e33748cc005ae19e57c2f480ec54a2244203291ca7162690ab4174d79">0x777b953e…4d79</a> → react <a href="https://lasna.reactscan.net/tx/0xb622bc82cdbd66bad8d5c14e085d4c080ec253c99b10ad1413675f67e849f226">0xb622bc82…f226</a></span></div></li>
-      <li><div><b>Silence again, grace runs out, the heir is paid.</b> EXPIRE makes the vault claimable; the two-step claim pays only the heir (<code>0x440E…438b</code>).
+      <li><div><b>Silence again, grace runs out, the heir is paid.</b> EXPIRE makes the vault claimable; the two-step claim (anyone may press; here the owner key pressed both) pays the heir (<code>0x440E…438b</code>), or an address the heir redirects it to.
         <span class="tx">EXPIRE callback <a href="https://sepolia.basescan.org/tx/0xabb5147f4da4bb94174c142612cdde6dfbcac89f7c206f757d24426d8a6e0401">0xabb5147f…0401</a> · initiateClaim <a href="https://sepolia.basescan.org/tx/0xf86669ab514601ee00a1fc8c0f97e6f0e6e2edb405cc9d496e761f25d91ede8d">0xf86669ab…de8d</a> · finalizeClaim <a href="https://sepolia.basescan.org/tx/0x13d8677c445bbfb41a63e33b3405c218bec83b6af7c50018ca34d739caf580d3">0x13d8677c…80d3</a></span></div></li>
       <li><div><b>The contract cleans up after itself.</b> After the payout, <code>react()</code> removed its own subscriptions: the finished demo instance holds 0 filters on Lasna.
         <span class="tx">teardown <a href="https://lasna.reactscan.net/tx/0x1eb6d631129b1db49bac2a230b10632214460809939c29e517d614021c25a988">0x1eb6d631…a988</a> · check command in <a href="https://github.com/edycutjong/heirloom/blob/main/DEMO.md">DEMO.md</a></span></div></li>
@@ -146,8 +149,8 @@ footer a{color:var(--muted)}
 
   <section aria-labelledby="repro">
     <h2 id="repro"><span class="n">03</span>Reproduce it yourself</h2>
-    <p class="sub">The real path: fire a spoof from any Base Sepolia wallet against the live long-T instance and watch the reactive contract refuse it on Lasna.</p>
-<pre><code>git clone --recurse-submodules https://github.com/edycutjong/heirloom &amp;&amp; cd heirloom
+    <p class="sub">The real path: fire a spoof from any Base Sepolia wallet against the long-T instance and watch the reactive contract refuse it on Lasna. Its testnet lREACT balance runs low between top-ups; if it has run dry, the reactive leg will not appear.</p>
+<pre tabindex="0" aria-label="Commands to reproduce a refused spoof"><code>git clone --recurse-submodules https://github.com/edycutjong/heirloom &amp;&amp; cd heirloom
 pnpm install
 PRIVATE_KEY=0x… pnpm exec tsx scripts/trigger-spoof.ts   <span class="c"># any Base Sepolia key with a little ETH; sends a real tx</span></code></pre>
     <p class="ci">CI / deterministic replay (not the product, no network): <code>forge test &amp;&amp; FOUNDRY_PROFILE=kit forge test &amp;&amp; pnpm test:coverage</code>. No key? <code>pnpm exec tsx scripts/trigger-spoof.ts --dry-run</code> simulates the same call with <code>eth_call</code> and sends nothing.</p>
@@ -156,7 +159,7 @@ PRIVATE_KEY=0x… pnpm exec tsx scripts/trigger-spoof.ts   <span class="c"># any
   <section aria-labelledby="limits">
     <h2 id="limits"><span class="n">04</span>Honest limits</h2>
     <ul class="limits">
-      <li><b>No mainnet evidence yet.</b> The mainnet deploy is scripted and dry-run, not run. Every transaction on this page is testnet.</li>
+      <li><b>No mainnet evidence yet.</b> The mainnet deploy is scripted, not run. Every transaction on this page is testnet.</li>
       <li><b>The testnet instances predate <code>HEAD</code>.</b> They were deployed before the re-entry lock, <code>coverDebt()</code> and the claim-grace fix; the rows prove the loop, the current contracts are what the tests run.</li>
       <li><b>Native ETH and silent grace.</b> Native ETH transfers emit no ERC-20 <code>Transfer</code> log, so they are not proof of life, and nobody is notified when a grace window opens.</li>
     </ul>

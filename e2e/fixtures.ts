@@ -2,7 +2,7 @@ import { test as base, expect } from "@playwright/test";
 
 /** The one-sentence claim: the elevator pitch, verbatim, on /judge/, JUDGE.md and the README. */
 export const CLAIM =
-  "Your wallet goes quiet and the vault remembers your partner. A Reactive dead-man's switch: no keeper, no check-in button, spoofs refused.";
+  "When your wallet goes quiet, silence pays your heir. A Reactive dead-man's switch: no keeper, no check-in button, spoofs refused.";
 
 /** Pages with every non-local request aborted (fonts are self-hosted; explorers, RPCs and the GitHub API are not
  *  needed to render). A test that wants the network opts in with `allow`. */

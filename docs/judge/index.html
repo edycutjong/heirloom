@@ -77,8 +77,9 @@ pre .c{color:color-mix(in srgb,var(--muted) 45%,var(--bg))}
 .ci{font-size:14.5px;color:var(--muted)}
 ul.limits{margin:0;padding-left:20px}
 ul.limits li{margin:8px 0}
-ul.links{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
-ul.links a{display:block;border:1.5px solid var(--ink);padding:10px 12px;color:var(--ink);text-decoration:none;transition:background .2s,color .2s}
+ul.links{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));grid-auto-rows:1fr;gap:10px}
+ul.links li{display:flex}
+ul.links a{display:block;flex:1;border:1.5px solid var(--ink);padding:10px 12px;color:var(--ink);text-decoration:none;transition:background .2s,color .2s}
 ul.links a:hover{background:var(--ink);color:var(--bg)}
 ul.links small{display:block;font:12px var(--font-data);color:var(--muted)}
 ul.links a:hover small{color:color-mix(in srgb,var(--bg) 75%,var(--ink))}

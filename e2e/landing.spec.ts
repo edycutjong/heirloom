@@ -16,7 +16,7 @@ test.describe("landing page", () => {
     await expect(page.locator("h1")).toHaveText("Heirloom in one page.");
   });
 
-  test("release tag: keeps the build-time text when the GitHub API is unreachable", async ({ page }) => {
+  test("release tag: the footer links the latest release", async ({ page }) => {
     await page.goto("/");
     const rel = page.locator("footer [data-release]");
     await expect(rel).toHaveAttribute("href", "https://github.com/edycutjong/heirloom/releases/latest");
@@ -53,22 +53,17 @@ test.describe("hero access card", () => {
   });
 });
 
-test.describe("release tag from the GitHub API", () => {
-  test("replaces the fallback on landing, deck and judge page", async ({ page }) => {
-    await page.route("https://api.github.com/repos/edycutjong/heirloom/releases/latest", (r) =>
-      r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ tag_name: "v7.7.7" }) }),
-    );
+test.describe("release tag, stamped at build time", () => {
+  test("landing, deck and judge page carry a version tag and make no runtime GitHub API call", async ({ page }) => {
+    const apiCalls: string[] = [];
+    page.on("request", (r) => { if (r.url().startsWith("https://api.github.com/")) apiCalls.push(r.url()); });
     for (const path of ["/", "/pitch/", "/judge/"]) {
       await page.goto(path);
-      await expect(page.locator("[data-release]").first()).toHaveText("v7.7.7");
+      await page.waitForLoadState("networkidle");
+      const tags = await page.locator("[data-release]").allTextContents();
+      expect(tags.length).toBeGreaterThan(0);
+      for (const t of tags) expect(t.trim()).toMatch(/^v\d+\.\d+\.\d+$/);
     }
-  });
-
-  test("regression: a non-version tag_name in the API reply is ignored, not printed", async ({ page }) => {
-    await page.route("https://api.github.com/repos/edycutjong/heirloom/releases/latest", (r) =>
-      r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ tag_name: "<b>x</b>" }) }),
-    );
-    await page.goto("/judge/");
-    await expect(page.locator("footer [data-release]")).not.toContainText("<b>");
+    expect(apiCalls).toEqual([]);
   });
 });

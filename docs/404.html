@@ -32,9 +32,12 @@ a{color:inherit}
 /* ---- the access card: shared by the landing hero and deck slides 1 + 6 -------------------------------------------------
    Markup default = the finished demo (every row stamped, silence pinned at expiry, RELEASED, stub torn and PAID), so print,
    no-JS, reduced motion and screenshots all see the true end state. JS adds .armed and drives a virtual clock from there. */
-.card{position:relative;background:var(--bg-card);color:var(--ink);padding:20px 24px 0;border-radius:3px;
+/* The card's paper ends at the perforation (--perf, set by Heirloom.card from the stub's offset; 100% without JS), so a torn stub shows
+   the drawer through the gap, not a strip of card left behind. */
+.card{position:relative;color:var(--ink);padding:20px 24px 0;border-radius:3px;background-repeat:no-repeat;
   background-image:repeating-linear-gradient(180deg,transparent 0 35px,color-mix(in srgb,var(--rule) 42%,transparent) 35px 36px),
-    radial-gradient(ellipse 80% 60% at 30% 0%,#FCF9F0,transparent 70%);
+    radial-gradient(ellipse 80% 60% at 30% 0%,#FCF9F0,transparent 70%),linear-gradient(var(--bg-card),var(--bg-card));
+  background-size:100% var(--perf,100%),100% 100%,100% var(--perf,100%);
   box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 0 0 1px color-mix(in srgb,var(--ink) 22%,transparent)}
 .card-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:1.5px solid var(--ink);padding-bottom:9px}
 .card-head h2,.card-head h3{font:400 27px/1 var(--font-display);margin:0}
@@ -96,7 +99,8 @@ a{color:inherit}
 .stub .teeth{position:absolute;left:0;right:0;top:-8px;height:8px;background:conic-gradient(from 135deg at 50% 0,var(--bg-card) 90deg,transparent 0) 0 0/10px 8px repeat-x;opacity:1}
 .stub::before,.stub::after{content:"";position:absolute;top:-9px;width:16px;height:16px;border-radius:50%;background:var(--hole,var(--bg-drawer))}
 .stub::before{left:-8px}.stub::after{right:-8px}
-.stub .glint{position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 35%,rgba(255,250,235,.75) 50%,transparent 65%);opacity:0;transform:translateX(-100%)}
+/* the glint sweeps by background position, so it never leaves the stub (a transform carried it onto the drawer beside it) */
+.stub .glint{position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 45%,rgba(255,250,235,.75) 50%,transparent 55%) 100% 0/300% 100% no-repeat;opacity:0}
 
 /* replay states (JS: .armed, then .on per row / per tally mark, .grace on the track, .rel at finalizeClaim) */
 .card.armed .row{transition:opacity .3s ease,transform .3s ease}
@@ -121,7 +125,7 @@ a{color:inherit}
 @keyframes slam{0%{opacity:0;transform:translate(-50%,-50%) rotate(-6deg) scale(2.1)}55%{opacity:1;transform:translate(-50%,-50%) rotate(-6deg) scale(.93)}100%{opacity:1;transform:translate(-50%,-50%) rotate(-6deg) scale(1)}}
 @keyframes ripple{0%{opacity:.55;transform:scale(.4)}100%{opacity:0;transform:scale(7)}}
 @keyframes shake{0%,100%{transform:none}20%{transform:translate(-3px,2px)}45%{transform:translate(3px,-1px)}70%{transform:translate(-1px,1px)}}
-@keyframes glint{0%{opacity:0;transform:translateX(-100%)}30%{opacity:1}100%{opacity:0;transform:translateX(100%)}}
+@keyframes glint{0%{opacity:0;background-position:100% 0}30%{opacity:1}100%{opacity:0;background-position:0 0}}
 @media (prefers-reduced-motion:reduce){
   .card.armed,.card.armed *{animation:none!important;transition:none!important}
 }

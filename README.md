@@ -3,9 +3,9 @@
   <h1>Heirloom</h1>
   <p><em>A dead-man's switch for a self-custody wallet. It reads silence across chains, so there is no keeper and no check-in button.</em></p>
 
-  <img src="docs/assets/brand/readme-hero-animated.svg" alt="Heirloom — releases a vault on Base to your heir once your wallet goes quiet across chains. The card's violet stamps stop; a stranger's $0 row is refused; silence outlasts grace; the oxblood RELEASED stamp lands." width="100%">
+  <img src="docs/assets/brand/readme-hero-animated.svg" alt="Heirloom — releases a vault on Base to your heir once your wallet goes quiet across chains. The card's violet stamps stop; a non-owner wallet's $0 row is refused; silence outlasts grace; the oxblood RELEASED stamp lands." width="100%">
 
-  <p>Every on-chain and security claim below links to a transaction or a test. Testnet only so far: Reactive Lasna with Base Sepolia. The mainnet deploy is scripted and dry-run, not yet run.</p>
+  <p>Every on-chain and security claim below links to a transaction or a test. Testnet only so far: Reactive Lasna with Base Sepolia. The mainnet deploy is scripted (with a dry-run mode) and not yet run.</p>
 
   <p><a href="https://edycutjong.github.io/heirloom/judge/"><b>For judges</b></a> · <a href="https://edycutjong.github.io/heirloom/">Landing page</a> · <a href="https://edycutjong.github.io/heirloom/pitch/">Pitch deck</a> · <a href="https://edycutjong.github.io/heirloom/status/">Live status card</a> (GitHub Pages, published from <code>docs/</code> and <code>status/</code>)</p>
 
@@ -103,7 +103,7 @@ The demo instance ran the full scenario on live networks: grace twice, one cance
 |---|---|---|
 | Zero-value spoof refused | a stranger cannot fake life with `transferFrom(owner, x, 0)` | `test_spoof_zero_value` (`test/HeirloomReactive.t.sol:23`) |
 | Token allowlist | a worthless token's transfer cannot reset the clock | `test_spoof_not_allowlisted` (`:33`) |
-| Spoof does not cancel a grace | a stranger cannot hold off a release | `test_spoof_in_grace_does_not_cancel` (`:254`) |
+| Spoof does not cancel a grace | one spoofed transfer cannot reset the clock or cancel a grace; a sustained spray can only delay a release, never cause one (Known limit 1) | `test_spoof_in_grace_does_not_cancel` (`:254`) |
 | Filter runs first | a refused react stays under a fixed gas ceiling, so spam is cheap to refuse | `test_refused_react_gas_ceiling` (`:57`) |
 | Spam brake | refused reacts are billed; without a bound spam could drain the reserve and silence the contract | `test_spam_brake` (`:76`) |
 | Freeze once, capped | a canary outage delays a release once and cannot be chained | `test_freeze_not_twice` (`:275`) |

@@ -60,9 +60,9 @@ States: `ARMED → GRACE → CLAIMABLE → CLAIM_PENDING → RELEASED`. Any watc
 | Scripts | TypeScript with viem, run with `tsx` |
 | Status page | static `status/` (HTML + one ES module), read-only live chain reads plus the heir's claim panel |
 
-<p align="center"><img src="docs/architecture.svg" alt="Heirloom architecture: origin chains feed the Reactive Network, which calls back into a vault on Base" width="100%"></p>
+<p align="center"><img src="docs/architecture.png" alt="Heirloom architecture, one loop across three chains. 1: the owner's allowlisted token transfers on Ethereum Sepolia and Base Sepolia reach the reactive contract as subscribed logs; a stranger's $0 transfer is refused. On Reactive Lasna, HeirloomReactive.react() 2: filters first (SpoofRefused) and stamps lastSeen, 3: times the silence on Cron ticks through ARMED, GRACE and EXPIRED, with a Chainlink canary on Base Sepolia that can freeze the clock once, and 4: calls back to Base with requestCallbackV_1_0. On Base Sepolia the callback proxy calls sync(rvm, snapshot) on HeirloomVault, which moves ARMED, GRACE and CLAIMABLE by sync(), CLAIM_PENDING by initiateClaim and RELEASED by finalizeClaim, and emits OwnerActive and Ack back to react(). 5: anyone may press either claim step and the payout goes only to the heir." width="100%"></p>
 
-The diagram source is [`docs/architecture.svg`](docs/architecture.svg).
+The diagram source is [`docs/architecture/architecture.html`](docs/architecture/architecture.html).
 
 ## 🏆 Reactive Network Integration
 
@@ -182,7 +182,7 @@ script/          deploy and scenario shell scripts
 status/          static status page
 e2e/             Playwright specs for the Pages site
 evidence/        triples.csv and the raw measurements
-docs/            landing (index.html), judge/, pitch/, DX-REPORT.md, architecture.svg
+docs/            landing (index.html), judge/, pitch/, DX-REPORT.md, architecture.png (source: architecture/)
 JUDGE.md         the judge page in Markdown: claim, 30-second path, receipts, limits
 ```
 

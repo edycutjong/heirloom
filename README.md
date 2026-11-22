@@ -73,7 +73,7 @@ The reactive contract is the engine, not an add-on: the loop does not exist with
 | Capability | Where it is used |
 |---|---|
 | `SYSTEM.subscribe` / `unsubscribe` | enumerated per (chain, token, `Transfer`, topic1 = owner); the allowlist, spam brake, canary arming and teardown all change subscriptions at runtime |
-| `requestCallbackV_1_0` | GRACE, CANCEL, EXPIRE, ATTEST and REVIVE callbacks to the vault (REVIVE is covered by tests; no live REVIVE triple yet), `gasLimit` 1,000,000 |
+| `requestCallbackV_1_0` | GRACE, CANCEL, EXPIRE, ATTEST and REVIVE callbacks to the vault (live REVIVE on 2026-11-22: owner transfer [`0x61f81227…ff26`](https://sepolia.etherscan.io/tx/0x61f8122782204b2731deeae60e6d45a107436e9bc66d9ed5fd295f357b37ff26) → react [`0x51d7f47d…5118`](https://lasna.reactscan.net/tx/0x51d7f47d84404d2746332a0771aa14b90c11f615f80921f559f6b1fae73d5118) → callback [`0x5b295eca…6ad3`](https://sepolia.basescan.org/tx/0x5b295eca4f2db1f2c0696d8df9d5b58e95a64ef779eb293ec8596eaf7b666ad3); see DEMO.md), `gasLimit` 1,000,000 |
 | CRON topics | the only clock (silence, grace, attest); one tier chosen at deploy, an optional faster tier can run during grace (unused on the testnet instances); attest is weekly on long-t |
 | Self-unsubscribe | `react()` removes its own subscriptions on teardown; the finished demo instance holds 0 filters on Lasna (command in [DEMO.md](DEMO.md)) |
 | Callback proxy guards | `sync()` checks both the proxy caller and the injected first argument (the reactive contract) |
@@ -105,7 +105,7 @@ The demo instance ran the full scenario on live networks: grace twice, one cance
 | Coverage, `src/` contracts (`forge coverage`, forge 1.9.0, gated in CI) | lines 616/616, functions 91/91, branches 203/204: the one left is the `if (c.armed) return;` guard at `src/HeirloomReactive.sol:509`, which no caller can reach (the gate allows it by name and fails if it ever becomes reachable) |
 | Coverage, kit contracts (`FOUNDRY_PROFILE=kit forge coverage`) | lines 64/64, functions 20/20, branches 17/17 |
 | Coverage, TypeScript kit (`pnpm test:coverage`, thresholds 100) | lines 131/131, functions 29/29, branches 111/111 |
-| Rows in `evidence/triples.csv` | 58 (31 with a callback leg: 22 from Heirloom instances (19 CRON-triggered, 3 owner-transfer CANCELs) and 9 from day-1 probes, 2 of them deliberately failed; 27 reactive-only) |
+| Rows in `evidence/triples.csv` | 69 (37 with a callback leg: 28 from Heirloom instances (24 CRON-triggered, 3 owner-transfer CANCELs, 1 owner-transfer REVIVE) and 9 from day-1 probes, 2 of them deliberately failed; 32 reactive-only) |
 
 ### Attacks defeated
 
@@ -191,7 +191,7 @@ JUDGE.md         the judge page in Markdown: claim, 30-second path, receipts, li
 - [x] Grace, cancel, expiry, two-step heir claim, teardown on live testnet
 - [x] Shared `reactive-kit` and Test Lib adapter
 - [ ] Mainnet instances (a 90-day one and a 48 h one)
-- [ ] A REVIVE triple in the evidence
+- [x] A REVIVE triple in the evidence
 - [x] Hardening: CI scans, SECURITY.md
 
 ## 📽️ Demo Materials

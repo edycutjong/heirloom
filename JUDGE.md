@@ -6,7 +6,7 @@ Web version (no wallet, no sign-in): **https://edycutjong.github.io/heirloom/jud
 
 ## The 30-second path
 
-Every link is a real transaction on a public explorer. The demo instance ran with T = 5 min on 2026-11-08 (UTC). These instances were deployed before the re-entry lock, `coverDebt()` and the claim-grace fix. The same lifecycle ran again on 2026-11-22 from `201eb1e`, the current contract source: see [DEMO.md, the same lifecycle at HEAD](DEMO.md#the-same-lifecycle-at-head-2026-11-22).
+Every link is a real transaction on a public explorer. The demo instance ran with T = 5 min on 2026-11-08 (UTC). These instances were deployed before the re-entry lock, `coverDebt()` and the claim-grace fix. The same lifecycle ran again on 2026-11-22 from `201eb1e`, the current contract source: see [DEMO.md, the same lifecycle at HEAD](DEMO.md#the-same-lifecycle-at-head-2026-11-22). A live REVIVE (the owner back after the expiry, the vault re-armed) is in [DEMO.md, a live REVIVE](DEMO.md#a-live-revive-2026-11-22).
 
 0. **Live again on 2026-11-22:** after the revival, the long-T contract's next CRON tick sent its overdue weekly ATTEST: CRON [`0xb5efe19b…d124`](https://lasna.reactscan.net/tx/0xb5efe19b1f732eb58d82ca56bdfe395feb870d394996913dd63066f06987d124) → react [`0xf776b049…3500`](https://lasna.reactscan.net/tx/0xf776b049b86c6f59ee2ac63bbc578d43496cc944ee2b2e811f4e957ceea13500) → callback [`0x0d654fcd…855b`](https://sepolia.basescan.org/tx/0x0d654fcd69b0deda5039f67662502ab774c635ca5a6b7265ff332eec5d6a855b) (acknowledged; the vault paid about 0.0000012 ETH for it).
 1. **Open the live status card:** https://edycutjong.github.io/heirloom/status/. It reads both testnet instances from the chain: the 90-day one is armed, the demo one is released.
@@ -25,7 +25,7 @@ Every link is a real transaction on a public explorer. The demo instance ran wit
 
 | Measure | Value | Source |
 |---|---|---|
-| Rows in the triple log (origin or CRON → reactive → callback) | 58 (31 with a callback leg: 22 from Heirloom instances (19 CRON-triggered, 3 owner-transfer CANCELs) and 9 from day-1 probes, 2 of them deliberately failed) | [`evidence/triples.csv`](evidence/triples.csv) |
+| Rows in the triple log (origin or CRON → reactive → callback) | 69 (37 with a callback leg: 28 from Heirloom instances (24 CRON-triggered, 3 owner-transfer CANCELs, 1 owner-transfer REVIVE) and 9 from day-1 probes, 2 of them deliberately failed) | [`evidence/triples.csv`](evidence/triples.csv) |
 | Demo instance callbacks acknowledged | 5 of 5, 0 resends | [`evidence/status.json`](evidence/status.json), [`evidence/demo-summary.json`](evidence/demo-summary.json) |
 | Demo scenario | 2 graces, 1 cancel, 1 expiry, claim, teardown | [`evidence/demo-summary.json`](evidence/demo-summary.json) |
 | Contract tests (`forge test`) | 169 passed | [`test/`](test/) |

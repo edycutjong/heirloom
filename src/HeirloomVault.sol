@@ -81,6 +81,7 @@ contract HeirloomVault is AbstractCallback, IHeirloomVault {
     error ClaimDelayTooShort();
     error TransferFailed2(address token);
     error Reentered();
+    error Underfunded(uint256 balance, uint256 reserve);
 
     uint256 private _lock = 1;
 
@@ -266,8 +267,25 @@ contract HeirloomVault is AbstractCallback, IHeirloomVault {
 
     // ------------------------------------------------------------------ the claim (anyone presses; pays only the heir)
 
+    /// @dev Callbacks this vault must still be able to pay for while a claim is pending: the REVIVE/CANCEL that stops
+    ///      it plus resends. Measured on Base Sepolia (2026-11-22): one callback cost ~0.0000012 ETH, under one
+    ///      gasLimit x basefee, so gasLimit x basefee per callback is a safe upper estimate.
+    uint256 internal constant CLAIM_CALLBACKS = 4;
+    uint256 internal constant SYNC_GAS_LIMIT = 1_000_000; // = HeirloomReactive's callback gasLimit
+
+    /// @notice Native balance `initiateClaim` requires after settling debt: CLAIM_CALLBACKS x gasLimit x basefee.
+    function claimReserve() public view returns (uint256) {
+        return CLAIM_CALLBACKS * SYNC_GAS_LIMIT * block.basefee;
+    }
+
     function initiateClaim() external nonReentrant {
         if (state != HeirloomTypes.VaultState.CLAIMABLE) revert BadState(state);
+        // The sync that cancels a claim (owner seen again) is billed to this vault, and the proxy delivers nothing while
+        // the vault is in debt: start the claim clock only if the channel that can stop it is paid for. Anyone (the heir
+        // included) may top up first, so this can only delay a release, never cause or block one.
+        _coverDebt();
+        uint256 need = claimReserve();
+        if (address(this).balance < need) revert Underfunded(address(this).balance, need);
         claimReadyAt = uint64(block.timestamp) + claimDelay;
         _setState(HeirloomTypes.VaultState.CLAIM_PENDING, lastAppliedSeq);
         emit ClaimInitiated(msg.sender, claimReadyAt);

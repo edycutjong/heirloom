@@ -124,6 +124,21 @@ contract HeirloomVaultTest is HeirloomBase {
         assertTrue(vault.paid(address(usdcBase)));
     }
 
+    function test_initiateClaim_requires_a_funded_cancel_channel() public {
+        toClaimable();
+        vm.fee(5_000_000); // Base Sepolia basefee, 2026-11-22
+        uint256 need = 4 * 1_000_000 * 5_000_000;
+        assertEq(vault.claimReserve(), need);
+        vm.deal(address(vault), need - 1);
+        vm.expectRevert(abi.encodeWithSelector(HeirloomVault.Underfunded.selector, need - 1, need));
+        vault.initiateClaim();
+        assertVault(HeirloomTypes.VaultState.CLAIMABLE);
+        vm.deal(address(vault), need); // anyone may top up, then the claim starts
+        vm.prank(stranger);
+        vault.initiateClaim();
+        assertVault(HeirloomTypes.VaultState.CLAIM_PENDING);
+    }
+
     function test_claim_not_before_expiry() public {
         vm.expectRevert(abi.encodeWithSelector(HeirloomVault.BadState.selector, HeirloomTypes.VaultState.ARMED));
         vault.initiateClaim();

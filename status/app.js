@@ -111,7 +111,7 @@ function renderFacts(i, lv) {
     fact("Canary age (per chain)", canary),
     fact("Days live", days),
     fact("Heartbeats · refused", i.heartbeats != null ? `${i.heartbeats} · ${i.spoofsRefused} (as of the evidence snapshot)` : "—"),
-    fact("RC reserve", lv?.balance != null ? `${lv.balance} ${NET.sym}${lv.runway ? (Number(lv.runway) >= 4294967295 ? "<br>runway: no spend since the last attest yet" : `<br>runway ${lv.runway} d (from the last attest)`) : ""}` : i.balanceReact != null ? `${i.balanceReact} ${NET.sym}` : "—"),
+    fact("RC reserve", lv?.balance != null ? `${lv.balance} ${NET.sym}${lv.runway ? (Number(lv.runway) >= 4294967295 ? "<br>runway: no spend since the last attest yet" : `<br>runway ${lv.runway} d (from the last attest)`) : ""}` : i.balanceReact != null ? `${i.balanceReact} ${NET.sym}${i.tornDown ? "" : "<br>runway: reading live…"}` : "—"),
     fact("Vault gas reserve", lv?.vaultEth != null ? `${lv.vaultEth} ETH` : "—"),
     fact("Cost", i.reactPerMonth != null ? `${i.reactPerMonth} ${NET.sym} / month (${esc(i.reactPerMonthBasis ?? "measured")}, ${i.costWindowHours} h window)<br>funded through ${esc(i.fundedThrough ?? "—")}` : "not yet measured (needs a quiet window of at least 6 h)"),
   ];

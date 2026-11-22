@@ -12,6 +12,8 @@
   [![Pitch deck](https://img.shields.io/badge/Pitch_deck-10_slides-6B4E2E?style=for-the-badge)](https://heirloom.edycu.dev/pitch/)
   [![Live status card](https://img.shields.io/badge/Live_status-testnet_instances-2F6B3A?style=for-the-badge)](https://heirloom.edycu.dev/status/)
   [![Demo video](https://img.shields.io/badge/Demo_video-2%3A21-B3261E?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/uj7rfKXP6wA)
+  [![Write-up on dev.to](https://img.shields.io/badge/Write--up-dev.to-0A0A0A?style=for-the-badge&logo=devdotto&logoColor=white)](https://dev.to/edycutjong/a-0-transfer-can-fake-your-proof-of-life-building-a-dead-mans-switch-that-reads-silence-2aca)
+  [![Launch thread on X](https://img.shields.io/badge/Launch_thread-X-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/edycutjong/status/2124397816894366120)
   [![Built for Reactive Omni Buildathon](https://img.shields.io/badge/DoraHacks-Reactive_Omni_Buildathon-4A3E8C?style=for-the-badge)](https://dorahacks.io/hackathon/reactive-omni-buildathon/detail)
 
   <br/>

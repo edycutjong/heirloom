@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-22T03:17:20.632Z",
+ "generatedAt": "2026-11-22T05:18:41.278Z",
  "unit": "REACT (testnet lREACT)",
  "usd": null,
  "usdNote": "no dollar figure: it needs a second REACT price source",
@@ -8,7 +8,7 @@
    "id": "long-t",
    "reactPerDay": null,
    "reactPerMonth": null,
-   "windowHours": 0.81,
+   "windowHours": 2.84,
    "balanceReact": 9.006731,
    "fundedThrough": null
   },
@@ -18,6 +18,14 @@
    "reactPerMonth": null,
    "windowHours": 0,
    "balanceReact": 0.643624,
+   "fundedThrough": null
+  },
+  {
+   "id": "demo-revive",
+   "reactPerDay": null,
+   "reactPerMonth": null,
+   "windowHours": 0,
+   "balanceReact": 0.725778,
    "fundedThrough": null
   },
   {

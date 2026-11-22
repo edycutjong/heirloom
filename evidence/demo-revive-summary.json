@@ -1,0 +1,19 @@
+{
+  "instance": "demo-revive",
+  "rc": "0x2dB4Ff1E444D6f023A8bfe542517E1A598091768",
+  "vault": "0x5320Aa92ad7635A828bF2A4FD3a111D2fAdfcfe8",
+  "callbackRows": 6,
+  "stages": {
+    "VISIT": 3,
+    "REFUSED": 1,
+    "GRACE": 2,
+    "EXPIRE": 2,
+    "REVIVE": 1,
+    "ATTEST": 1,
+    "TEARDOWN": 1
+  },
+  "canaryBeats": 3,
+  "freezeUsed": 0,
+  "stuck": 0,
+  "resends": 0
+}

@@ -19,6 +19,14 @@
       "note": "deployed 2026-11-22 from 201eb1e (re-entry lock, coverDebt(), claim-grace fix, claim solvency gate); scenario asserts the heartbeat is Seen on Lasna; a third wallet pressed initiateClaim, the heir's wallet pressed finalizeClaim; torn down."
     },
     {
+      "id": "demo-revive",
+      "label": "REVIVE run at HEAD, T = 5 min (Cron100)",
+      "commit": "2ef45d0",
+      "addresses": "evidence/demo-revive-addresses.txt",
+      "fundedReact": 1.2,
+      "note": "deployed 2026-11-22 from 2ef45d0 (same contract source as 201eb1e) with the demo-head settings; STEP=setup, revive, expire: the vault went CLAIMABLE, nobody claimed, an owner transfer on Ethereum Sepolia sent a REVIVE that re-armed the vault; then it expired again, a third wallet pressed initiateClaim, the heir's wallet pressed finalizeClaim; torn down."
+    },
+    {
       "id": "demo",
       "label": "Demo, T = 5 min (Cron100)",
       "addresses": "evidence/demo-addresses.txt",

@@ -3,6 +3,8 @@
 #   deposit -> heartbeat (Eth Sepolia) -> zero-value spoof (Circle USDC, Base Sepolia, from a stranger)
 #   -> silence -> GRACE -> heartbeat (Base Sepolia) -> CANCEL
 #   -> silence -> GRACE -> EXPIRE -> CLAIMABLE -> initiateClaim -> claimDelay -> finalizeClaim -> RC torn down.
+# STEP=revive (run between setup and expire; not part of "all"): silence -> GRACE -> EXPIRE -> CLAIMABLE, nobody claims
+#   -> heartbeat (Eth Sepolia) -> REVIVE -> RC ARMED, vault ARMED.  Full run: STEP=setup, STEP=revive, STEP=expire.
 # Every action is logged to evidence/<instance>-actions.csv; scripts/heirloom-triples.ts joins them with the logs.
 # STRANGER_ENV: env file whose PROBE_PRIVATE_KEY signs the spoof and finalizeClaim (any wallet that is not the owner).
 # THIRD_ENV: env file whose PRIVATE_KEY presses initiateClaim (neither owner nor heir: the claim is permissionless, it pays only the heir).
@@ -66,6 +68,18 @@ if [ "$STEP" = all ] || [ "$STEP" = cancel ]; then
   act heartbeat 84532 "$B" "$K" "$THTD_BASE" 'transfer(address,uint256)' "$HEIR" 1000000
   wait_for "rc phase" phase 0 120
   wait_for "vault state" vstate 0 120
+fi
+
+# The owner comes back after the expiry, before anyone presses initiateClaim: the RC sends REVIVE, the vault re-arms.
+if [ "$STEP" = revive ]; then
+  wait_for "rc phase" phase 1 $((T + 300))
+  wait_for "rc phase" phase 2 $((GRACE + 300))
+  wait_for "vault state" vstate 2 180   # CLAIMABLE: the heir could start a claim now; nobody does
+  SEEN_FROM=$(cast block-number --rpc-url "$LASNA_RPC")
+  act heartbeat 11155111 "$ETHEREUM_SEPOLIA_RPC" "$K" "$THTD_ETH" 'transfer(address,uint256)' "$HEIR" 1000000
+  assert_seen "$SEEN_FROM" "$(tail -1 "$LOG" | cut -d, -f3)"
+  wait_for "rc phase" phase 0 180       # REVIVE sent
+  wait_for "vault state" vstate 0 180   # REVIVE applied on Base
 fi
 
 if [ "$STEP" = all ] || [ "$STEP" = expire ]; then

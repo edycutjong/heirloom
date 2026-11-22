@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-22T03:17:20.632Z",
+ "generatedAt": "2026-11-22T05:18:41.277Z",
  "network": "Reactive Lasna (5318007) + Base Sepolia (84532); heartbeats from Ethereum Sepolia (11155111)",
  "instances": [
   {
@@ -20,12 +20,12 @@
    "lastOriginTx": "0xd29c6509ddf88430200f8ddfc1dbdf5ad12e52fb7e477294e9195ebe8da20cc0",
    "deadline": 1803090012,
    "deployedAt": 1794160666,
-   "daysLive": 13.387,
+   "daysLive": 13.471,
    "heartbeats": 8,
    "versionAdoptions": 0,
-   "spoofsRefused": 5,
+   "spoofsRefused": 6,
    "refusedByReason": {
-    "3": 5
+    "3": 6
    },
    "callbacksSent": 1,
    "acked": 1,
@@ -39,7 +39,7 @@
    "reactPerMonth": null,
    "reactPerMonthBasis": null,
    "fundedThrough": null,
-   "costWindowHours": 0.81
+   "costWindowHours": 2.84
   },
   {
    "id": "demo-head",
@@ -74,6 +74,45 @@
    "balanceReact": 0.643624,
    "fundedReact": 1.2,
    "spentReactReported": 0.556376,
+   "reactPerDay": null,
+   "reactPerMonth": null,
+   "reactPerMonthBasis": null,
+   "fundedThrough": null,
+   "costWindowHours": 0
+  },
+  {
+   "id": "demo-revive",
+   "label": "REVIVE run at HEAD, T = 5 min (Cron100)",
+   "note": "deployed 2026-11-22 from 2ef45d0 (same contract source as 201eb1e) with the demo-head settings; STEP=setup, revive, expire: the vault went CLAIMABLE, nobody claimed, an owner transfer on Ethereum Sepolia sent a REVIVE that re-armed the vault; then it expired again, a third wallet pressed initiateClaim, the heir's wallet pressed finalizeClaim; torn down.",
+   "network": "Reactive Lasna (5318007) + Base Sepolia (84532); heartbeats from Ethereum Sepolia (11155111)",
+   "rc": "0x2dB4Ff1E444D6f023A8bfe542517E1A598091768",
+   "vault": "0x5320Aa92ad7635A828bF2A4FD3a111D2fAdfcfe8",
+   "owner": "0x12bF8bbD1Eec23B5ab5A44B8d551bbC1d038651C",
+   "heir": "0x440E03bb3AAdBE65D5Bf2Ad7f84A64c509ff438b",
+   "phase": "DONE",
+   "vaultState": "RELEASED",
+   "tornDown": true,
+   "T": 300,
+   "lastSeen": 1795323408,
+   "lastChain": 11155111,
+   "lastOriginTx": "0x61f8122782204b2731deeae60e6d45a107436e9bc66d9ed5fd295f357b37ff26",
+   "deadline": 1795323708,
+   "deployedAt": 1795322692,
+   "daysLive": null,
+   "heartbeats": 4,
+   "versionAdoptions": 0,
+   "spoofsRefused": 1,
+   "refusedByReason": {
+    "3": 1
+   },
+   "callbacksSent": 6,
+   "acked": 6,
+   "freezesUsed": 0,
+   "canaryArrivals": 3,
+   "brakes": 0,
+   "balanceReact": 0.725778,
+   "fundedReact": 1.2,
+   "spentReactReported": 0.474222,
    "reactPerDay": null,
    "reactPerMonth": null,
    "reactPerMonthBasis": null,

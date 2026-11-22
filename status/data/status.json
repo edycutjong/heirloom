@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-22T02:31:32.460Z",
+ "generatedAt": "2026-11-22T02:43:07.869Z",
  "network": "Reactive Lasna (5318007) + Base Sepolia (84532); heartbeats from Ethereum Sepolia (11155111)",
  "instances": [
   {
@@ -20,8 +20,9 @@
    "lastOriginTx": "0xd29c6509ddf88430200f8ddfc1dbdf5ad12e52fb7e477294e9195ebe8da20cc0",
    "deadline": 1803090012,
    "deployedAt": 1794160666,
-   "daysLive": 13.355,
+   "daysLive": 13.363,
    "heartbeats": 8,
+   "versionAdoptions": 0,
    "spoofsRefused": 4,
    "refusedByReason": {
     "3": 4
@@ -38,7 +39,7 @@
    "reactPerMonth": null,
    "reactPerMonthBasis": null,
    "fundedThrough": null,
-   "costWindowHours": 0.05
+   "costWindowHours": 0.25
   },
   {
    "id": "demo",
@@ -60,6 +61,7 @@
    "deployedAt": 1794160947,
    "daysLive": null,
    "heartbeats": 4,
+   "versionAdoptions": 0,
    "spoofsRefused": 1,
    "refusedByReason": {
     "3": 1
@@ -98,6 +100,7 @@
    "deployedAt": 1794159011,
    "daysLive": null,
    "heartbeats": 4,
+   "versionAdoptions": 0,
    "spoofsRefused": 1,
    "refusedByReason": {
     "3": 1

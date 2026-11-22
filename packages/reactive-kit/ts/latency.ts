@@ -2,7 +2,7 @@
 // local clock at send -> origin mined -> reactive log first observed -> callback log first observed.
 // The observer's own polling interval bounds its resolution (reported alongside every sample).
 import type { AbiEvent, Log } from "viem";
-import { client } from "./chains.ts";
+import { chain, client } from "./chains.ts";
 import type { Hex } from "./triples.ts";
 
 export interface LegWatch {
@@ -31,10 +31,15 @@ async function waitFor(w: LegWatch, fromBlock: bigint, deadlineMs: number, pollM
   while (Date.now() < deadlineMs) {
     const head = await c.getBlockNumber();
     if (head >= from) {
-      const logs = (await c.getLogs({ address: w.address, event: w.event, fromBlock: from, toBlock: head })) as (Log & { args?: Record<string, unknown> })[];
+      // never ask for more than the chain's getLogs span (public Base Sepolia caps at 200 blocks of 200 ms); catch up
+      // span by span without sleeping, so "first observed" stays the poll that saw the log
+      const span = BigInt(chain(w.chainId).logSpan);
+      const to = head - from > span ? from + span : head;
+      const logs = (await c.getLogs({ address: w.address, event: w.event, fromBlock: from, toBlock: to })) as (Log & { args?: Record<string, unknown> })[];
       const hit = logs.find(w.match);
       if (hit) return { at: Date.now(), tx: hit.transactionHash as Hex };
-      from = head + 1n;
+      from = to + 1n;
+      if (to < head) continue;
     }
     await sleep(pollMs);
   }

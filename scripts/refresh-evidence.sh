@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Idempotent evidence refresh: rejoins every instance's on-chain logs into evidence/triples.csv (append-only, first row per key wins),
+# Idempotent evidence refresh: rejoins every instance's on-chain logs into evidence/triples.csv (upsert by instance|stage|seq|reactive_tx; rows are never dropped; a callback leg is only replaced by an earlier one),
 # then recomputes evidence/{status,cost,triples}.json (days live, heartbeats, spoofs refused, REACT balance -> REACT/month, funded-through).
-# Safe to re-run any time; Ledgerlock P7 reruns it. RPCs: LASNA_RPC / BASE_SEPOLIA_RPC / ETHEREUM_SEPOLIA_RPC else public defaults.
+# Safe to re-run any time. Long-lived instances rescan Base Sepolia from BASE_FROM in 180-block pages, which grows slow over weeks. RPCs: LASNA_RPC / BASE_SEPOLIA_RPC / ETHEREUM_SEPOLIA_RPC else public defaults.
 # Mainnet instances (after scripts/deploy-mainnet.sh --execute): DEPLOYMENTS=deployments/mainnet.json scripts/refresh-evidence.sh
 set -euo pipefail
 cd "$(dirname "$0")/.."

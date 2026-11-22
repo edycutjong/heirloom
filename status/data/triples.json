@@ -82,7 +82,7 @@
   "last_activity_chain": "84532",
   "last_activity_tx": "0xe224940a552f813a2b9f67954859c4b05a3e61be864ae383edb2d2a3297eedca",
   "instance": "probe",
-  "note": "\"owner-transfer-callback-forced-revert; callback reverted on purpose; proxy emitted CallbackFailure(target indexed, payload)\""
+  "note": "owner-transfer-callback-forced-revert; callback reverted on purpose; proxy emitted CallbackFailure(target indexed, payload)"
  },
  {
   "stage": "PROBE_CALLBACK_FAILURE",
@@ -99,7 +99,7 @@
   "last_activity_chain": "84532",
   "last_activity_tx": "0x5ea285ea78b242e118a59fd90a78a379294e8cb6f72e0bfe67bae2309a85424a",
   "instance": "probe",
-  "note": "\"callback reverted on purpose; proxy emitted CallbackFailure(target indexed, payload)\""
+  "note": "callback reverted on purpose; proxy emitted CallbackFailure(target indexed, payload)"
  },
  {
   "stage": "PROBE",
@@ -746,5 +746,22 @@
   "last_activity_tx": "0xd29c6509ddf88430200f8ddfc1dbdf5ad12e52fb7e477294e9195ebe8da20cc0",
   "instance": "long-t",
   "note": "accepted heartbeat (token 0x8FFB2f8b5b82a4F31B1f9D043d2a6FA208B9D1C5); ARMED so no callback needed"
+ },
+ {
+  "stage": "ATTEST",
+  "seq": "1",
+  "trigger_kind": "cron",
+  "trigger_chain": "5318007",
+  "trigger_tx": "0xb5efe19b1f732eb58d82ca56bdfe395feb870d394996913dd63066f06987d124",
+  "trigger_ts": "1795314366",
+  "reactive_tx": "0xf776b049b86c6f59ee2ac63bbc578d43496cc944ee2b2e811f4e957ceea13500",
+  "reactive_ts": "1795314367",
+  "callback_chain": "84532",
+  "callback_tx": "0x0d654fcd69b0deda5039f67662502ab774c635ca5a6b7265ff332eec5d6a855b",
+  "callback_ts": "1795314371",
+  "last_activity_chain": "84532",
+  "last_activity_tx": "0xd29c6509ddf88430200f8ddfc1dbdf5ad12e52fb7e477294e9195ebe8da20cc0",
+  "instance": "long-t",
+  "note": "seq 1; tries 1; trigger = Cron10000 log on Lasna"
  }
 ]

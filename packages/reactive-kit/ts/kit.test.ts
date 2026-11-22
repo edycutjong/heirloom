@@ -47,6 +47,20 @@ describe("reactive-kit (pure helpers)", () => {
     expect(readTriples(q)[0].callback_tx, "a blank callback leg is filled").toBe("0xFILL");
   });
 
+  test("appendTriples: a re-join that misses the Ack keeps the note of the row that cites one", () => {
+    const p = join(mkdtempSync(join(tmpdir(), "kit-")), "t.csv");
+    const base = { stage: "EXPIRE", seq: "7", reactive_tx: "0xaa", instance: "demo" };
+    appendTriples(p, [row({ ...base, callback_chain: "84532", callback_tx: "0xcb", callback_ts: "100", note: "seq 7; tries 1; vault 1->2" })]);
+    appendTriples(p, [row({ ...base, note: "seq 7; tries 1; no Ack found" })]);
+    const r = readTriples(p)[0];
+    expect(r.callback_tx).toBe("0xcb");
+    expect(r.note, "the kept leg keeps its note").toBe("seq 7; tries 1; vault 1->2");
+    const q = join(mkdtempSync(join(tmpdir(), "kit-")), "t.csv");
+    appendTriples(q, [row({ ...base, note: "seq 7; no Ack found" })]);
+    appendTriples(q, [row({ ...base, note: "seq 7; still none" })]);
+    expect(readTriples(q)[0].note, "a row without a leg takes the newer note").toBe("seq 7; still none");
+  });
+
   test("hopSeconds and missing legs", () => {
     const h = hopSeconds(row({ trigger_ts: "100", reactive_ts: "101", callback_ts: "103" }));
     expect(h).toEqual({ triggerToReactive: 1, reactiveToCallback: 2, total: 3 });

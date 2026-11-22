@@ -140,7 +140,10 @@ async function main() {
 
   for (const s of seenOrder) {
     if ((byTx.get(s.tx) ?? []).some((x) => x.name === "CallbackSent")) continue;
-    const via = Number(s.args.chainId) === BASE_SEPOLIA && (s.args.token as string).toLowerCase() === VAULT.toLowerCase() ? "vault OwnerActive" : `token ${s.args.token}`;
+    // an owner-version adoption (vault Ack carrying a newer owner nonce) also emits Seen; its trigger is the callback tx
+    const adopted = (byTx.get(s.tx) ?? []).some((x) => x.name === "OwnerVersionAdopted");
+    const via = adopted ? "vault version adopted from an Ack (trigger_tx is the callback tx)"
+      : Number(s.args.chainId) === BASE_SEPOLIA && (s.args.token as string).toLowerCase() === VAULT.toLowerCase() ? "vault OwnerActive" : `token ${s.args.token}`;
     rows.push(await buildTriple({ stage: "VISIT", seq: "", triggerKind: "origin_log", triggerChain: Number(s.args.chainId), triggerTx: hex32(s.args.originTx),
       reactiveChain: LASNA, reactiveTx: s.tx, lastActivity: { chainId: Number(s.args.chainId), tx: hex32(s.args.originTx) }, instance: INSTANCE,
       note: `accepted heartbeat (${via}); ARMED so no callback needed` }));

@@ -8,6 +8,7 @@ Web version (no wallet, no sign-in): **https://edycutjong.github.io/heirloom/jud
 
 Every link is a real transaction on a public explorer. The demo instance ran with T = 5 min on 2026-11-08 (UTC). These instances were deployed from a commit before `HEAD` (before the re-entry lock, `coverDebt()` and the claim-grace fix): the rows prove the loop, the tests cover `HEAD`.
 
+0. **Live again on 2026-11-22:** after the revival, the long-T contract's next CRON tick sent its overdue weekly ATTEST: CRON [`0xb5efe19b…d124`](https://lasna.reactscan.net/tx/0xb5efe19b1f732eb58d82ca56bdfe395feb870d394996913dd63066f06987d124) → react [`0xf776b049…3500`](https://lasna.reactscan.net/tx/0xf776b049b86c6f59ee2ac63bbc578d43496cc944ee2b2e811f4e957ceea13500) → callback [`0x0d654fcd…855b`](https://sepolia.basescan.org/tx/0x0d654fcd69b0deda5039f67662502ab774c635ca5a6b7265ff332eec5d6a855b) (acknowledged; the vault paid about 0.0000012 ETH for it).
 1. **Open the live status card:** https://edycutjong.github.io/heirloom/status/. It reads both testnet instances from the chain: the 90-day one is armed, the demo one is released.
 2. **Silence opens a grace window.** A Reactive CRON tick saw no owner activity for T, so the reactive contract asked the Base vault to enter GRACE.
    CRON [`0x9535fa9d…10a0`](https://lasna.reactscan.net/tx/0x9535fa9d6409fb168cba654e2b53c499770c409fb6cafe61fa6d648549cd10a0) → react [`0xe4d5fb4d…4e5d`](https://lasna.reactscan.net/tx/0xe4d5fb4d7d811d13c35781eabf43cfcdc6fe03f972291299ca01b3df77d74e5d) → callback [`0xde28408b…9488`](https://sepolia.basescan.org/tx/0xde28408b0cb45115d6bde3464bf03255e356a5411d666c0c7f617bee3d209488)
@@ -24,12 +25,12 @@ Every link is a real transaction on a public explorer. The demo instance ran wit
 
 | Measure | Value | Source |
 |---|---|---|
-| Rows in the triple log (origin or CRON → reactive → callback) | 44 (22 with a callback leg: 13 from Heirloom instances (11 CRON-triggered, 2 owner-transfer CANCELs) and 9 from day-1 probes, 2 of them deliberately failed) | [`evidence/triples.csv`](evidence/triples.csv) |
+| Rows in the triple log (origin or CRON → reactive → callback) | 45 (23 with a callback leg: 14 from Heirloom instances (12 CRON-triggered, 2 owner-transfer CANCELs) and 9 from day-1 probes, 2 of them deliberately failed) | [`evidence/triples.csv`](evidence/triples.csv) |
 | Demo instance callbacks acknowledged | 5 of 5, 0 resends | [`evidence/status.json`](evidence/status.json), [`evidence/demo-summary.json`](evidence/demo-summary.json) |
 | Demo scenario | 2 graces, 1 cancel, 1 expiry, claim, teardown | [`evidence/demo-summary.json`](evidence/demo-summary.json) |
 | Contract tests (`forge test`) | 168 passed | [`test/`](test/) |
 | Shared kit tests (`FOUNDRY_PROFILE=kit forge test`) | 27 passed | [`packages/reactive-kit/test/`](packages/reactive-kit/test/) |
-| TypeScript tests (`pnpm test:coverage`) | 25 passed | [`packages/reactive-kit/ts/`](packages/reactive-kit/ts/) |
+| TypeScript tests (`pnpm test:coverage`) | 27 passed | [`packages/reactive-kit/ts/`](packages/reactive-kit/ts/) |
 | Line coverage: `src/` contracts · kit contracts · TypeScript kit | 611/611 · 64/64 · 126/126 | CI Stage 1 gate; branches 202/203 in `src/` (the one left is an unreachable guard, `HeirloomReactive.sol:509`, allowed by name) |
 
 ## Reproduce it yourself

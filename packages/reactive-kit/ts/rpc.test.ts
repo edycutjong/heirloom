@@ -54,6 +54,29 @@ describe("chains", () => {
 });
 
 describe("latency.observe", () => {
+  test("a leg far behind head is scanned span by span (never more than the chain's getLogs span) without sleeping", async () => {
+    const span = chain(84532).logSpan;
+    let calls = 0;
+    fake.getBlockNumber.mockImplementation(async () => (calls++ < 2 ? 100n : 600n)); // start blocks, then head far ahead
+    const ranges: [bigint, bigint][] = [];
+    fake.getLogs.mockImplementation(async ({ address, fromBlock, toBlock }: { address: string; fromBlock: bigint; toBlock: bigint }) => {
+      if (address === ADDR) return [{ transactionHash: tx(7), args: {} }]; // reactive leg: found at once
+      ranges.push([fromBlock, toBlock]);
+      return fromBlock > 100n + span ? [{ transactionHash: tx(9), args: {} }] : []; // callback: second span only
+    });
+    const s = await observe({
+      send: async () => tx(1),
+      reactive: { chainId: 5318007, address: ADDR, event: EVENT, match: () => true },
+      callback: { chainId: 84532, address: "0x00000000000000000000000000000000000000bb", event: EVENT, match: () => true },
+      pollMs: 60_000, // a sleep would time the test out
+      timeoutMs: 5_000,
+    });
+    expect(ranges[0]).toEqual([100n, 100n + span]);
+    expect(ranges[1][0]).toBe(101n + span);
+    expect(ranges.every(([f, e]) => e - f <= span)).toBe(true);
+    expect(s.callbackTx).toBe(tx(9));
+  });
+
   test("captures start blocks before sending, then times the reactive and callback legs", async () => {
     const order: string[] = [];
     let head = 10n;

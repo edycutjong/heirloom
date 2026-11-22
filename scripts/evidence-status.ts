@@ -8,6 +8,7 @@
 import { appendFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { decodeEventLog, formatEther, parseAbi, type Log } from "viem";
 import { chain, client } from "../packages/reactive-kit/ts/chains.ts";
+import { readTriples } from "../packages/reactive-kit/ts/triples.ts";
 
 type Hex = `0x${string}`;
 interface Inst { id: string; label: string; addresses: string; fundedReact: number; reclaimedReact?: number; note?: string; costFrom?: number }
@@ -24,6 +25,7 @@ const rcAbi = parseAbi([
   "event CanaryBeat(uint256 indexed chainId, uint64 gap)",
   "event SpamBrake(uint256 indexed chainId, address indexed token, uint64 until)",
   "event TornDown(uint256 trigger)",
+  "event OwnerVersionAdopted(uint64 nonce, bytes32 actionId, uint256 ackTx)",
   "function phase() view returns (uint8)",
   "function lastSeen() view returns (uint64)",
   "function lastChain() view returns (uint256)",
@@ -101,7 +103,8 @@ for (const inst of cfg.instances) {
     lastSeen: lastSeen === null ? null : Number(lastSeen), lastChain: lastChain === null ? null : Number(lastChain),
     lastOriginTx: lastOrigin, deadline: deadline === null ? null : Number(deadline),
     deployedAt: deployedTs, daysLive: lifeEnd ? +((lifeEnd - deployedTs) / 86400).toFixed(3) : null,
-    heartbeats: count("Seen"), spoofsRefused: count("SpoofRefused"), refusedByReason: refusedBy,
+    // an owner-version adoption emits one Seen whose originTx is a proxy callback, not owner activity
+    heartbeats: count("Seen") - count("OwnerVersionAdopted"), versionAdoptions: count("OwnerVersionAdopted"), spoofsRefused: count("SpoofRefused"), refusedByReason: refusedBy,
     callbacksSent: new Set(log.filter((d) => d.name === "CallbackSent").map((d) => String(d.args.seq))).size,
     acked: count("Acked"), freezesUsed: count("FreezeUsed"), canaryArrivals: count("CanaryBeat"), brakes: count("SpamBrake"),
     balanceReact: +bal.toFixed(6), fundedReact: inst.fundedReact, spentReactReported: +spent.toFixed(6), // funded/reclaimed are hand-recorded in deployments/*.json, not measured by this script
@@ -112,14 +115,8 @@ for (const inst of cfg.instances) {
   });
 }
 
-const csv = readFileSync("evidence/triples.csv", "utf8").trim().split("\n");
-const cols = csv[0].split(",");
-const rows = csv.slice(1).map((l) => {
-  const v = l.split(","); // notes may contain commas: everything past the last column belongs to note
-  const o: Record<string, string> = {};
-  cols.forEach((c, i) => (o[c] = i === cols.length - 1 ? v.slice(i).join(",") : v[i]));
-  return o;
-});
+// the kit parser handles the writer's quoting (a note with a comma is a quoted CSV cell)
+const rows = readTriples("evidence/triples.csv");
 writeFileSync("evidence/triples.json", JSON.stringify(rows, null, 1) + "\n");
 writeFileSync(`evidence/status${SUFFIX}.json`, JSON.stringify({ generatedAt: new Date().toISOString(), network: cfg.network, instances: out }, null, 1) + "\n");
 writeFileSync(`evidence/cost${SUFFIX}.json`, JSON.stringify({

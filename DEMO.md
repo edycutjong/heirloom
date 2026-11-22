@@ -60,6 +60,8 @@ The instances share one owner, so one owner transfer can appear more than once: 
 | VISIT | origin_log @ 84532 | [`0x2082f0bc…ef00`](https://sepolia.basescan.org/tx/0x2082f0bc5c04108e8393bb2b58451b5a58c90a057aa0ccc6a2e2d8aee05def00) | [`0x479f3bf4…6c2b`](https://lasna.reactscan.net/tx/0x479f3bf4127e69e4189588dc07a6d51c0906204b880679ef90688d32db846c2b) |
 | VISIT (2026-11-22, after the revival) | origin_log @ 84532 | [`0xd29c6509…0cc0`](https://sepolia.basescan.org/tx/0xd29c6509ddf88430200f8ddfc1dbdf5ad12e52fb7e477294e9195ebe8da20cc0) | [`0xddd26576…9a70`](https://lasna.reactscan.net/tx/0xddd265766c478bfe572902e5038b7a2e941b86956891646439b24beadeef9a70) |
 
+**Live again on 2026-11-22:** after the revival, the long-T contract's next CRON tick sent its overdue weekly ATTEST: CRON [`0xb5efe19b…d124`](https://lasna.reactscan.net/tx/0xb5efe19b1f732eb58d82ca56bdfe395feb870d394996913dd63066f06987d124) → react [`0xf776b049…3500`](https://lasna.reactscan.net/tx/0xf776b049b86c6f59ee2ac63bbc578d43496cc944ee2b2e811f4e957ceea13500) → callback [`0x0d654fcd…855b`](https://sepolia.basescan.org/tx/0x0d654fcd69b0deda5039f67662502ab774c635ca5a6b7265ff332eec5d6a855b) (acknowledged; the vault paid about 0.0000012 ETH for it).
+
 ### Claim on the demo instance (Base Sepolia)
 
 Anyone may press either step; here both were pressed from the owner key, and the vault paid the heir (`0x440E…438b`).
@@ -113,7 +115,7 @@ The contracts are tested with the Reactive Network's own Test Lib, driven throug
 ```sh
 forge test                       # Ran 10 test suites: 168 tests passed, 0 failed, 0 skipped
 FOUNDRY_PROFILE=kit forge test   # Ran 5 test suites: 27 tests passed, 0 failed, 0 skipped
-pnpm test:ts                     # Test Files 2 passed, Tests 25 passed
+pnpm test:ts                     # Test Files 2 passed, Tests 27 passed
 ```
 
 Those are the counts at the latest test update (2026-11-14 UTC); the first version of this page (2026-11-08) ran 104, 23 and 6.

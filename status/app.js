@@ -68,9 +68,12 @@ async function show(i) {
   [...$("tabs").children].forEach((b) => b.setAttribute("aria-current", String(b.textContent === i.id)));
   $("label").textContent = i.label; $("net").textContent = i.network?.split(";")[0] ?? "";
   renderRows(i);
+  $("rowsec").classList.remove("rows-loading");
   renderFacts(i, null);
   await live(i);
 }
+
+setTimeout(() => $("rowsec")?.classList.remove("rows-loading"), 5000); // never leave the reserve if the data fails to load
 
 function renderRows(i) {
   if (i.custom) { $("tbody").innerHTML = `<tr><td colspan="5">Rows for your own instance are not loaded on this page yet. Open the Reactive explorer for <code>${esc(short(i.rc))}</code>; the state, facts and heir stub above are live.</td></tr>`; return; }
@@ -101,7 +104,7 @@ function renderFacts(i, lv) {
     fact("Canary age (per chain)", canary),
     fact("Days live", days),
     fact("Heartbeats · refused", i.heartbeats != null ? `${i.heartbeats} · ${i.spoofsRefused} (as of the evidence snapshot)` : "—"),
-    fact("RC reserve", lv?.balance != null ? `${lv.balance} ${NET.sym}${lv.runway ? `<br>runway ${lv.runway} d (from the last attest)` : ""}` : i.balanceReact != null ? `${i.balanceReact} ${NET.sym}` : "—"),
+    fact("RC reserve", lv?.balance != null ? `${lv.balance} ${NET.sym}${lv.runway ? (Number(lv.runway) >= 4294967295 ? "<br>runway: no spend since the last attest yet" : `<br>runway ${lv.runway} d (from the last attest)`) : ""}` : i.balanceReact != null ? `${i.balanceReact} ${NET.sym}` : "—"),
     fact("Vault gas reserve", lv?.vaultEth != null ? `${lv.vaultEth} ETH` : "—"),
     fact("Cost", i.reactPerMonth != null ? `${i.reactPerMonth} ${NET.sym} / month (${esc(i.reactPerMonthBasis ?? "measured")}, ${i.costWindowHours} h window)<br>funded through ${esc(i.fundedThrough ?? "—")}` : "not yet measured (needs a quiet window of at least 6 h)"),
   ];

@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="docs/assets/brand/icon-animated.svg" alt="Heirloom mark: the card's stamps stop, RELEASED lands, the heir stub tears free" width="112">
-  <h1>Heirloom</h1>
+  <img src="docs/assets/brand/icon-animated.svg" alt="Heirloom mark: the card's stamps stop, RELEASED lands, the heir stub tears free" width="144">
+  <h1>Heirloom 🗝️</h1>
   <p><em>A dead-man's switch for a self-custody wallet. It reads silence across chains, so there is no keeper and no check-in required.</em></p>
 
   <img src="docs/assets/brand/readme-hero-animated.svg" alt="Heirloom — releases a vault on Base to your heir once your wallet goes quiet across chains. The card's violet stamps stop; a non-owner wallet's $0 row is refused; silence outlasts grace; the oxblood RELEASED stamp lands." width="100%">

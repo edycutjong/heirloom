@@ -1,8 +1,8 @@
 # Heirloom for judges
 
-> When your wallet goes quiet, silence pays your heir. A Reactive dead-man's switch: no keeper, no check-in button, spoofs refused.
+> When your wallet goes quiet, silence pays your heir. A Reactive dead-man's switch: no keeper, no check-in required, spoofs refused.
 
-Web version (no wallet, no sign-in): **https://edycutjong.github.io/heirloom/judge/**. Track: **Set It and Forget It**. Everything below is testnet (Reactive Lasna 5318007 + Base Sepolia 84532); the mainnet deploy is scripted and dry-run, not yet run.
+Web version (no wallet, no sign-in): **https://edycutjong.github.io/heirloom/judge/**. Track: **Set It and Forget It**. Everything below is testnet (Reactive Lasna 5318007 + Base Sepolia 84532); the mainnet deploy is scripted with a dry-run mode and has not been run.
 
 ## The 30-second path
 
@@ -14,7 +14,7 @@ Every link is a real transaction on a public explorer. The demo instance ran wit
    CRON [`0x9535fa9d…10a0`](https://lasna.reactscan.net/tx/0x9535fa9d6409fb168cba654e2b53c499770c409fb6cafe61fa6d648549cd10a0) → react [`0xe4d5fb4d…4e5d`](https://lasna.reactscan.net/tx/0xe4d5fb4d7d811d13c35781eabf43cfcdc6fe03f972291299ca01b3df77d74e5d) → callback [`0xde28408b…9488`](https://sepolia.basescan.org/tx/0xde28408b0cb45115d6bde3464bf03255e356a5411d666c0c7f617bee3d209488)
 3. **An ordinary owner transfer cancels it.** No button: a token transfer on Base Sepolia was the proof of life.
    origin [`0x2082f0bc…ef00`](https://sepolia.basescan.org/tx/0x2082f0bc5c04108e8393bb2b58451b5a58c90a057aa0ccc6a2e2d8aee05def00) → react [`0x99bb1f22…99fe`](https://lasna.reactscan.net/tx/0x99bb1f2241f3b067a91e4130343e0d8a6bfe8245aa658b4e639329c4ed2899fe) → callback [`0x217b43e3…90ce`](https://sepolia.basescan.org/tx/0x217b43e3027b9ead0bf1f1af33137ab12b8a9a4f69c4202fec9d82bf62f390ce)
-4. **A stranger's $0 transfer is refused.** `transferFrom(owner, you, 0)` from another wallet; the long-T reactive contract logged `SpoofRefused` with reason `ZERO_VALUE`.
+4. **A non-owner wallet's $0 transfer is refused.** `transferFrom(owner, you, 0)` from another wallet; the long-T reactive contract logged `SpoofRefused` with reason `ZERO_VALUE`.
    origin [`0x777b953e…4d79`](https://sepolia.basescan.org/tx/0x777b953e33748cc005ae19e57c2f480ec54a2244203291ca7162690ab4174d79) → react [`0xb622bc82…f226`](https://lasna.reactscan.net/tx/0xb622bc82cdbd66bad8d5c14e085d4c080ec253c99b10ad1413675f67e849f226)
 5. **Silence again, grace runs out, the heir is paid.** EXPIRE makes the vault claimable; the two-step claim pays only the heir (`0x440E…438b`).
    EXPIRE callback [`0xabb5147f…0401`](https://sepolia.basescan.org/tx/0xabb5147f4da4bb94174c142612cdde6dfbcac89f7c206f757d24426d8a6e0401) · initiateClaim [`0xf86669ab…de8d`](https://sepolia.basescan.org/tx/0xf86669ab514601ee00a1fc8c0f97e6f0e6e2edb405cc9d496e761f25d91ede8d) · finalizeClaim [`0x13d8677c…80d3`](https://sepolia.basescan.org/tx/0x13d8677c445bbfb41a63e33b3405c218bec83b6af7c50018ca34d739caf580d3)
@@ -47,7 +47,7 @@ CI / deterministic replay (not the product, no network): `forge test && FOUNDRY_
 
 ## Honest limits
 
-- **No mainnet evidence yet.** The mainnet deploy is scripted and dry-run, not run. Every transaction on this page is testnet.
+- **No mainnet evidence yet.** The mainnet deploy is scripted with a dry-run mode; it has not been run on mainnet. Every transaction on this page is testnet.
 - **Two builds on testnet.** The 11-08 demo and the 90-day instance predate the re-entry lock, `coverDebt()` and the claim-grace fix; the `demo-head` instance (2026-11-22, `201eb1e`) ran the full lifecycle on the current contract source.
 - **Native ETH and silent grace.** Native ETH transfers emit no ERC-20 `Transfer` log, so they are not proof of life, and nobody is notified when a grace window opens. Until notifications ship, a living owner can watch the vault itself: every vault state change emits `StateChanged`, so an explorer address alert on the vault warns of a grace window.
 

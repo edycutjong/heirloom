@@ -1,7 +1,7 @@
 <div align="center">
   <img src="docs/assets/brand/icon-animated.svg" alt="Heirloom mark: the card's stamps stop, RELEASED lands, the heir stub tears free" width="112">
   <h1>Heirloom</h1>
-  <p><em>A dead-man's switch for a self-custody wallet. It reads silence across chains, so there is no keeper and no check-in button.</em></p>
+  <p><em>A dead-man's switch for a self-custody wallet. It reads silence across chains, so there is no keeper and no check-in required.</em></p>
 
   <img src="docs/assets/brand/readme-hero-animated.svg" alt="Heirloom — releases a vault on Base to your heir once your wallet goes quiet across chains. The card's violet stamps stop; a non-owner wallet's $0 row is refused; silence outlasts grace; the oxblood RELEASED stamp lands." width="100%">
 
@@ -84,7 +84,7 @@ Measured platform facts, including what did not work as documented, are in [docs
 
 ## ⛓️ Live Deployment
 
-Testnet instances, with every origin, reactive and callback hash in [DEMO.md](DEMO.md):
+Testnet instances; [DEMO.md](DEMO.md) links every callback row and the main reactive-only rows, and every row is in [`evidence/triples.csv`](evidence/triples.csv):
 
 | | Reactive contract (Lasna) | Vault (Base Sepolia) |
 |---|---|---|

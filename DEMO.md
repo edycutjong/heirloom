@@ -14,7 +14,7 @@ A watched wallet's token activity on an origin chain → a Reactive Network cont
 |---|---|---|---|---|
 | demo | [`0xa3d92EAe…B8b`](https://lasna.reactscan.net/address/0xa3d92EAefb2fc4C972d6Ee524c24F38A93739B8b) | [`0x51365bb9…DBA`](https://sepolia.basescan.org/address/0x51365bb9560dDfA4236fd62d4eF2CB61f78edDBA) | 5 min | full scenario, torn down after the claim |
 | demo-head (`201eb1e`, 2026-11-22) | [`0xe8812588…381F`](https://lasna.reactscan.net/address/0xe8812588c7bEa5E5c29004aebB04AC02abA2381F) | [`0x3d526a7D…0BEa`](https://sepolia.basescan.org/address/0x3d526a7DeB8d963F2e5A0AdaEde747A1Ce3a0BEa) | 5 min | full lifecycle at `HEAD`, released and torn down; see below |
-| long-t | [`0x80b56204…DC6`](https://lasna.reactscan.net/address/0x80b56204D8860a6B46c08deCd9F01DD1881F9DC6) | [`0x8C37E794…7Be`](https://sepolia.basescan.org/address/0x8C37E79420Cd16e46E4D9FFd4541a87FfFa4e7Be) | 90 days | armed since 2026-11-08 (UTC). It stalled in reactive-contract debt after its last logged event (2026-11-08 23:35 UTC): this build predates `coverDebt()`, and the 2026-11-15 top-ups were transfers, which do not clear debt. Revived on 2026-11-22 with the system contract's `depositTo` ([`0xe1c6ea97…c94a`](https://lasna.reactscan.net/tx/0xe1c6ea97590511041e9795f729bb1efc6f6a9b5bd07dd8ece81e5f023931c94a)): 9.0067 lREACT balance plus 0.9866 lREACT reserves, last heartbeat 2026-11-22 02:20 UTC (`evidence/status.json`). The one to fire a loop against |
+| long-t | [`0x80b56204…DC6`](https://lasna.reactscan.net/address/0x80b56204D8860a6B46c08deCd9F01DD1881F9DC6) | [`0x8C37E794…7Be`](https://sepolia.basescan.org/address/0x8C37E79420Cd16e46E4D9FFd4541a87FfFa4e7Be) | 90 days | armed since 2026-11-08 (UTC). It stalled in reactive-contract debt after its last logged event (2026-11-08 23:35 UTC): this build predates `coverDebt()`, and the 2026-11-15 top-ups were transfers, which do not clear debt. Revived on 2026-11-22 with the system contract's `depositTo` ([`0xe1c6ea97…c94a`](https://lasna.reactscan.net/tx/0xe1c6ea97590511041e9795f729bb1efc6f6a9b5bd07dd8ece81e5f023931c94a)): 9.0067 lREACT balance plus 0.9866 lREACT reserves at the revival, last heartbeat 2026-11-22 02:20 UTC (`evidence/status.json`). The one to fire a loop against |
 
 Owner (all three): `0x12bF8bbD1Eec23B5ab5A44B8d551bbC1d038651C`. Heir: `0x440E03bb3AAdBE65D5Bf2Ad7f84A64c509ff438b`.
 
@@ -141,7 +141,7 @@ FOUNDRY_PROFILE=kit forge test   # Ran 5 test suites: 27 tests passed, 0 failed,
 pnpm test:ts                     # Test Files 2 passed, Tests 27 passed
 ```
 
-Those are the counts at the latest test update (2026-11-14 UTC); the first version of this page (2026-11-08) ran 104, 23 and 6.
+Those are the counts at the latest test update (2026-11-22 UTC); the first version of this page (2026-11-08) ran 104, 23 and 6.
 
 ## Cost and latency
 

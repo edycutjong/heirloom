@@ -7,7 +7,16 @@
       "addresses": "evidence/long-t-addresses.txt",
       "fundedReact": 9.5,
       "note": "owner = deployer; scripted heartbeats. Funded 0.5 lREACT at deploy, +3 and +6 by transfer on 2026-11-15 (9.5 in all). This build predates coverDebt(), and a transfer does not clear system-contract debt, so it stalled in debt after its last logged event (2026-11-08 23:35 UTC) and missed a heartbeat sent on 2026-11-22. Revived 2026-11-22 with depositTo (1 lREACT: 0.0134 debt settled, 0.9866 to reserves); the next heartbeat reacted within ~10 s. Shares owner and tokens with the demo and p1b-e2e instances, so its rows and cost up to costFrom include their activity; the cost window starts after the demo ended.",
-      "costFrom": 1794162555
+      "costFrom": 1794162555,
+      "commit": "pre-HEAD (deployed 2026-11-08, before the re-entry lock, coverDebt() and the claim-grace fix)"
+    },
+    {
+      "id": "demo-head",
+      "label": "Demo at HEAD, T = 5 min (Cron100)",
+      "commit": "201eb1e",
+      "addresses": "evidence/demo-head-addresses.txt",
+      "fundedReact": 1.2,
+      "note": "deployed 2026-11-22 from 201eb1e (re-entry lock, coverDebt(), claim-grace fix, claim solvency gate); scenario asserts the heartbeat is Seen on Lasna; a third wallet pressed initiateClaim, the heir's wallet pressed finalizeClaim; torn down."
     },
     {
       "id": "demo",
@@ -15,7 +24,8 @@
       "addresses": "evidence/demo-addresses.txt",
       "fundedReact": 0.5,
       "reclaimedReact": 0.0799,
-      "note": "short-T scenario run end to end: grace, cancel, grace, expiry, heir claim, teardown."
+      "note": "short-T scenario run end to end: grace, cancel, grace, expiry, heir claim, teardown.",
+      "commit": "pre-HEAD (deployed 2026-11-08, before the re-entry lock, coverDebt() and the claim-grace fix)"
     },
     {
       "id": "p1b-e2e",

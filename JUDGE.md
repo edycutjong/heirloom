@@ -6,7 +6,7 @@ Web version (no wallet, no sign-in): **https://edycutjong.github.io/heirloom/jud
 
 ## The 30-second path
 
-Every link is a real transaction on a public explorer. The demo instance ran with T = 5 min on 2026-11-08 (UTC). These instances were deployed from a commit before `HEAD` (before the re-entry lock, `coverDebt()` and the claim-grace fix): the rows prove the loop, the tests cover `HEAD`.
+Every link is a real transaction on a public explorer. The demo instance ran with T = 5 min on 2026-11-08 (UTC). These instances were deployed before the re-entry lock, `coverDebt()` and the claim-grace fix. The same lifecycle ran again on 2026-11-22 from `201eb1e`, the current contract source: see [DEMO.md, the same lifecycle at HEAD](DEMO.md#the-same-lifecycle-at-head-2026-11-22).
 
 0. **Live again on 2026-11-22:** after the revival, the long-T contract's next CRON tick sent its overdue weekly ATTEST: CRON [`0xb5efe19b…d124`](https://lasna.reactscan.net/tx/0xb5efe19b1f732eb58d82ca56bdfe395feb870d394996913dd63066f06987d124) → react [`0xf776b049…3500`](https://lasna.reactscan.net/tx/0xf776b049b86c6f59ee2ac63bbc578d43496cc944ee2b2e811f4e957ceea13500) → callback [`0x0d654fcd…855b`](https://sepolia.basescan.org/tx/0x0d654fcd69b0deda5039f67662502ab774c635ca5a6b7265ff332eec5d6a855b) (acknowledged; the vault paid about 0.0000012 ETH for it).
 1. **Open the live status card:** https://edycutjong.github.io/heirloom/status/. It reads both testnet instances from the chain: the 90-day one is armed, the demo one is released.
@@ -25,7 +25,7 @@ Every link is a real transaction on a public explorer. The demo instance ran wit
 
 | Measure | Value | Source |
 |---|---|---|
-| Rows in the triple log (origin or CRON → reactive → callback) | 45 (23 with a callback leg: 14 from Heirloom instances (12 CRON-triggered, 2 owner-transfer CANCELs) and 9 from day-1 probes, 2 of them deliberately failed) | [`evidence/triples.csv`](evidence/triples.csv) |
+| Rows in the triple log (origin or CRON → reactive → callback) | 58 (31 with a callback leg: 22 from Heirloom instances (19 CRON-triggered, 3 owner-transfer CANCELs) and 9 from day-1 probes, 2 of them deliberately failed) | [`evidence/triples.csv`](evidence/triples.csv) |
 | Demo instance callbacks acknowledged | 5 of 5, 0 resends | [`evidence/status.json`](evidence/status.json), [`evidence/demo-summary.json`](evidence/demo-summary.json) |
 | Demo scenario | 2 graces, 1 cancel, 1 expiry, claim, teardown | [`evidence/demo-summary.json`](evidence/demo-summary.json) |
 | Contract tests (`forge test`) | 168 passed | [`test/`](test/) |
@@ -48,7 +48,7 @@ CI / deterministic replay (not the product, no network): `forge test && FOUNDRY_
 ## Honest limits
 
 - **No mainnet evidence yet.** The mainnet deploy is scripted and dry-run, not run. Every transaction on this page is testnet.
-- **The testnet instances predate `HEAD`.** They were deployed before the re-entry lock, `coverDebt()` and the claim-grace fix; the rows prove the loop, the current contracts are what the tests run.
+- **Two builds on testnet.** The 11-08 demo and the 90-day instance predate the re-entry lock, `coverDebt()` and the claim-grace fix; the `demo-head` instance (2026-11-22, `201eb1e`) ran the full lifecycle on the current contract source.
 - **Native ETH and silent grace.** Native ETH transfers emit no ERC-20 `Transfer` log, so they are not proof of life, and nobody is notified when a grace window opens. Until notifications ship, a living owner can watch the vault itself: every vault state change emits `StateChanged`, so an explorer address alert on the vault warns of a grace window.
 
 ## Links

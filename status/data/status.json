@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-22T02:43:07.869Z",
+ "generatedAt": "2026-11-22T03:17:20.632Z",
  "network": "Reactive Lasna (5318007) + Base Sepolia (84532); heartbeats from Ethereum Sepolia (11155111)",
  "instances": [
   {
@@ -20,12 +20,12 @@
    "lastOriginTx": "0xd29c6509ddf88430200f8ddfc1dbdf5ad12e52fb7e477294e9195ebe8da20cc0",
    "deadline": 1803090012,
    "deployedAt": 1794160666,
-   "daysLive": 13.363,
+   "daysLive": 13.387,
    "heartbeats": 8,
    "versionAdoptions": 0,
-   "spoofsRefused": 4,
+   "spoofsRefused": 5,
    "refusedByReason": {
-    "3": 4
+    "3": 5
    },
    "callbacksSent": 1,
    "acked": 1,
@@ -39,7 +39,46 @@
    "reactPerMonth": null,
    "reactPerMonthBasis": null,
    "fundedThrough": null,
-   "costWindowHours": 0.25
+   "costWindowHours": 0.81
+  },
+  {
+   "id": "demo-head",
+   "label": "Demo at HEAD, T = 5 min (Cron100)",
+   "note": "deployed 2026-11-22 from 201eb1e (re-entry lock, coverDebt(), claim-grace fix, claim solvency gate); scenario asserts the heartbeat is Seen on Lasna; a third wallet pressed initiateClaim, the heir's wallet pressed finalizeClaim; torn down.",
+   "network": "Reactive Lasna (5318007) + Base Sepolia (84532); heartbeats from Ethereum Sepolia (11155111)",
+   "rc": "0xe8812588c7bEa5E5c29004aebB04AC02abA2381F",
+   "vault": "0x3d526a7DeB8d963F2e5A0AdaEde747A1Ce3a0BEa",
+   "owner": "0x12bF8bbD1Eec23B5ab5A44B8d551bbC1d038651C",
+   "heir": "0x440E03bb3AAdBE65D5Bf2Ad7f84A64c509ff438b",
+   "phase": "DONE",
+   "vaultState": "RELEASED",
+   "tornDown": true,
+   "T": 300,
+   "lastSeen": 1795316078,
+   "lastChain": 84532,
+   "lastOriginTx": "0xc5767890327b0cae7bf6356b17de5f49494d26c5e685eca33311ab12627b970f",
+   "deadline": 1795316378,
+   "deployedAt": 1795315644,
+   "daysLive": null,
+   "heartbeats": 4,
+   "versionAdoptions": 0,
+   "spoofsRefused": 1,
+   "refusedByReason": {
+    "3": 1
+   },
+   "callbacksSent": 8,
+   "acked": 8,
+   "freezesUsed": 0,
+   "canaryArrivals": 10,
+   "brakes": 0,
+   "balanceReact": 0.643624,
+   "fundedReact": 1.2,
+   "spentReactReported": 0.556376,
+   "reactPerDay": null,
+   "reactPerMonth": null,
+   "reactPerMonthBasis": null,
+   "fundedThrough": null,
+   "costWindowHours": 0
   },
   {
    "id": "demo",

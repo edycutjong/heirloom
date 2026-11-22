@@ -2,7 +2,7 @@
 
 Every row below is a real transaction on Reactive Lasna (5318007), Base Sepolia (84532) or Ethereum Sepolia (11155111), copied from [`evidence/triples.csv`](evidence/triples.csv), [`evidence/demo-actions.csv`](evidence/demo-actions.csv) and [`evidence/fresh-loop-runs.csv`](evidence/fresh-loop-runs.csv). Nothing here is simulated. Mainnet rows do not exist yet: the mainnet deploy is a separate step (`scripts/deploy-mainnet.sh`, dry-run only so far), so every claim on this page is a testnet claim.
 
-**Which build.** The testnet instances were deployed from an earlier commit than `HEAD` (before the re-entry lock, `coverDebt()` and the claim-grace fix). The rows prove the loop; the current contracts are what `forge test` runs and what mainnet deploys.
+**Which build.** The `demo` and `long-t` instances were deployed on 2026-11-08, before the re-entry lock, `coverDebt()` and the claim-grace fix. The `demo-head` instance ran the same lifecycle on 2026-11-22 from `201eb1e`, the current contract source (see [the same lifecycle at HEAD](#the-same-lifecycle-at-head-2026-11-22)). The rows prove the loop; the current contracts are what `forge test` runs and what mainnet deploys.
 
 ## The loop in one line
 
@@ -13,9 +13,10 @@ A watched wallet's token activity on an origin chain → a Reactive Network cont
 | Instance | Reactive contract (Lasna) | Vault (Base Sepolia) | T | Notes |
 |---|---|---|---|---|
 | demo | [`0xa3d92EAe…B8b`](https://lasna.reactscan.net/address/0xa3d92EAefb2fc4C972d6Ee524c24F38A93739B8b) | [`0x51365bb9…DBA`](https://sepolia.basescan.org/address/0x51365bb9560dDfA4236fd62d4eF2CB61f78edDBA) | 5 min | full scenario, torn down after the claim |
+| demo-head (`201eb1e`, 2026-11-22) | [`0xe8812588…381F`](https://lasna.reactscan.net/address/0xe8812588c7bEa5E5c29004aebB04AC02abA2381F) | [`0x3d526a7D…0BEa`](https://sepolia.basescan.org/address/0x3d526a7DeB8d963F2e5A0AdaEde747A1Ce3a0BEa) | 5 min | full lifecycle at `HEAD`, released and torn down; see below |
 | long-t | [`0x80b56204…DC6`](https://lasna.reactscan.net/address/0x80b56204D8860a6B46c08deCd9F01DD1881F9DC6) | [`0x8C37E794…7Be`](https://sepolia.basescan.org/address/0x8C37E79420Cd16e46E4D9FFd4541a87FfFa4e7Be) | 90 days | armed since 2026-11-08 (UTC). It stalled in reactive-contract debt after its last logged event (2026-11-08 23:35 UTC): this build predates `coverDebt()`, and the 2026-11-15 top-ups were transfers, which do not clear debt. Revived on 2026-11-22 with the system contract's `depositTo` ([`0xe1c6ea97…c94a`](https://lasna.reactscan.net/tx/0xe1c6ea97590511041e9795f729bb1efc6f6a9b5bd07dd8ece81e5f023931c94a)): 9.0067 lREACT balance plus 0.9866 lREACT reserves, last heartbeat 2026-11-22 02:20 UTC (`evidence/status.json`). The one to fire a loop against |
 
-Owner (both): `0x12bF8bbD1Eec23B5ab5A44B8d551bbC1d038651C`. Heir: `0x440E03bb3AAdBE65D5Bf2Ad7f84A64c509ff438b`.
+Owner (all three): `0x12bF8bbD1Eec23B5ab5A44B8d551bbC1d038651C`. Heir: `0x440E03bb3AAdBE65D5Bf2Ad7f84A64c509ff438b`.
 
 ## Triples
 
@@ -62,9 +63,31 @@ The instances share one owner, so one owner transfer can appear more than once: 
 
 **Live again on 2026-11-22:** after the revival, the long-T contract's next CRON tick sent its overdue weekly ATTEST: CRON [`0xb5efe19b…d124`](https://lasna.reactscan.net/tx/0xb5efe19b1f732eb58d82ca56bdfe395feb870d394996913dd63066f06987d124) → react [`0xf776b049…3500`](https://lasna.reactscan.net/tx/0xf776b049b86c6f59ee2ac63bbc578d43496cc944ee2b2e811f4e957ceea13500) → callback [`0x0d654fcd…855b`](https://sepolia.basescan.org/tx/0x0d654fcd69b0deda5039f67662502ab774c635ca5a6b7265ff332eec5d6a855b) (acknowledged; the vault paid about 0.0000012 ETH for it).
 
+## The same lifecycle at `HEAD` (2026-11-22)
+
+The `demo-head` instance was deployed on 2026-11-22 from commit `201eb1e`, the current contract source (re-entry lock, `coverDebt()`, the claim-grace fix and the claim solvency gate), with the same settings as the 11-08 demo (T = 5 min, grace 220 s, claim delay 450 s). `script/heirloom-scenario.sh` now fails the run unless the first heartbeat is `Seen` on Lasna; it was, about one second after the Ethereum Sepolia transfer. Reactive contract [`0xe8812588…381F`](https://lasna.reactscan.net/address/0xe8812588c7bEa5E5c29004aebB04AC02abA2381F), vault [`0x3d526a7D…0BEa`](https://sepolia.basescan.org/address/0x3d526a7DeB8d963F2e5A0AdaEde747A1Ce3a0BEa).
+
+| Stage | Trigger | Trigger tx | Reactive tx (Lasna) | Callback tx (Base Sepolia) |
+|---|---|---|---|---|
+| VISIT | origin_log @ 84532 | [`0x4aca1bc2…78d5`](https://sepolia.basescan.org/tx/0x4aca1bc2d978674bab74c9de048dc3e21fe84a710c1c6cef68dc0b6ec9b978d5) | [`0xeecc9786…c6b6`](https://lasna.reactscan.net/tx/0xeecc97860f0b5f0e6ea43fdacd70c2a7e7cc17e0573ead13ab6023769d38c6b6) | — |
+| VISIT | origin_log @ 84532 | [`0x4aca1bc2…78d5`](https://sepolia.basescan.org/tx/0x4aca1bc2d978674bab74c9de048dc3e21fe84a710c1c6cef68dc0b6ec9b978d5) | [`0xa4a40a0a…5edb`](https://lasna.reactscan.net/tx/0xa4a40a0a48b9608c047161d9bdbcb536de7242c5913461a8147cc2c326f45edb) | — |
+| VISIT | origin_log @ 11155111 | [`0xb8b8d322…f870`](https://sepolia.etherscan.io/tx/0xb8b8d322e0ed0e74b744945007e8bb53b782a4ff55b35bc91f5e693fe3a1f870) | [`0xaa601523…1a4e`](https://lasna.reactscan.net/tx/0xaa601523763141756f97c76fef389d33aa370f5c022ffddb4e1086bcf4741a4e) | — |
+| REFUSED | origin_log @ 84532 | [`0xe9b9693e…4bd9`](https://sepolia.basescan.org/tx/0xe9b9693ed731a9689c6bab2ec65ee863ca590ffaaa5f7241a5c069f7c30e4bd9) | [`0xd5420c22…cabc`](https://lasna.reactscan.net/tx/0xd5420c2258d9267e4c674349fe5e4b0ef1cd46fcb9086b4581ad728a1097cabc) | — |
+| ATTEST | cron @ 5318007 | [`0x5b448b3f…6af9`](https://lasna.reactscan.net/tx/0x5b448b3ff0535f63548995213dfb251021932854d71989e4e0ac3237f3f66af9) | [`0x9a963bb7…097c`](https://lasna.reactscan.net/tx/0x9a963bb7b36fef36cac9fe34b071c3597afbbf866446903503cd5d6dc84a097c) | [`0xf47ed40b…2960`](https://sepolia.basescan.org/tx/0xf47ed40b82e1c058739e863bc44025d248e11e6f8bae2d7a9b035cb500402960) |
+| GRACE | cron @ 5318007 | [`0xa6bac6a7…e4ac`](https://lasna.reactscan.net/tx/0xa6bac6a7a8d9b0b1ba0670f3f7087ecef593a970d5b9d4aac23466aa3126e4ac) | [`0x05117b9f…b381`](https://lasna.reactscan.net/tx/0x05117b9fc4047636a97b166716bec00efb4b19f3056e34484da1e6ff73e1b381) | [`0x884975d6…7861`](https://sepolia.basescan.org/tx/0x884975d6e9151e016e57d40eb901330628984a0b3692f827a805c769be787861) |
+| CANCEL | origin_log @ 84532 | [`0xc5767890…970f`](https://sepolia.basescan.org/tx/0xc5767890327b0cae7bf6356b17de5f49494d26c5e685eca33311ab12627b970f) | [`0x680c0cc5…5ec9`](https://lasna.reactscan.net/tx/0x680c0cc555b8c560318db5d66eef551be65dfae04199d29310c67865aae65ec9) | [`0x40536ed4…2e50`](https://sepolia.basescan.org/tx/0x40536ed404473d29bb513b8889ddabb8c659602a5efb4143fb37112461372e50) |
+| ATTEST | cron @ 5318007 | [`0x4e797a28…46ca`](https://lasna.reactscan.net/tx/0x4e797a2800511029c8974b3e9f7c620c4943bf050c4c904d4b7f2520950246ca) | [`0x2226832b…519b`](https://lasna.reactscan.net/tx/0x2226832bddd66e30d48791ac189809e936413e7ba12d3def25ceb0a86da2519b) | [`0xb46a06be…466a`](https://sepolia.basescan.org/tx/0xb46a06bea51196629f3f611b33d23540471dd096b04b5a82b30b3970a589466a) |
+| GRACE | cron @ 5318007 | [`0xed38fcd5…e499`](https://lasna.reactscan.net/tx/0xed38fcd51b812cd3fbfed95037109965a24e73ad2c0b516e880ef79d2b8fe499) | [`0xfe78af6f…3911`](https://lasna.reactscan.net/tx/0xfe78af6f5e615fb51ac864f88eb3c6d357f1380e883973d9bb4167dac0e03911) | [`0x4d53977b…be02`](https://sepolia.basescan.org/tx/0x4d53977b810c4747d6f70c9824a1b99131dd58410c208f31491d2e2aee48be02) |
+| ATTEST | cron @ 5318007 | [`0x6f4617f1…2fee`](https://lasna.reactscan.net/tx/0x6f4617f1fa9447bfae9b113351ed6407e9ac868ee90a40c5dcfb0f35d9502fee) | [`0xe4fcf10f…a239`](https://lasna.reactscan.net/tx/0xe4fcf10f8fc1041831dbe28e4c1e9e48019630033795138981421dad68baa239) | [`0xd8b44558…36ec`](https://sepolia.basescan.org/tx/0xd8b44558648c68aca06dc10ca4471e1070eb405cee12ae27e6f83f31bb0436ec) |
+| EXPIRE | cron @ 5318007 | [`0x7b936e40…b24d`](https://lasna.reactscan.net/tx/0x7b936e40fddf48e552097db71263b9e24d65d1cb40ab6f5dadeecdffd6f7b24d) | [`0x0b64541a…a901`](https://lasna.reactscan.net/tx/0x0b64541a84c958bdc7b12d3344057407abb06ab2877303726e32eba6030fa901) | [`0xf0c5235b…a61d`](https://sepolia.basescan.org/tx/0xf0c5235bd87ce749bf0d49e1a20e238d96c709871dd418e25ec6f9bf5b47a61d) |
+| ATTEST | cron @ 5318007 | [`0x5d363a8b…7b1a`](https://lasna.reactscan.net/tx/0x5d363a8b60276e100d0dcc1746864b6ff79455e2619290291994d37e040b7b1a) | [`0xf26781f2…62bf`](https://lasna.reactscan.net/tx/0xf26781f2860243f189364e762bae51085d32f725a866667331638be67c8262bf) | [`0xbd288794…28d9`](https://sepolia.basescan.org/tx/0xbd288794cef75abd98592c142daa79d8788b90ce6bb9370ec643dcf25faa28d9) |
+| TEARDOWN | origin_log @ 84532 | [`0xdc714896…fb49`](https://sepolia.basescan.org/tx/0xdc714896e85fcae9b40f8ea4c29f197f320bcd77462331ff975fddaee5f9fb49) | [`0x95df1304…130d`](https://lasna.reactscan.net/tx/0x95df1304bea8b5fce1c81dadef30e2ab81c6326ca09f3924aa1c9ef6efc3130d) | — |
+
+Claim: a third wallet that is neither owner nor heir (`0xc8cd…5395`) pressed `initiateClaim` [`0xa96dd12d…f79d`](https://sepolia.basescan.org/tx/0xa96dd12dcc21ccd1fbbd7ac1a31366dbb6b6221aa23e2db09cff4a0d0d88f79d), the heir's wallet pressed `finalizeClaim` [`0xdc714896…fb49`](https://sepolia.basescan.org/tx/0xdc714896e85fcae9b40f8ea4c29f197f320bcd77462331ff975fddaee5f9fb49), and the vault paid the heir. 8 of 8 callbacks acknowledged on the first try, 0 resends; the reactive contract then removed its own subscriptions (TEARDOWN row).
+
 ### Claim on the demo instance (Base Sepolia)
 
-Anyone may press either step; here both were pressed from the owner key, and the vault paid the heir (`0x440E…438b`).
+Anyone may press either step; on this 11-08 run both were pressed from the owner key, and the vault paid the heir (`0x440E…438b`). On the `demo-head` run above, a third wallet initiated and the heir's wallet finalized.
 
 | Step | Tx |
 |---|---|

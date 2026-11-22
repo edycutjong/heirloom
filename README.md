@@ -7,11 +7,13 @@
 
   <p>Every on-chain and security claim below links to a transaction or a test. Testnet only so far: Reactive Lasna with Base Sepolia. The mainnet deploy is scripted (with a dry-run mode) and not yet run.</p>
 
-  <p><a href="https://edycutjong.github.io/heirloom/judge/"><b>For judges</b></a> · <a href="https://edycutjong.github.io/heirloom/">Landing page</a> · <a href="https://edycutjong.github.io/heirloom/pitch/">Pitch deck</a> · <a href="https://edycutjong.github.io/heirloom/status/">Live status card</a> (GitHub Pages, published from <code>docs/</code> and <code>status/</code>)</p>
+  [![Landing page](https://img.shields.io/badge/Landing-heirloom.edycu.dev-2B2420?style=for-the-badge)](https://heirloom.edycu.dev/)
+  [![Pitch deck](https://img.shields.io/badge/Pitch_deck-10_slides-6B4E2E?style=for-the-badge)](https://heirloom.edycu.dev/pitch/)
+  [![Live status card](https://img.shields.io/badge/Live_status-testnet_instances-2F6B3A?style=for-the-badge)](https://heirloom.edycu.dev/status/)
 
   <br/>
 
-  [![For Judges](https://img.shields.io/badge/For_Judges-30--second_path-8E2B1D?style=for-the-badge)](https://edycutjong.github.io/heirloom/judge/)
+  [![For Judges](https://img.shields.io/badge/For_Judges-30--second_path-8E2B1D?style=for-the-badge)](https://heirloom.edycu.dev/judge/)
   [![Built for Reactive Omni Buildathon](https://img.shields.io/badge/DoraHacks-Reactive_Omni_Buildathon-4A3E8C?style=for-the-badge)](https://dorahacks.io/hackathon/reactive-omni-buildathon/detail)
 
   <br/>

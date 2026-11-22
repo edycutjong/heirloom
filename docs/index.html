@@ -519,7 +519,7 @@ footer .stamp-line{grid-column:1/-1;max-width:none;font:12.5px var(--font-data);
 </div></div>
 <div class="wrap">
   <div class="receipts" aria-label="Receipts">
-    <div><span class="num" data-to="168">168</span><p>contract tests passing; the whole loop runs in <code style="display:inline">forge test</code> on the Reactive Test Lib</p><code>README · Engineering Rigor</code></div>
+    <div><span class="num" data-to="169">169</span><p>contract tests passing; the whole loop runs in <code style="display:inline">forge test</code> on the Reactive Test Lib</p><code>README · Engineering Rigor</code></div>
     <div><span class="num"><span data-to="5">5</span> of 5</span><p>callbacks the demo vault acknowledged, 0 resends</p><code>evidence/status.json</code></div>
     <div><span class="num" data-to="58">58</span><p>rows in the evidence ledger, 31 of them with a callback leg</p><code>evidence/triples.csv</code></div>
     <div><span class="num" data-to="0">0</span><p>subscriptions left on Lasna after the release: the contract removes its own</p><code>DEMO.md · rnk_getFilters</code></div>
@@ -647,7 +647,7 @@ refusal   ZERO_VALUE</pre>
       <details><summary>What if I just go travelling for a month?</summary><p>You choose the silence period at deploy; the long-running testnet instance uses 90 days. Silence first opens a grace window, and any value-carrying transfer of a listed token, or any action of yours on the vault, cancels it. You can withdraw from the vault at any time before release.</p></details>
       <details><summary>Can a stranger fake my life, or cause my release?</summary><p>Neither a spoof nor an unlisted token counts as life: $0 transfers are refused and logged, and tokens you have not listed are never subscribed. Only your silence can start a release; a sustained spam spray can delay one, never cause one (Remark 1).</p></details>
       <details><summary>What if the Reactive Network stops hearing a chain?</summary><p>An owner-independent Chainlink ETH/USD feed acts as a canary. If its updates stop arriving, the countdown freezes once, capped, so a short outage cannot trigger a release. The Ethereum feeds measured so far update about hourly (medians 3,612 s and 3,636 s over about 23 h).</p></details>
-      <details><summary>What is real, and what is not yet?</summary><p>Real: every transaction on this page is on a public testnet (Reactive Lasna, Base Sepolia and Ethereum Sepolia, plus one Unichain Sepolia probe), linked to its explorer, and the tests run the whole loop. Not yet: mainnet (scripted, never run; no mainnet transaction exists). The testnet rows come from a build earlier than HEAD; mainnet deploys HEAD.</p></details>
+      <details><summary>What is real, and what is not yet?</summary><p>Real: every transaction on this page is on a public testnet (Reactive Lasna, Base Sepolia and Ethereum Sepolia, plus one Unichain Sepolia probe), linked to its explorer, and the tests run the whole loop. Not yet: mainnet (scripted, never run; no mainnet transaction exists). The 11-08 demo and the 90-day instance predate the last contract fixes; on 2026-11-22 a fresh instance from 201eb1e, the current contract source, repeated the whole lifecycle.</p></details>
       <details><summary>What does it cost to keep running?</summary><p>Not published yet. The long-running instance&#x27;s measured window is shorter than the 6 hours the meter needs, and a dollar figure needs a second REACT price source. Refused reacts are billed too, which is why the filter runs first and a spam brake bounds it.</p></details>
     </div>
   </div>
@@ -685,7 +685,7 @@ refusal   ZERO_VALUE</pre>
       <li><a href="https://github.com/edycutjong/heirloom/blob/main/docs/DX-REPORT.md">DX report</a></li>
       <li><a href="https://dorahacks.io/hackathon/reactive-omni-buildathon/detail">The buildathon</a></li>
     </ul>
-    <p class="stamp-line">Evidence generated 2026-11-22 02:43 UTC · numbers from <code>evidence/</code> · release <a data-release href="https://github.com/edycutjong/heirloom/releases/latest">v0.5.1</a></p>
+    <p class="stamp-line">Evidence generated 2026-11-22 03:17 UTC · numbers from <code>evidence/</code> · release <a data-release href="https://github.com/edycutjong/heirloom/releases/latest">v0.5.1</a></p>
   </div>
 </footer>
 

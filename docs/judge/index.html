@@ -140,10 +140,10 @@ footer a{color:var(--muted)}
         <tr><td>Rows in the triple log (origin or CRON → reactive → callback)</td><td class="v">58 (31 with a callback leg: 22 from Heirloom instances (19 CRON-triggered, 3 owner-transfer CANCELs) and 9 from day-1 probes, 2 of them deliberately failed)</td><td><code>evidence/triples.csv</code></td></tr>
         <tr><td>Demo instance callbacks acknowledged</td><td class="v">5 of 5, 0 resends</td><td><code>evidence/status.json</code>, <code>evidence/demo-summary.json</code></td></tr>
         <tr><td>Demo scenario</td><td class="v">2 graces, 1 cancel, 1 expiry, claim, teardown</td><td><code>evidence/demo-summary.json</code></td></tr>
-        <tr><td>Contract tests (<code>forge test</code>)</td><td class="v" data-count="forge">168 passed</td><td><code>test/</code></td></tr>
+        <tr><td>Contract tests (<code>forge test</code>)</td><td class="v" data-count="forge">169 passed</td><td><code>test/</code></td></tr>
         <tr><td>Shared kit tests (<code>FOUNDRY_PROFILE=kit forge test</code>)</td><td class="v" data-count="kit">27 passed</td><td><code>packages/reactive-kit/test/</code></td></tr>
         <tr><td>TypeScript tests (<code>pnpm test:coverage</code>)</td><td class="v">27 passed</td><td><code>packages/reactive-kit/ts/</code></td></tr>
-        <tr><td>Line coverage: <code>src/</code> contracts · kit contracts · TypeScript kit</td><td class="v" data-count="cov">611/611 · 64/64 · 126/126</td><td>CI Stage 1 gate; branches 202/203 in <code>src/</code> (the one left is an unreachable guard, <code>HeirloomReactive.sol:509</code>, allowed by name)</td></tr>
+        <tr><td>Line coverage: <code>src/</code> contracts · kit contracts · TypeScript kit</td><td class="v" data-count="cov">616/616 · 64/64 · 131/131</td><td>CI Stage 1 gate; branches 203/204 in <code>src/</code> (the one left is an unreachable guard, <code>HeirloomReactive.sol:509</code>, allowed by name)</td></tr>
       </tbody>
     </table>
   </section>

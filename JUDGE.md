@@ -28,10 +28,10 @@ Every link is a real transaction on a public explorer. The demo instance ran wit
 | Rows in the triple log (origin or CRON → reactive → callback) | 58 (31 with a callback leg: 22 from Heirloom instances (19 CRON-triggered, 3 owner-transfer CANCELs) and 9 from day-1 probes, 2 of them deliberately failed) | [`evidence/triples.csv`](evidence/triples.csv) |
 | Demo instance callbacks acknowledged | 5 of 5, 0 resends | [`evidence/status.json`](evidence/status.json), [`evidence/demo-summary.json`](evidence/demo-summary.json) |
 | Demo scenario | 2 graces, 1 cancel, 1 expiry, claim, teardown | [`evidence/demo-summary.json`](evidence/demo-summary.json) |
-| Contract tests (`forge test`) | 168 passed | [`test/`](test/) |
+| Contract tests (`forge test`) | 169 passed | [`test/`](test/) |
 | Shared kit tests (`FOUNDRY_PROFILE=kit forge test`) | 27 passed | [`packages/reactive-kit/test/`](packages/reactive-kit/test/) |
 | TypeScript tests (`pnpm test:coverage`) | 27 passed | [`packages/reactive-kit/ts/`](packages/reactive-kit/ts/) |
-| Line coverage: `src/` contracts · kit contracts · TypeScript kit | 611/611 · 64/64 · 126/126 | CI Stage 1 gate; branches 202/203 in `src/` (the one left is an unreachable guard, `HeirloomReactive.sol:509`, allowed by name) |
+| Line coverage: `src/` contracts · kit contracts · TypeScript kit | 616/616 · 64/64 · 131/131 | CI Stage 1 gate; branches 203/204 in `src/` (the one left is an unreachable guard, `HeirloomReactive.sol:509`, allowed by name) |
 
 ## Reproduce it yourself
 

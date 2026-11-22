@@ -100,12 +100,12 @@ The demo instance ran the full scenario on live networks: grace twice, one cance
 
 | Check | Result |
 |---|---|
-| Contract tests (`forge test`) | 168 passed, 0 failed |
+| Contract tests (`forge test`) | 169 passed, 0 failed |
 | Shared kit tests (`FOUNDRY_PROFILE=kit forge test`) | 27 passed, 0 failed |
 | TypeScript tests (`pnpm test:ts`) | 27 passed, 0 failed |
-| Coverage, `src/` contracts (`forge coverage`, forge 1.9.0, gated in CI) | lines 611/611, functions 90/90, branches 202/203: the one left is the `if (c.armed) return;` guard at `src/HeirloomReactive.sol:509`, which no caller can reach (the gate allows it by name and fails if it ever becomes reachable) |
+| Coverage, `src/` contracts (`forge coverage`, forge 1.9.0, gated in CI) | lines 616/616, functions 91/91, branches 203/204: the one left is the `if (c.armed) return;` guard at `src/HeirloomReactive.sol:509`, which no caller can reach (the gate allows it by name and fails if it ever becomes reachable) |
 | Coverage, kit contracts (`FOUNDRY_PROFILE=kit forge coverage`) | lines 64/64, functions 20/20, branches 17/17 |
-| Coverage, TypeScript kit (`pnpm test:coverage`, thresholds 100) | lines 126/126, functions 29/29, branches 101/101 |
+| Coverage, TypeScript kit (`pnpm test:coverage`, thresholds 100) | lines 131/131, functions 29/29, branches 111/111 |
 | Rows in `evidence/triples.csv` | 58 (31 with a callback leg: 22 from Heirloom instances (19 CRON-triggered, 3 owner-transfer CANCELs) and 9 from day-1 probes, 2 of them deliberately failed; 27 reactive-only) |
 
 ### Attacks defeated

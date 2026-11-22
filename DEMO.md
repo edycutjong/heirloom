@@ -46,6 +46,8 @@ Callback stages (GRACE, CANCEL, EXPIRE, ATTEST) have all three legs. VISIT and R
 
 ### Reactive-only rows (no callback): heartbeats and refused spoofs, long-T instance
 
+The instances share one owner, so one owner transfer can appear more than once: `0xe698b8e6…68b6` is listed twice because that one tx emitted two watched logs, a token `Transfer` and the vault's `OwnerActive`, and each got its own reactive tx (not a double-processed log), and `0x2082f0bc…ef00` is the demo instance's CANCEL origin, which the long-T contract also counted as a visit (each contract was billed for it).
+
 | Stage | Trigger | Origin tx | Reactive tx (Lasna) |
 |---|---|---|---|
 | VISIT | origin_log @ 84532 | [`0xe698b8e6…68b6`](https://sepolia.basescan.org/tx/0xe698b8e61267c4845ffd5a1e625106a32538eb914e34f91340593e5ba70068b6) | [`0xee192b3d…1101`](https://lasna.reactscan.net/tx/0xee192b3d2c4b3cd18d283fd7982a24b0ba92d38e26957525263c347cca301101) |
@@ -63,8 +65,8 @@ Anyone may press either step; here both were pressed from the owner key, and the
 
 | Step | Tx |
 |---|---|
-| `initiateClaim` | [`0xf86669ab…8d`](https://sepolia.basescan.org/tx/0xf86669ab514601ee00a1fc8c0f97e6f0e6e2edb405cc9d496e761f25d91ede8d) |
-| `finalizeClaim` | [`0x13d8677c…3d`](https://sepolia.basescan.org/tx/0x13d8677c445bbfb41a63e33b3405c218bec83b6af7c50018ca34d739caf580d3) |
+| `initiateClaim` | [`0xf86669ab…de8d`](https://sepolia.basescan.org/tx/0xf86669ab514601ee00a1fc8c0f97e6f0e6e2edb405cc9d496e761f25d91ede8d) |
+| `finalizeClaim` | [`0x13d8677c…80d3`](https://sepolia.basescan.org/tx/0x13d8677c445bbfb41a63e33b3405c218bec83b6af7c50018ca34d739caf580d3) |
 
 The scenario's own summary (`evidence/demo-summary.json`): 5 callback rows, 0 stuck, 0 resends, 0 `FreezeUsed`, 3 canary beats. Acknowledged callbacks: `evidence/status.json`, demo instance, `callbacksSent` 5 and `acked` 5.
 
@@ -80,6 +82,8 @@ curl -s -X POST https://lasna-rpc.rnk.dev/ -H 'content-type: application/json' -
 ## Fire a fresh loop yourself
 
 Any wallet that is not the owner can send a zero-value `transferFrom(owner, you, 0)` on the instance's Base Sepolia USDC. It is not the owner's activity, so the reactive contract must refuse it. You see your origin tx, then a `SpoofRefused` event from the long-t reactive contract on Lasna shortly after (no timing figure is claimed). (Only the owner's key, or a spender the owner has approved on that token, can produce a real heartbeat; see Known limit 2 in the README.)
+
+The long-T contract brakes a token after 20 refused spoofs within 24 hours (`maxRefusedPerWindow` = 20, `brakeWindow` = 86,400 s, both read from the deployed contract): after that you see a `SpamBrake` event and no `SpoofRefused` for that token for 24 hours. A brake can delay a release; it never causes one.
 
 ```sh
 pnpm install

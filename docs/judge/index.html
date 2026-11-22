@@ -137,7 +137,7 @@ footer a{color:var(--muted)}
     <table>
       <thead><tr><th scope="col">Measure</th><th scope="col">Value</th><th scope="col">Source</th></tr></thead>
       <tbody>
-        <tr><td>Rows in the triple log (origin or CRON → reactive → callback)</td><td class="v">43 (22 with a callback leg)</td><td><code>evidence/triples.csv</code></td></tr>
+        <tr><td>Rows in the triple log (origin or CRON → reactive → callback)</td><td class="v">43 (22 with a callback leg: 13 from Heirloom instances (11 CRON-triggered, 2 owner-transfer CANCELs) and 9 from day-1 probes, 2 of them deliberately failed)</td><td><code>evidence/triples.csv</code></td></tr>
         <tr><td>Demo instance callbacks acknowledged</td><td class="v">5 of 5, 0 resends</td><td><code>evidence/status.json</code>, <code>evidence/demo-summary.json</code></td></tr>
         <tr><td>Demo scenario</td><td class="v">2 graces, 1 cancel, 1 expiry, claim, teardown</td><td><code>evidence/demo-summary.json</code></td></tr>
         <tr><td>Contract tests (<code>forge test</code>)</td><td class="v" data-count="forge">168 passed</td><td><code>test/</code></td></tr>

@@ -6,7 +6,7 @@ Web version (no wallet, no sign-in): **https://edycutjong.github.io/heirloom/jud
 
 ## The 30-second path
 
-Every link is a real transaction on a public explorer. The demo instance ran with T = 5 min on 2026-11-08 (UTC).
+Every link is a real transaction on a public explorer. The demo instance ran with T = 5 min on 2026-11-08 (UTC). These instances were deployed from a commit before `HEAD` (before the re-entry lock, `coverDebt()` and the claim-grace fix): the rows prove the loop, the tests cover `HEAD`.
 
 1. **Open the live status card:** https://edycutjong.github.io/heirloom/status/. It reads both testnet instances from the chain: the 90-day one is armed, the demo one is released.
 2. **Silence opens a grace window.** A Reactive CRON tick saw no owner activity for T, so the reactive contract asked the Base vault to enter GRACE.
@@ -24,7 +24,7 @@ Every link is a real transaction on a public explorer. The demo instance ran wit
 
 | Measure | Value | Source |
 |---|---|---|
-| Rows in the triple log (origin or CRON → reactive → callback) | 43 (22 with a callback leg) | [`evidence/triples.csv`](evidence/triples.csv) |
+| Rows in the triple log (origin or CRON → reactive → callback) | 43 (22 with a callback leg: 13 from Heirloom instances (11 CRON-triggered, 2 owner-transfer CANCELs) and 9 from day-1 probes, 2 of them deliberately failed) | [`evidence/triples.csv`](evidence/triples.csv) |
 | Demo instance callbacks acknowledged | 5 of 5, 0 resends | [`evidence/status.json`](evidence/status.json), [`evidence/demo-summary.json`](evidence/demo-summary.json) |
 | Demo scenario | 2 graces, 1 cancel, 1 expiry, claim, teardown | [`evidence/demo-summary.json`](evidence/demo-summary.json) |
 | Contract tests (`forge test`) | 168 passed | [`test/`](test/) |
@@ -48,7 +48,7 @@ CI / deterministic replay (not the product, no network): `forge test && FOUNDRY_
 
 - **No mainnet evidence yet.** The mainnet deploy is scripted and dry-run, not run. Every transaction on this page is testnet.
 - **The testnet instances predate `HEAD`.** They were deployed before the re-entry lock, `coverDebt()` and the claim-grace fix; the rows prove the loop, the current contracts are what the tests run.
-- **Native ETH and silent grace.** Native ETH transfers emit no ERC-20 `Transfer` log, so they are not proof of life, and nobody is notified when a grace window opens.
+- **Native ETH and silent grace.** Native ETH transfers emit no ERC-20 `Transfer` log, so they are not proof of life, and nobody is notified when a grace window opens. Until notifications ship, a living owner can watch the vault itself: every vault state change emits `StateChanged`, so an explorer address alert on the vault warns of a grace window.
 
 ## Links
 

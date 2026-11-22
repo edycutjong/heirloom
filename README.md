@@ -74,7 +74,7 @@ The reactive contract is the engine, not an add-on: the loop does not exist with
 | Capability | Where it is used |
 |---|---|
 | `SYSTEM.subscribe` / `unsubscribe` | enumerated per (chain, token, `Transfer`, topic1 = owner); the allowlist, spam brake, canary arming and teardown all change subscriptions at runtime |
-| `requestCallbackV_1_0` | GRACE, CANCEL, EXPIRE, ATTEST and REVIVE callbacks to the vault, `gasLimit` 1,000,000 |
+| `requestCallbackV_1_0` | GRACE, CANCEL, EXPIRE, ATTEST and REVIVE callbacks to the vault (REVIVE is covered by tests; no live REVIVE triple yet), `gasLimit` 1,000,000 |
 | CRON topics | the only clock (silence, grace, attest); one tier chosen at deploy, an optional faster tier can run during grace (unused on the testnet instances); attest is weekly on long-t |
 | Self-unsubscribe | `react()` removes its own subscriptions on teardown; the finished demo instance holds 0 filters on Lasna (command in [DEMO.md](DEMO.md)) |
 | Callback proxy guards | `sync()` checks both the proxy caller and the injected first argument (the reactive contract) |
@@ -106,12 +106,12 @@ The demo instance ran the full scenario on live networks: grace twice, one cance
 | Coverage, `src/` contracts (`forge coverage`, forge 1.9.0, gated in CI) | lines 611/611, functions 90/90, branches 202/203: the one left is the `if (c.armed) return;` guard at `src/HeirloomReactive.sol:509`, which no caller can reach (the gate allows it by name and fails if it ever becomes reachable) |
 | Coverage, kit contracts (`FOUNDRY_PROFILE=kit forge coverage`) | lines 64/64, functions 20/20, branches 17/17 |
 | Coverage, TypeScript kit (`pnpm test:coverage`, thresholds 100) | lines 126/126, functions 29/29, branches 101/101 |
-| Rows in `evidence/triples.csv` | 43 (22 with a callback leg, 21 reactive-only) across probe, short-T and long-T instances |
+| Rows in `evidence/triples.csv` | 43 (22 with a callback leg: 13 from Heirloom instances (11 CRON-triggered, 2 owner-transfer CANCELs) and 9 from day-1 probes, 2 of them deliberately failed; 21 reactive-only) |
 
 ### Attacks defeated
 
 <p align="center"><img src="docs/assets/broll/spoof-refused.gif" alt="Live testnet run from a stranger's wallet 0x144C…57F8: a terminal excerpt shows trigger-spoof.ts, transferFrom(owner, you, 0) simulating without a revert, and the origin tx 0xb476…f55f; then rows from Reactscan, captured 2026-11-16: Lasna transaction 0x433b24f1…5069ee18, its origin transaction 0xb476…f55f, the origin Transfer to 0x144C…4057F8 with value 0, and a log from the reactive contract whose topic 0 is 0xbea89ef3…f21c657, the SpoofRefused event; then the long-T status card, read about 9 minutes later, with the 23:35:02 row struck through as Refused · zero value while Last seen stays at the owner's 23:34:23 visit" width="880"></p>
-<p align="center"><em>Recorded live on 2026-11-08 at 23:35 UTC. A stranger's zero-value transfer <a href="https://sepolia.basescan.org/tx/0xb476a67684d8f6406de291b91dcb1636d30af9b8ae674ed3438974629a4bf55f"><code>0xb476…f55f</code></a> is refused on Lasna in <a href="https://lasna.reactscan.net/tx/0x433b24f19ebddbb164ff15c3e92e638ddb6d7947ade8f910fa81e82e5069ee18"><code>0x433b…ee18</code></a>: topic 0 of its log, <code>0xbea89ef3…</code>, is keccak256 of <code>SpoofRefused(uint256,address,uint256,uint8)</code> (<a href="src/HeirloomReactive.sol#L144"><code>src/HeirloomReactive.sol:144</code></a>). The Reactscan rows were captured on 2026-11-16; the card was read about 9 minutes after the spoof.</em></p>
+<p align="center"><em>Recorded live on 2026-11-08 at 23:35 UTC. A stranger's zero-value transfer <a href="https://sepolia.basescan.org/tx/0xb476a67684d8f6406de291b91dcb1636d30af9b8ae674ed3438974629a4bf55f"><code>0xb476…f55f</code></a> is refused on Lasna in <a href="https://lasna.reactscan.net/tx/0x433b24f19ebddbb164ff15c3e92e638ddb6d7947ade8f910fa81e82e5069ee18"><code>0x433b…ee18</code></a>: topic 0 of its log, <code>0xbea89ef3…</code>, is keccak256 of <code>SpoofRefused(uint256,address,uint256,uint8)</code> (<a href="src/HeirloomReactive.sol#L144"><code>src/HeirloomReactive.sol:144</code></a>). The Reactscan rows were captured on 2026-11-16; the card was read about 9 minutes after the spoof. This is a second spoof run; JUDGE.md step 4 cites the 20:22 UTC run.</em></p>
 
 | Control | Why it is load-bearing | Test |
 |---|---|---|
@@ -132,7 +132,7 @@ The demo instance ran the full scenario on live networks: grace twice, one cance
 4. **Top-up.** Fund the reactive contract with a transfer plus `coverDebt()` (or the system contract's `depositTo(address)`); a plain transfer does not clear its debt.
 5. **Watch-set drift after an origin reorg.** An orphaned Base `setAllowlist(.., false)` can leave the reactive contract unsubscribed until the next `setAllowlist`. Documented at the ALLOWLIST branch of `react()`.
 6. **No mainnet evidence yet.** Cost per month is not published: the measured window is too short, and a dollar figure needs a second price source. The canary gaps in `evidence/canary-gaps.json` cover about 23 h of Ethereum feeds (medians 3,612 s and 3,636 s); a multi-day measurement is still open.
-7. **Native ETH and silent grace.** Native ETH transfers emit no ERC-20 `Transfer` log, so they are not proof of life; hold WETH-style tokens. Nobody is notified when a grace window opens, so choose T above your longest normal quiet stretch.
+7. **Native ETH and silent grace.** Native ETH transfers emit no ERC-20 `Transfer` log, so they are not proof of life; hold WETH-style tokens. Nobody is notified when a grace window opens, so choose T above your longest normal quiet stretch. Until notifications ship, a living owner can watch the vault itself: every vault state change emits `StateChanged`, so an explorer address alert on the vault warns of a grace window.
 
 ## 🚀 Getting Started
 

@@ -11,6 +11,7 @@
   [![Landing page](https://img.shields.io/badge/Landing-heirloom.edycu.dev-2B2420?style=for-the-badge)](https://heirloom.edycu.dev/)
   [![Pitch deck](https://img.shields.io/badge/Pitch_deck-10_slides-6B4E2E?style=for-the-badge)](https://heirloom.edycu.dev/pitch/)
   [![Live status card](https://img.shields.io/badge/Live_status-testnet_instances-2F6B3A?style=for-the-badge)](https://heirloom.edycu.dev/status/)
+  [![Demo video](https://img.shields.io/badge/Demo_video-2%3A21-B3261E?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/uj7rfKXP6wA)
   [![Built for Reactive Omni Buildathon](https://img.shields.io/badge/DoraHacks-Reactive_Omni_Buildathon-4A3E8C?style=for-the-badge)](https://dorahacks.io/hackathon/reactive-omni-buildathon/detail)
 
   <br/>

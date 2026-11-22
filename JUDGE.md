@@ -2,7 +2,7 @@
 
 > When your wallet goes quiet, silence pays your heir. A Reactive dead-man's switch: no keeper, no check-in required, spoofs refused.
 
-Web version (no wallet, no sign-in): **https://edycutjong.github.io/heirloom/judge/**. Track: **Set It and Forget It**. Everything below is testnet (Reactive Lasna 5318007 + Base Sepolia 84532); the mainnet deploy is scripted with a dry-run mode and has not been run.
+Web version (no wallet, no sign-in): **https://heirloom.edycu.dev/judge/**. Demo video (2:21): **https://youtu.be/uj7rfKXP6wA**. Track: **Set It and Forget It**. Everything below is testnet (Reactive Lasna 5318007 + Base Sepolia 84532); the mainnet deploy is scripted with a dry-run mode and has not been run.
 
 ## The 30-second path
 

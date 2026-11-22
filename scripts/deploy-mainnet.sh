@@ -158,7 +158,7 @@ for spec in "$A" "$B"; do
     lc() { tr '[:upper:]' '[:lower:]' <<<"$1"; }
     RC=$(sed -n 's/^RC=//p' "$ADDRS" | tail -1); VAULT=$(sed -n 's/^VAULT=//p' "$ADDRS" | tail -1)
     # Never advise moving $ADDRS aside while it names a live RC: a fresh run would fund a second RC.
-    stop9() { echo "instance $NAME: $1 — the recorded RC does not match this invocation: rerun with the OWNER/spec it was deployed with (see $ADDRS), or reclaim it before deploying afresh; inspect evidence/mainnet-deploy.log" >&2; exit 9; }
+    stop9() { echo "instance $NAME: $1 — the recorded RC does not match this invocation: rerun with the OWNER/spec it was deployed with (see $ADDRS), or wire and retire it first (reclaim() works only on a torn-down RC); never move $ADDRS aside while it names a funded RC; inspect evidence/mainnet-deploy.log" >&2; exit 9; }
     stopv() { echo "instance $NAME: $1 — delete ONLY the VAULT= line in $ADDRS (keep RC=) and rerun to deploy a fresh vault for RC $RC" >&2; exit 9; }
     [ -n "$RC" ] && [ "$(cast code "$RC" --rpc-url "$RC_RPC" | wc -c)" -gt 4 ] || stop9 "$ADDRS names RC '$RC' with no code on $RC_CHAIN"
     [ "$(lc "$(cast call "$RC" 'owner()(address)' --rpc-url "$RC_RPC")")" = "$(lc "$OWNER")" ] || stop9 "recorded RC watches another owner"
@@ -193,7 +193,7 @@ for spec in "$A" "$B"; do
     logtx "$RC_CHAIN" "$RCTX" "deploy RC $NAME (+$FUND REACT)" "$RC_RPC"
   else
     read -r RCSTAT RCTX < <(create "$RC_RPC" src/HeirloomReactive.sol:HeirloomReactive "$FUND_WEI" "$RC_CTOR" "$OWNER" "$CFG")
-    RC=$(cast compute-address "$DEPLOYER_ADDRESS" --nonce "$(( $(cast nonce "$DEPLOYER_ADDRESS" --rpc-url "$RC_RPC") + IDX ))" | awk '{print $NF}')
+    RC=$(cast compute-address "$DEPLOYER_ADDRESS" --nonce "$(( $(cast nonce "$DEPLOYER_ADDRESS" --rpc-url "$RC_RPC") + 2 * IDX ))" | awk '{print $NF}')  # each instance spends two RC-chain nonces: create + setVault
   fi
   [ "$EXECUTE" = 1 ] && say "  RC ($RC_CHAIN): $RC" || say "  RC creation $RCSTAT ($RC_CHAIN), predicted address $RC"
   VARGS=("$PROXY" "$RC" "$OWNER" "$HEIR" "$CLAIM" "$CAP" "[$BASE_CHAIN,$EXTRA_CHAIN]" "[$WATCH_A,$WATCH_B]")

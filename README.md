@@ -106,7 +106,7 @@ The demo instance ran the full scenario on live networks: grace twice, one cance
 | Coverage, `src/` contracts (`forge coverage`, forge 1.9.0, gated in CI) | lines 611/611, functions 90/90, branches 202/203: the one left is the `if (c.armed) return;` guard at `src/HeirloomReactive.sol:509`, which no caller can reach (the gate allows it by name and fails if it ever becomes reachable) |
 | Coverage, kit contracts (`FOUNDRY_PROFILE=kit forge coverage`) | lines 64/64, functions 20/20, branches 17/17 |
 | Coverage, TypeScript kit (`pnpm test:coverage`, thresholds 100) | lines 126/126, functions 29/29, branches 101/101 |
-| Rows in `evidence/triples.csv` | 43 (22 with a callback leg: 13 from Heirloom instances (11 CRON-triggered, 2 owner-transfer CANCELs) and 9 from day-1 probes, 2 of them deliberately failed; 21 reactive-only) |
+| Rows in `evidence/triples.csv` | 44 (22 with a callback leg: 13 from Heirloom instances (11 CRON-triggered, 2 owner-transfer CANCELs) and 9 from day-1 probes, 2 of them deliberately failed; 22 reactive-only) |
 
 ### Attacks defeated
 
@@ -129,8 +129,8 @@ The demo instance ran the full scenario on live networks: grace twice, one cance
 1. **An active spam brake holds a grace.** Safety over liveness: spam can delay a release, never cause one.
 2. **Approved spenders count as life.** Any value-carrying `Transfer` from the owner counts, including one made by a spender holding a standing allowance. That can only delay a release. Allowlist tokens that have no standing allowances.
 3. **Cross-chain revive is best effort.** The vault owner's own action is the synchronous cancel.
-4. **Top-up.** Fund the reactive contract with a transfer plus `coverDebt()` (or the system contract's `depositTo(address)`); a plain transfer does not clear its debt.
-5. **Watch-set drift after an origin reorg.** An orphaned Base `setAllowlist(.., false)` can leave the reactive contract unsubscribed until the next `setAllowlist`. Documented at the ALLOWLIST branch of `react()`.
+4. **Top-up.** Fund the reactive contract with a transfer plus `coverDebt()` (or the system contract's `depositTo(address)`); a plain transfer does not clear its debt. The 90-day testnet instance hit exactly this: its build predates `coverDebt()`, it stalled in debt, and `depositTo` revived it on 2026-11-22 (see DEMO.md, Instances).
+5. **Watch-set drift after an origin reorg.** An orphaned Base `setAllowlist(.., false)` can leave the reactive contract unsubscribed until the next `setAllowlist`. Documented at the ALLOWLIST branch of `react()`. Related: the vault binds the Base callback proxy at construction and has no setter, so if Reactive ever rotated that proxy the heir path would stop; the owner's `withdraw` and `retire` keep working.
 6. **No mainnet evidence yet.** Cost per month is not published: the measured window is too short, and a dollar figure needs a second price source. The canary gaps in `evidence/canary-gaps.json` cover about 23 h of Ethereum feeds (medians 3,612 s and 3,636 s); a multi-day measurement is still open.
 7. **Native ETH and silent grace.** Native ETH transfers emit no ERC-20 `Transfer` log, so they are not proof of life; hold WETH-style tokens. Nobody is notified when a grace window opens, so choose T above your longest normal quiet stretch. Until notifications ship, a living owner can watch the vault itself: every vault state change emits `StateChanged`, so an explorer address alert on the vault warns of a grace window.
 

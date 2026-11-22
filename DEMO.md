@@ -13,7 +13,7 @@ A watched wallet's token activity on an origin chain → a Reactive Network cont
 | Instance | Reactive contract (Lasna) | Vault (Base Sepolia) | T | Notes |
 |---|---|---|---|---|
 | demo | [`0xa3d92EAe…B8b`](https://lasna.reactscan.net/address/0xa3d92EAefb2fc4C972d6Ee524c24F38A93739B8b) | [`0x51365bb9…DBA`](https://sepolia.basescan.org/address/0x51365bb9560dDfA4236fd62d4eF2CB61f78edDBA) | 5 min | full scenario, torn down after the claim |
-| long-t | [`0x80b56204…DC6`](https://lasna.reactscan.net/address/0x80b56204D8860a6B46c08deCd9F01DD1881F9DC6) | [`0x8C37E794…7Be`](https://sepolia.basescan.org/address/0x8C37E79420Cd16e46E4D9FFd4541a87FfFa4e7Be) | 90 days | armed as of 2026-11-08 (UTC); funded for days, not its 90-day horizon (`evidence/status.json`); the one to fire a loop against |
+| long-t | [`0x80b56204…DC6`](https://lasna.reactscan.net/address/0x80b56204D8860a6B46c08deCd9F01DD1881F9DC6) | [`0x8C37E794…7Be`](https://sepolia.basescan.org/address/0x8C37E79420Cd16e46E4D9FFd4541a87FfFa4e7Be) | 90 days | armed since 2026-11-08 (UTC). It stalled in reactive-contract debt after its last logged event (2026-11-08 23:35 UTC): this build predates `coverDebt()`, and the 2026-11-15 top-ups were transfers, which do not clear debt. Revived on 2026-11-22 with the system contract's `depositTo` ([`0xe1c6ea97…c94a`](https://lasna.reactscan.net/tx/0xe1c6ea97590511041e9795f729bb1efc6f6a9b5bd07dd8ece81e5f023931c94a)): 9.0067 lREACT balance plus 0.9866 lREACT reserves, last heartbeat 2026-11-22 02:20 UTC (`evidence/status.json`). The one to fire a loop against |
 
 Owner (both): `0x12bF8bbD1Eec23B5ab5A44B8d551bbC1d038651C`. Heir: `0x440E03bb3AAdBE65D5Bf2Ad7f84A64c509ff438b`.
 
@@ -58,6 +58,7 @@ The instances share one owner, so one owner transfer can appear more than once: 
 | VISIT | origin_log @ 11155111 | [`0xbc2c6b8b…ac55`](https://sepolia.etherscan.io/tx/0xbc2c6b8b69649105fc56b15fac5f792b9117da76f9f01c5d6ef71442140bac55) | [`0x54e99883…e3a2`](https://lasna.reactscan.net/tx/0x54e99883591dbe92ee5c85816c6375938b6aa951d7cf486f3dcd3b2f8d3ae3a2) |
 | REFUSED | origin_log @ 84532 | [`0xaac45c5d…52e9`](https://sepolia.basescan.org/tx/0xaac45c5d961a6daf07676707c49b2422f72f24c0d90c06025f9033ade90b52e9) | [`0x76661c01…6a77`](https://lasna.reactscan.net/tx/0x76661c01fd3877e9329ae37566d58d960e79a6026be9667e0df7ec7479ef6a77) |
 | VISIT | origin_log @ 84532 | [`0x2082f0bc…ef00`](https://sepolia.basescan.org/tx/0x2082f0bc5c04108e8393bb2b58451b5a58c90a057aa0ccc6a2e2d8aee05def00) | [`0x479f3bf4…6c2b`](https://lasna.reactscan.net/tx/0x479f3bf4127e69e4189588dc07a6d51c0906204b880679ef90688d32db846c2b) |
+| VISIT (2026-11-22, after the revival) | origin_log @ 84532 | [`0xd29c6509…0cc0`](https://sepolia.basescan.org/tx/0xd29c6509ddf88430200f8ddfc1dbdf5ad12e52fb7e477294e9195ebe8da20cc0) | [`0xddd26576…9a70`](https://lasna.reactscan.net/tx/0xddd265766c478bfe572902e5038b7a2e941b86956891646439b24beadeef9a70) |
 
 ### Claim on the demo instance (Base Sepolia)
 

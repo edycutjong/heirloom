@@ -729,5 +729,22 @@
   "last_activity_tx": "",
   "instance": "long-t",
   "note": "SpoofRefused ZERO_VALUE token 0x036CbD53842c5426634e7929541eC2318f3dCF7e; lastSeen unchanged"
+ },
+ {
+  "stage": "VISIT",
+  "seq": "",
+  "trigger_kind": "origin_log",
+  "trigger_chain": "84532",
+  "trigger_tx": "0xd29c6509ddf88430200f8ddfc1dbdf5ad12e52fb7e477294e9195ebe8da20cc0",
+  "trigger_ts": "1795314012",
+  "reactive_tx": "0xddd265766c478bfe572902e5038b7a2e941b86956891646439b24beadeef9a70",
+  "reactive_ts": "1795314012",
+  "callback_chain": "",
+  "callback_tx": "",
+  "callback_ts": "",
+  "last_activity_chain": "84532",
+  "last_activity_tx": "0xd29c6509ddf88430200f8ddfc1dbdf5ad12e52fb7e477294e9195ebe8da20cc0",
+  "instance": "long-t",
+  "note": "accepted heartbeat (token 0x8FFB2f8b5b82a4F31B1f9D043d2a6FA208B9D1C5); ARMED so no callback needed"
  }
 ]

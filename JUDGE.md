@@ -24,7 +24,7 @@ Every link is a real transaction on a public explorer. The demo instance ran wit
 
 | Measure | Value | Source |
 |---|---|---|
-| Rows in the triple log (origin or CRON → reactive → callback) | 43 (22 with a callback leg: 13 from Heirloom instances (11 CRON-triggered, 2 owner-transfer CANCELs) and 9 from day-1 probes, 2 of them deliberately failed) | [`evidence/triples.csv`](evidence/triples.csv) |
+| Rows in the triple log (origin or CRON → reactive → callback) | 44 (22 with a callback leg: 13 from Heirloom instances (11 CRON-triggered, 2 owner-transfer CANCELs) and 9 from day-1 probes, 2 of them deliberately failed) | [`evidence/triples.csv`](evidence/triples.csv) |
 | Demo instance callbacks acknowledged | 5 of 5, 0 resends | [`evidence/status.json`](evidence/status.json), [`evidence/demo-summary.json`](evidence/demo-summary.json) |
 | Demo scenario | 2 graces, 1 cancel, 1 expiry, claim, teardown | [`evidence/demo-summary.json`](evidence/demo-summary.json) |
 | Contract tests (`forge test`) | 168 passed | [`test/`](test/) |

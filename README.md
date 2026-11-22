@@ -15,6 +15,8 @@
   [![Write-up on dev.to](https://img.shields.io/badge/Write--up-dev.to-0A0A0A?style=for-the-badge&logo=devdotto&logoColor=white)](https://dev.to/edycutjong/a-0-transfer-can-fake-your-proof-of-life-building-a-dead-mans-switch-that-reads-silence-2aca)
   [![Launch thread on X](https://img.shields.io/badge/Launch_thread-X-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/edycutjong/status/2124397816894366120)
   [![Built for Reactive Omni Buildathon](https://img.shields.io/badge/DoraHacks-Reactive_Omni_Buildathon-4A3E8C?style=for-the-badge)](https://dorahacks.io/hackathon/reactive-omni-buildathon/detail)
+  [![Track: Set It and Forget It](https://img.shields.io/badge/Track-Set_It_and_Forget_It-8E2B1D?style=for-the-badge)](https://dorahacks.io/hackathon/reactive-omni-buildathon/detail)
+  [![DoraHacks BUIDL](https://img.shields.io/badge/DoraHacks-BUIDL_51585-4A3E8C?style=for-the-badge)](https://dorahacks.io/build/51585)
 
   <br/>
 
